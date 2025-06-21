@@ -1,7 +1,21 @@
-import { Button } from "@/components/ui/button"
-import { Globe, User } from "lucide-react"
+"use client"
+
+import { Button } from "../components/ui/button"
+import { Globe, User, ShoppingCart } from "lucide-react"
+import { useCart } from "../contexts/cart-context"
 
 export function Header() {
+  const { toggleCart, getTotalItems, getTotalPrice } = useCart()
+  const totalItems = getTotalItems()
+  const totalPrice = getTotalPrice()
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: "ARS",
+    }).format(price)
+  }
+
   return (
     <header className="bg-[#DF6C3B] text-babalu-medium">
       <div className="container mx-auto px-4 py-3">
@@ -36,11 +50,24 @@ export function Header() {
               <Globe className="w-4 h-4" />
               <span className="text-sm">ES</span>
             </div>
+
+            {/* Carrito de Compras */}
             <Button
               variant="outline"
               size="sm"
-              className="bg-[#FBE9E7] text-babalu-medium border-babalu-medium"
+              className="relative bg-[#FBE9E7] text-babalu-medium border-babalu-medium hover:bg-[#FBE9E7]/80"
+              onClick={toggleCart}
             >
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              <span className="text-sm font-medium">${totalPrice.toFixed(2)}</span>
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                  {totalItems}
+                </span>
+              )}
+            </Button>
+
+            <Button variant="outline" size="sm" className="bg-[#FBE9E7] text-babalu-medium border-babalu-medium">
               <User className="w-4 h-4 mr-1" />
               Ingresar
             </Button>

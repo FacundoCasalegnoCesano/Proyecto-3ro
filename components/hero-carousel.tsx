@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
+import { Button } from "../components/ui/button"
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "../components/ui/carousel"
 
 interface HeroImage {
   src: string;

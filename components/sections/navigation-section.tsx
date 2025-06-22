@@ -4,13 +4,12 @@ import { NavigationLinks } from "../../components/navigation-links"
 
 export function NavigationSection() {
   const navigationLinks = [
-    { href: "#", label: "Informática" },
-    { href: "#", label: "Para bebes" },
-    { href: "#", label: "Perfumes" },
-    { href: "#", label: "Bombas de baño" },
-    { href: "#", label: "Accesorios" },
-    { href: "#", label: "Alimentación" },
-    { href: "#", label: "Limpieza de Oro" },
+    { href: "#", label: "Sahumerios" },
+    { href: "#", label: "Inciensos" },
+    { href: "#", label: "Velas" },
+    { href: "#", label: "Bombas de humo" },
+    { href: "#", label: "Porta Sahumerios" },
+    { href: "#", label: "Palo santos" },
   ]
 
   return <NavigationLinks links={navigationLinks} showViewMore={true} />

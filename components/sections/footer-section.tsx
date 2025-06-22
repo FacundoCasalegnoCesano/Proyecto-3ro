@@ -11,7 +11,7 @@ export function FooterSection() {
 
   const footerText = {
     quote: "Tu energía habla más fuerte que tus palabras",
-    copyright: "Todos los derechos reservados © 2023 Facundo Castañio Cesario",
+    copyright: "Todos los derechos reservados © 2025 Facundo Casalegno Cesano",
   }
 
   return <Footer contactInfo={footerContactInfo} footerText={footerText} />

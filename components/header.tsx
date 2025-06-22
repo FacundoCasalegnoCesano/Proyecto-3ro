@@ -3,27 +3,35 @@
 import { Button } from "../components/ui/button"
 import { Globe, User, ShoppingCart } from "lucide-react"
 import { useCart } from "../contexts/cart-context"
+import Image from "next/image"
 
 export function Header() {
   const { toggleCart, getTotalItems, getTotalPrice } = useCart()
   const totalItems = getTotalItems()
   const totalPrice = getTotalPrice()
 
-  const formatPrice = (price: number) => {
+  /* const formatPrice = (price: number) => {
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
       currency: "ARS",
     }).format(price)
   }
+    */
 
   return (
     <header className="bg-[#DF6C3B] text-babalu-medium">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center">
-              <img src="img/logo.png" alt="" />
-            </div>
+  <div className="w-8 h-8 rounded-full flex items-center justify-center">
+  <Image 
+    src="/img/logo.png" 
+    alt="Logo" 
+    width={32} 
+    height={32}
+    className="rounded-full"
+  />
+</div>
             <span className="font-bold text-lg">Babalu Aye Reiki & Tarot</span>
           </div>
 
@@ -41,7 +49,7 @@ export function Header() {
               Reservar
             </a>
             <a href="#" className="hover:text-orange-200 transition-colors">
-              Mi Carrito
+              Mi Camino
             </a>
           </nav>
 

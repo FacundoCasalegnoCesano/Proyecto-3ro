@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import Image from "next/image"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "../components/ui/carousel"
 
-interface MinimalCarouselAPI {
+interface CarouselApi {
   selectedScrollSnap: () => number
   scrollNext: () => void
   scrollPrev: () => void
@@ -16,24 +16,17 @@ interface HeroImage {
   src: string
   alt: string
   focalPoint?: string
-  content?: {
-    title?: string
-    description?: string
-    buttonText?: string
-    buttonAction?: () => void
-  }
 }
 
 interface HeroCarouselProps {
   images: HeroImage[]
   className?: string
-  onSlideChange?: (index: number) => void
+  onSlideChange: (index: number) => void
 }
 
 export function HeroCarousel({ images = [], className = "", onSlideChange }: HeroCarouselProps) {
-  const apiRef = useRef<MinimalCarouselAPI | null>(null)
+  const apiRef = useRef<CarouselApi | null>(null)
   const autoplayRef = useRef<NodeJS.Timeout | null>(null)
-  const [currentIndex, setCurrentIndex] = useState(0)
 
   // Configuración del autoplay
   const startAutoplay = () => {
@@ -50,28 +43,22 @@ export function HeroCarousel({ images = [], className = "", onSlideChange }: Her
     }
   }
 
-  // Manejar cambio de slide
-  const handleSlideChange = (index: number) => {
-    const safeIndex = ((index % images.length) + images.length) % images.length
-    setCurrentIndex(safeIndex)
-    onSlideChange?.(safeIndex)
-  }
-
   // Inicialización del carrusel
   useEffect(() => {
     const api = apiRef.current
     if (!api) return
 
-    startAutoplay()
-
     const handleSelect = () => {
       const selectedIndex = api.selectedScrollSnap()
-      handleSlideChange(selectedIndex)
+      onSlideChange(selectedIndex)
     }
 
     api.on("select", handleSelect)
     api.on("pointerDown", stopAutoplay)
     api.on("pointerUp", startAutoplay)
+
+    // Iniciar autoplay después de configurar los listeners
+    startAutoplay()
 
     return () => {
       stopAutoplay()
@@ -79,18 +66,24 @@ export function HeroCarousel({ images = [], className = "", onSlideChange }: Her
       api.off("pointerDown", stopAutoplay)
       api.off("pointerUp", startAutoplay)
     }
-  }, [images.length, onSlideChange])
+  }, [onSlideChange])
 
-  // Validación de imágenes
-  if (!images || images.length === 0) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const setCarouselApi = (api: any) => {
+    apiRef.current = api
+    if (api) {
+      // Notificar el slide inicial inmediatamente
+      onSlideChange(api.selectedScrollSnap())
+    }
+  }
+
+  if (!images?.length) {
     return (
-      <div className={`relative w-full h-[65vh] md:h-[70vh] bg-gray-200 flex items-center justify-center ${className}`}>
+      <div className={`relative w-full h-[65vh] bg-gray-200 flex items-center justify-center ${className}`}>
         <p className="text-gray-500">No hay imágenes disponibles</p>
       </div>
     )
   }
-
-  const currentContent = images[currentIndex]?.content || {}
 
   return (
     <div className={`relative w-full overflow-hidden ${className}`}>
@@ -98,17 +91,9 @@ export function HeroCarousel({ images = [], className = "", onSlideChange }: Her
         className="w-full h-full"
         opts={{
           loop: true,
-          skipSnaps: true,
-          startIndex: 0,
+          skipSnaps: false,
         }}
-        setApi={(api) => {
-          apiRef.current = api as MinimalCarouselAPI
-          if (api) {
-            startAutoplay()
-            // Actualizar el índice inicial
-            handleSlideChange(api.selectedScrollSnap())
-          }
-        }}
+        setApi={setCarouselApi}
       >
         <CarouselContent className="h-[65vh] md:h-[70vh]">
           {images.map((image, index) => (
@@ -123,7 +108,6 @@ export function HeroCarousel({ images = [], className = "", onSlideChange }: Her
                     objectPosition: image.focalPoint || "center center",
                   }}
                   priority={index === 0}
-                  quality={100}
                   sizes="(max-width: 768px) 100vw, 80vw"
                 />
                 <div className="absolute inset-0 bg-black/30" />
@@ -133,36 +117,14 @@ export function HeroCarousel({ images = [], className = "", onSlideChange }: Her
         </CarouselContent>
 
         <CarouselPrevious 
-          className="left-2 md:left-4 text-black border-white hover:bg-white/90"
+          className="left-2 md:left-4 text-white border-white hover:bg-white/20"
           onClick={stopAutoplay}
         />
         <CarouselNext 
-          className="right-2 md:right-4 text-black border-white hover:bg-white/90"
+          className="right-2 md:right-4 text-white border-white hover:bg-white/20"
           onClick={stopAutoplay}
         />
       </Carousel>
-
-      {/* Contenido dinámico */}
-      <div className="absolute left-4 md:left-8 top-1/2 transform -translate-y-1/2 max-w-xs md:max-w-md z-10">
-        <div className="bg-[#FBE9E7] bg-opacity-90 p-4 md:p-6 rounded-lg shadow-lg transition-all duration-300">
-          <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 md:mb-3">
-            {currentContent.title || "Título predeterminado"}
-          </h1>
-          {currentContent.description && (
-            <p className="text-sm md:text-base text-gray-700 mb-3 md:mb-4">
-              {currentContent.description}
-            </p>
-          )}
-          {currentContent.buttonText && (
-            <button
-              className="bg-babalu-primary hover:bg-babalu-dark text-white text-sm md:text-base px-4 py-2 rounded transition-all duration-200 hover:scale-105"
-              onClick={currentContent.buttonAction}
-            >
-              {currentContent.buttonText}
-            </button>
-          )}
-        </div>
-      </div>
     </div>
   )
 }

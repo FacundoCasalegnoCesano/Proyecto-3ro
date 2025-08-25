@@ -22,7 +22,7 @@ const config: Config = {
   		colors: {
   			babalu: {
   				dark: '#3A2415',
-  				primary: '#DF6C3B',
+  				primary: '#F58549',
   				medium: '#4E342E'
   			},
   			border: 'hsl(var(--border))',

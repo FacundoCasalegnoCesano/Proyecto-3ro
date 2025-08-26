@@ -4,12 +4,12 @@ import { NavigationLinks } from "../../components/navigation-links"
 
 export function NavigationSection() {
   const navigationLinks = [
-    { href: "#", label: "Sahumerios" },
-    { href: "#", label: "Inciensos" },
-    { href: "#", label: "Velas" },
-    { href: "#", label: "Bombas de humo" },
-    { href: "#", label: "Porta Sahumerios" },
-    { href: "#", label: "Palo santos" },
+    { href: "/productos?category==Sahumerios", label: "Sahumerios" },
+    { href: "/productos?category==Inciensos", label: "Inciensos" },
+    { href: "/productos?category==Velas", label: "Velas" },
+    { href: "/productos?category==Bombas de humo", label: "Bombas de humo" },
+    { href: "/productos?category==Porta Sahumerios", label: "Porta Sahumerios" },
+    { href: "/productos?category==Estatuas", label: "Estatuas" },
   ]
 
   return <NavigationLinks links={navigationLinks} showViewMore={true} />

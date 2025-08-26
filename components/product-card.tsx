@@ -5,15 +5,7 @@ import { Card, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "../contexts/cart-context"
-
-interface Product {
-  image: string
-  id: number
-  name: string
-  price: string
-  shipping: string
-  src: string
-}
+import { Product } from "app/types/product" // Importar la interfaz compartida
 
 interface ProductCardProps {
   product: Product
@@ -37,13 +29,14 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
       <CardContent className="p-4">
-        <div className="aspect-square bg-gray-200 rounded-lg mb-3 overflow-hidden">
+        <div className="aspect-square bg-gray-200 rounded-lg mb-3 overflow-hidden cursor-pointer">
           <Image
             src={product.image || "/placeholder.svg?height=200&width=200"}
             alt={product.name}
             width={200}
             height={200}
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            onClick={() => (window.location.href = `/productos/${product.id}`)}
           />
         </div>
         <div className="space-y-2">

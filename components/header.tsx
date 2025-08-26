@@ -36,19 +36,16 @@ export function Header() {
           </div>
 
           <nav className="hidden md:flex items-center space-x-6">
-            <a href="#" className="hover:text-orange-200 transition-colors">
+            <a href="/#" className="hover:text-orange-200 transition-colors">
               Inicio
             </a>
-            <a href="#" className="hover:text-orange-200 transition-colors">
+            <a href="/productos" className="hover:text-orange-200 transition-colors">
               Productos
             </a>
-            <a href="#" className="hover:text-orange-200 transition-colors">
+            <a href="/servicios" className="hover:text-orange-200 transition-colors">
               Servicios
             </a>
-            <a href="#" className="hover:text-orange-200 transition-colors">
-              Reservar
-            </a>
-            <a href="#" className="hover:text-orange-200 transition-colors">
+            <a href="/mi-camino" className="hover:text-orange-200 transition-colors">
               Mi Camino
             </a>
           </nav>

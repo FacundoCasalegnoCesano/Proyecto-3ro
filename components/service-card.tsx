@@ -61,8 +61,8 @@ export function ServiceCard({ service }: ServiceCardProps) {
         {/* Precio y duración */}
         <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-lg">
           <div className="flex items-center space-x-2">
-            <DollarSign className="w-5 h-5 text-babalu-primary" />
-            <span className="text-2xl font-bold text-babalu-primary">
+            <DollarSign className="w-5 h-5 text-black" />
+            <span className="text-2xl font-bold text-black">
               {service.price}
             </span>
           </div>
@@ -82,11 +82,6 @@ export function ServiceCard({ service }: ServiceCardProps) {
                 <span className="text-sm text-gray-600">{benefit}</span>
               </li>
             ))}
-            {service.benefits.length > 3 && (
-              <li className="text-sm text-gray-500 ml-6">
-                +{service.benefits.length - 3} beneficios más...
-              </li>
-            )}
           </ul>
         </div>
 
@@ -94,7 +89,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
         <Button
           onClick={handleReservar}
           className="w-full bg-babalu-primary hover:bg-babalu-dark text-white py-3 text-lg font-medium rounded-lg transition-all duration-200 hover:scale-105"
-        >
+          >
           Reservar Sesión
         </Button>
       </div>

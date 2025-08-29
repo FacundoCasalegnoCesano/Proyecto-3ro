@@ -36,19 +36,16 @@ export function Header() {
           </div>
 
           <nav className="hidden md:flex items-center space-x-6">
-            <a href="#" className="hover:text-orange-200 transition-colors">
+            <a href="/#" className="hover:text-orange-200 transition-colors">
               Inicio
             </a>
-            <a href="#" className="hover:text-orange-200 transition-colors">
+            <a href="/productos" className="hover:text-orange-200 transition-colors">
               Productos
             </a>
-            <a href="#" className="hover:text-orange-200 transition-colors">
+            <a href="/servicios" className="hover:text-orange-200 transition-colors">
               Servicios
             </a>
-            <a href="#" className="hover:text-orange-200 transition-colors">
-              Reservar
-            </a>
-            <a href="#" className="hover:text-orange-200 transition-colors">
+            <a href="/mi-camino" className="hover:text-orange-200 transition-colors">
               Mi Camino
             </a>
           </nav>
@@ -77,14 +74,16 @@ export function Header() {
               )}
             </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-[#FBE9E7] text-babalu-medium border-babalu-medium"
-            >
-              <User className="w-4 h-4 mr-1" />
-              Ingresar
-            </Button>
+            <a href="/iniciar-sesion">
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-[#FBE9E7] text-babalu-medium border-babalu-medium hover:bg-[#FBE9E7]/80"
+              >
+                <User className="w-4 h-4 mr-1" />
+                Ingresar
+              </Button>
+            </a>
           </div>
         </div>
       </div>

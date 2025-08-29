@@ -28,22 +28,22 @@ export function Footer({ sections = [], contactInfo = {}, footerText = {} }: Foo
     {
       title: "Mapa Del Sitio",
       links: [
-        { href: "#", label: "Inicio" },
-        { href: "#", label: "Productos" },
+        { href: "/#", label: "Inicio" },
+        { href: "/productos", label: "Productos" },
       ],
     },
     {
       title: "Servicios",
       links: [
-        { href: "#", label: "Reiki" },
-        { href: "#", label: "Lectura de Tarot" },
-        { href: "#", label: "Limpieza Espiritual" },
-        { href: "#", label: "Limpieza de Espacios" },
+        { href: "/servicios", label: "Reiki" },
+        { href: "/servicios", label: "Lectura de Tarot" },
+        { href: "/servicios", label: "Limpieza Espiritual" },
+        { href: "/servicios", label: "Limpieza de Espacios" },
       ],
     },
     {
-      title: "Reservar",
-      links: [{ href: "#", label: "Mi Carrito" }],
+      title: "Mi Camino",
+      links: [{ href: "/mi-camino", label: "Sobre Mi" }],
     },
   ]
 

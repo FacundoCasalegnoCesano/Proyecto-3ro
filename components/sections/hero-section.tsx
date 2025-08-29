@@ -4,45 +4,46 @@ import { useState, useEffect } from "react"
 import { HeroCarousel } from "../../components/hero-carousel"
 import { Button } from "../../components/ui/button"
 
+// Mover heroImages fuera del componente para evitar recreación en cada render
+const heroImages = [
+  {
+    src: "/img/cartas-tarot.jpg",
+    alt: "Tarot cards spread",
+    focalPoint: "center center",
+    content: {
+      title: "Descubre tu Destino con el Tarot",
+      description: "Consultas personalizadas de Tarot Rider-Waite para guiar tu camino espiritual.",
+      buttonText: "Reservar Lectura",
+      buttonAction: () => console.log("Reservar lectura de tarot")
+    }
+  },
+  {
+    src: "/img/1744750643661.jpg",
+    alt: "Reiki session",
+    focalPoint: "center 30%",
+    content: {
+      title: "Sanación Energética con Reiki",
+      description: "Sesiones de Reiki para equilibrar tu energía vital y reducir el estrés.",
+      buttonText: "Agendar Sesión",
+      buttonAction: () => console.log("Agendar sesión de Reiki")
+    }
+  },
+  {
+    src: "/placeholder.svg?height=500&width=800",
+    alt: "Spiritual cleansing",
+    focalPoint: "center center",
+    content: {
+      title: "Limpieza Espiritual Profunda",
+      description: "Rituales de limpieza energética para purificar tu aura.",
+      buttonText: "Conocer Más",
+      buttonAction: () => console.log("Mostrar información de limpieza espiritual")
+    }
+  }
+]
+
 export function HeroSection() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isInitialized, setIsInitialized] = useState(false)
-
-  const heroImages = [
-    {
-      src: "/img/cartas-tarot.jpg",
-      alt: "Tarot cards spread",
-      focalPoint: "center center",
-      content: {
-        title: "Descubre tu Destino con el Tarot",
-        description: "Consultas personalizadas de Tarot Rider-Waite para guiar tu camino espiritual.",
-        buttonText: "Reservar Lectura",
-        buttonAction: () => console.log("Reservar lectura de tarot")
-      }
-    },
-    {
-      src: "/img/1744750643661.jpg",
-      alt: "Reiki session",
-      focalPoint: "center 30%",
-      content: {
-        title: "Sanación Energética con Reiki",
-        description: "Sesiones de Reiki para equilibrar tu energía vital y reducir el estrés.",
-        buttonText: "Agendar Sesión",
-        buttonAction: () => console.log("Agendar sesión de Reiki")
-      }
-    },
-    {
-      src: "/placeholder.svg?height=500&width=800",
-      alt: "Spiritual cleansing",
-      focalPoint: "center center",
-      content: {
-        title: "Limpieza Espiritual Profunda",
-        description: "Rituales de limpieza energética para purificar tu aura.",
-        buttonText: "Conocer Más",
-        buttonAction: () => console.log("Mostrar información de limpieza espiritual")
-      }
-    }
-  ]
 
   const handleSlideChange = (index: number) => {
     console.log("Slide cambiado a:", index)
@@ -56,7 +57,7 @@ export function HeroSection() {
       console.log("Índice actual:", currentIndex)
       console.log("Contenido actual:", heroImages[currentIndex]?.content)
     }
-  }, [currentIndex, isInitialized])
+  }, [currentIndex, isInitialized]) // Ahora heroImages no es una dependencia porque está fuera del componente
 
   const currentContent = heroImages[currentIndex]?.content || {}
 

@@ -4,23 +4,20 @@ import { useState } from "react"
 import { 
   ChevronDown, 
   ChevronRight, 
-  Car, 
-  Home, 
-  FlaskConical, 
-  TreePine, 
-  Sparkles, 
-  Cloud,
-  Flame,
-  Mountain,
-  Gem,
-  Lamp,
-  Container
 } from "lucide-react"
 import Image from "next/image"
 
+// Define las props que aceptan los íconos
+interface IconProps {
+  className?: string
+  size?: number
+  strokeWidth?: number
+  // otras props que puedan tener los íconos
+}
+
 interface Subcategory {
   name: string
-  icon?: React.ComponentType<any> // Icono de Lucide
+  icon?: React.ComponentType<IconProps> // Icono de Lucide con tipo específico
   image?: string // URL de imagen personalizada
   emoji?: string // Emoji como alternativa
 }

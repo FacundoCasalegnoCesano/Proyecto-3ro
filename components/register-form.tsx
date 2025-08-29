@@ -137,6 +137,7 @@ export function RegisterForm() {
       // Redirigir al login o dashboard
       window.location.href = "/iniciar-sesion"
     } catch (error) {
+      console.error("Error en registro:", error)
       setErrors({
         general: "Error al crear la cuenta. Intenta nuevamente.",
       })

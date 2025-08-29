@@ -83,10 +83,11 @@ export function LoginForm() {
           general: "Credenciales incorrectas. Intenta con admin@babalu.com / 123456",
         })
       }
-    } catch (error) {
-      setErrors({
-        general: "Error al iniciar sesión. Intenta nuevamente.",
-      })
+      } catch (error) {
+        console.error("Error en login:", error)
+          setErrors({
+            general: "Error al iniciar sesión. Intenta nuevamente.",
+  })
     } finally {
       setIsLoading(false)
     }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useCallback } from "react"
 import Image from "next/image"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "../components/ui/carousel"
 
@@ -28,45 +28,46 @@ export function HeroCarousel({ images = [], className = "", onSlideChange }: Her
   const apiRef = useRef<CarouselApi | null>(null)
   const autoplayRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Configuración del autoplay
-  const startAutoplay = () => {
-    stopAutoplay()
-    autoplayRef.current = setInterval(() => {
-      apiRef.current?.scrollNext()
-    }, 5000)
-  }
-
-  const stopAutoplay = () => {
+  // Memorizar stopAutoplay para evitar recreación en cada render
+  const stopAutoplay = useCallback(() => {
     if (autoplayRef.current) {
       clearInterval(autoplayRef.current)
       autoplayRef.current = null
     }
-  }
+  }, [])
+
+  // Memorizar startAutoplay para evitar recreación en cada render
+  const startAutoplay = useCallback(() => {
+    stopAutoplay()
+    autoplayRef.current = setInterval(() => {
+      apiRef.current?.scrollNext()
+    }, 5000)
+  }, [stopAutoplay])
 
   // Inicialización del carrusel
   useEffect(() => {
     const api = apiRef.current
     if (!api) return
-
+    
     const handleSelect = () => {
       const selectedIndex = api.selectedScrollSnap()
       onSlideChange(selectedIndex)
     }
-
+    
     api.on("select", handleSelect)
     api.on("pointerDown", stopAutoplay)
     api.on("pointerUp", startAutoplay)
-
+    
     // Iniciar autoplay después de configurar los listeners
     startAutoplay()
-
+    
     return () => {
       stopAutoplay()
       api.off("select", handleSelect)
       api.off("pointerDown", stopAutoplay)
       api.off("pointerUp", startAutoplay)
     }
-  }, [onSlideChange])
+  }, [onSlideChange, startAutoplay, stopAutoplay])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const setCarouselApi = (api: any) => {

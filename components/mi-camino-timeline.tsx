@@ -15,7 +15,7 @@ interface TimelineEvent {
   location?: string
   type: "education" | "milestone" | "achievement" | "personal"
   image?: string
-  icon: React.ComponentType<any>
+  icon: React.ComponentType<{ className?: string }>
 }
 
 export function MiCaminoTimeline() {

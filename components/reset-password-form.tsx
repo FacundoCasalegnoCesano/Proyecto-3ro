@@ -123,6 +123,7 @@ export function ResetPasswordForm() {
         })
       }
     } catch (error) {
+      console.error("Error al enviar el código:", error)
       setErrors({
         general: "Error al enviar el código. Intenta nuevamente.",
       })
@@ -154,6 +155,7 @@ export function ResetPasswordForm() {
         })
       }
     } catch (error) {
+      console.error("Error al verificar el código:", error)
       setErrors({
         general: "Error al verificar el código. Intenta nuevamente.",
       })
@@ -179,6 +181,7 @@ export function ResetPasswordForm() {
       console.log("Nueva contraseña establecida para:", formData.email)
       setCurrentStep("success")
     } catch (error) {
+      console.error("Error al actualizar la contraseña:", error)
       setErrors({
         general: "Error al actualizar la contraseña. Intenta nuevamente.",
       })
@@ -193,6 +196,7 @@ export function ResetPasswordForm() {
       await new Promise((resolve) => setTimeout(resolve, 1000))
       alert("Código reenviado a " + formData.email)
     } catch (error) {
+      console.error("Error al reenviar el código:", error)
       setErrors({
         general: "Error al reenviar el código.",
       })

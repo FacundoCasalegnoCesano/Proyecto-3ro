@@ -16,6 +16,8 @@ export function ProductsSection({ title = "MAS VENDIDO", showTitle = true, class
       price: "$25.99",
       shipping: "Envío Gratis",
       image: "/img/sahumerio1.jpg?height=200&width=200&text=Tarot+Cards&bg=8B4513",
+      src: "/img/sahumerio1.jpg?height=200&width=200&text=Tarot+Cards&bg=8B4513", // Agregar src
+      category: "Sahumerios", // Agregar category
     },
     {
       id: 2,
@@ -23,6 +25,8 @@ export function ProductsSection({ title = "MAS VENDIDO", showTitle = true, class
       price: "$18.50",
       shipping: "Envío Gratis",
       image: "/img/sahumerio2.jpg?height=200&width=200&text=Rose+Quartz&bg=FFC0CB",
+      src: "/img/sahumerio2.jpg?height=200&width=200&text=Rose+Quartz&bg=FFC0CB",
+      category: "Cristales",
     },
     {
       id: 3,
@@ -30,6 +34,8 @@ export function ProductsSection({ title = "MAS VENDIDO", showTitle = true, class
       price: "$12.99",
       shipping: "Envío Gratis",
       image: "/img/sahumerio1.jpg?height=200&width=200&text=Lavender+Candle&bg=9370DB",
+      src: "/img/sahumerio1.jpg?height=200&width=200&text=Lavender+Candle&bg=9370DB",
+      category: "Velas",
     },
     {
       id: 4,
@@ -37,6 +43,8 @@ export function ProductsSection({ title = "MAS VENDIDO", showTitle = true, class
       price: "$15.75",
       shipping: "Envío Gratis",
       image: "/img/sahumerio2.jpg?height=200&width=200&text=Palo+Santo&bg=D2691E",
+      src: "/img/sahumerio2.jpg?height=200&width=200&text=Palo+Santo&bg=D2691E",
+      category: "Inciensos",
     },
     {
       id: 5,
@@ -44,6 +52,8 @@ export function ProductsSection({ title = "MAS VENDIDO", showTitle = true, class
       price: "$22.00",
       shipping: "Envío Gratis",
       image: "/img/sahumerio1.jpg?height=200&width=200&text=Amethyst+Pendulum&bg=9966CC",
+      src: "/img/sahumerio1.jpg?height=200&width=200&text=Amethyst+Pendulum&bg=9966CC",
+      category: "Péndulos",
     },
     {
       id: 6,
@@ -51,6 +61,8 @@ export function ProductsSection({ title = "MAS VENDIDO", showTitle = true, class
       price: "$14.25",
       shipping: "Envío Gratis",
       image: "/img/sahumerio2.jpg?height=200&width=200&text=Essential+Oil&bg=228B22",
+      src: "/img/sahumerio2.jpg?height=200&width=200&text=Essential+Oil&bg=228B22",
+      category: "Aceites",
     },
     {
       id: 7,
@@ -58,6 +70,8 @@ export function ProductsSection({ title = "MAS VENDIDO", showTitle = true, class
       price: "$28.99",
       shipping: "Envío Gratis",
       image: "/img/sahumerio1.jpg?height=200&width=200&text=Viking+Runes&bg=696969",
+      src: "/img/sahumerio1.jpg?height=200&width=200&text=Viking+Runes&bg=696969",
+      category: "Runas",
     },
     {
       id: 8,
@@ -65,6 +79,8 @@ export function ProductsSection({ title = "MAS VENDIDO", showTitle = true, class
       price: "$45.50",
       shipping: "Envío Gratis",
       image: "/img/sahumerio2.jpg?height=200&width=200&text=Tibetan+Bowl&bg=DAA520",
+      src: "/img/sahumerio2.jpg?height=200&width=200&text=Tibetan+Bowl&bg=DAA520",
+      category: "Instrumentos",
     },
     {
       id: 9,
@@ -72,6 +88,8 @@ export function ProductsSection({ title = "MAS VENDIDO", showTitle = true, class
       price: "$11.99",
       shipping: "Envío Gratis",
       image: "/img/sahumerio1.jpg?height=200&width=200&text=Myrrh+Incense&bg=8B4513",
+      src: "/img/sahumerio1.jpg?height=200&width=200&text=Myrrh+Incense&bg=8B4513",
+      category: "Sahumerios",
     },
     {
       id: 10,
@@ -79,6 +97,8 @@ export function ProductsSection({ title = "MAS VENDIDO", showTitle = true, class
       price: "$32.75",
       shipping: "Envío Gratis",
       image: "/img/sahumerio2.jpg?height=200&width=200&text=Chakra+Necklace&bg=FF6347",
+      src: "/img/sahumerio2.jpg?height=200&width=200&text=Chakra+Necklace&bg=FF6347",
+      category: "Joyería",
     },
   ]
 

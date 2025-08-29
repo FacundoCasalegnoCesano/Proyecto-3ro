@@ -74,14 +74,16 @@ export function Header() {
               )}
             </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-[#FBE9E7] text-babalu-medium border-babalu-medium"
-            >
-              <User className="w-4 h-4 mr-1" />
-              Ingresar
-            </Button>
+            <a href="/iniciar-sesion">
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-[#FBE9E7] text-babalu-medium border-babalu-medium hover:bg-[#FBE9E7]/80"
+              >
+                <User className="w-4 h-4 mr-1" />
+                Ingresar
+              </Button>
+            </a>
           </div>
         </div>
       </div>

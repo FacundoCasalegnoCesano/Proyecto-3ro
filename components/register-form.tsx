@@ -18,7 +18,7 @@ interface FormData {
 interface FormErrors {
   email?: string
   firstName?: string
-  lastName?: string
+  lastName?: string 
   birthDate?: string
   password?: string
   confirmPassword?: string

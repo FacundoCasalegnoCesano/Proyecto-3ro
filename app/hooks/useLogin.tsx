@@ -32,7 +32,7 @@ export function useLogin(options?: UseLoginOptions): UseLoginReturn {
         email,
         password,
         redirect: false, // No redirigir automáticamente, manejamos nosotros
-        callbackUrl: "/dashboard", // URL a la que redirigir después de éxito
+        callbackUrl: "/#", // URL a la que redirigir después de éxito
       })
 
       if (result?.error) {

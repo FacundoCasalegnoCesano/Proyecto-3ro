@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -14,24 +13,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User{
-  id  Int @id @default(autoincrement())
-  nombre  String 
-  apellido  String
-  email String @unique
-  password  String
-  fechaNac  DateTime
+model User {
+  id           Int      @id @default(autoincrement())
+  nombre       String
+  apellido     String
+  email        String   @unique
+  password     String
+  fechaNac     DateTime
+  calle        String?
+  ciudad       String?
+  provincia    String?
+  codigoPostal String?
+  pais         String?  @default("Argentina")
 }
 
-model Products{
-  id  Int @id @default(autoincrement())
-  nombre String
+model Products {
+  id          Int      @id @default(autoincrement())
+  nombre      String
   descripcion String
-  precio String
-  imgUrl  String
+  precio      String
+  imgUrl      String
   imgPublicId String
   empresaEnvios Int
-  envios  Deliver  @relation(fields: [empresaEnvios],references: [id])
+  envios      Deliver  @relation(fields: [empresaEnvios], references: [id])
 }
 
 model Deliver {
@@ -42,10 +46,9 @@ model Deliver {
 }
 
 model Empresa {
-  id       Int       @id @default(autoincrement())
-  nombre   String
+  id        Int       @id @default(autoincrement())
+  nombre    String
   direccion String?
   telefono  String?
-  // otros campos que hagan falta
-  delivers Deliver[]
+  delivers  Deliver[]
 }

@@ -1,22 +1,50 @@
+// components/Header.tsx
 "use client";
 
 import { Button } from "../components/ui/button";
 import { Globe, User, ShoppingCart } from "lucide-react";
 import { useCart } from "../contexts/cart-context";
 import Image from "next/image";
+import { UserDropdown } from "./user-dropdown";
+import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
 
 export function Header() {
   const { toggleCart, getTotalItems, getTotalPrice } = useCart();
+  const { data: session, status } = useSession();
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
 
-  /* const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("es-AR", {
-      style: "currency",
-      currency: "ARS",
-    }).format(price)
+  // Mostrar loading mientras se verifica la sesión
+  if (status === "loading") {
+    return (
+      <header className="bg-babalu-primary text-babalu-medium">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo y navegación con skeleton loading */}
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-babalu-medium/20 rounded-full animate-pulse"></div>
+              <div className="w-32 h-6 bg-babalu-medium/20 rounded animate-pulse"></div>
+            </div>
+            
+            <nav className="hidden md:flex items-center space-x-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="w-16 h-6 bg-babalu-medium/20 rounded animate-pulse"></div>
+              ))}
+            </nav>
+
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-6 bg-babalu-medium/20 rounded animate-pulse"></div>
+              <div className="w-20 h-10 bg-babalu-medium/20 rounded animate-pulse"></div>
+              <div className="w-24 h-10 bg-babalu-medium/20 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+    );
   }
-    */
+
+  const isLoggedIn = !!session?.user;
 
   return (
     <header className="bg-babalu-primary text-babalu-medium">
@@ -74,16 +102,27 @@ export function Header() {
               )}
             </Button>
 
-            <a href="/iniciar-sesion">
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-[#FBE9E7] text-babalu-medium border-babalu-medium hover:bg-[#FBE9E7]/80"
-              >
-                <User className="w-4 h-4 mr-1" />
-                Ingresar
-              </Button>
-            </a>
+            {isLoggedIn ? (
+              <UserDropdown 
+                user={{
+                  firstName: session.user.nombre || "Usuario",
+                  lastName: session.user.apellido || "",
+                  email: session.user.email || ""
+                }} 
+                onLogout={() => signOut({ callbackUrl: "/" })} 
+              />
+            ) : (
+              <Link href="/iniciar-sesion">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-[#FBE9E7] text-babalu-medium border-babalu-medium hover:bg-[#FBE9E7]/80"
+                >
+                  <User className="w-4 h-4 mr-1" />
+                  Ingresar
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

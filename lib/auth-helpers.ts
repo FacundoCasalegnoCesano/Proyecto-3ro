@@ -22,6 +22,8 @@ export async function createUser(userData: CreateUserData) {
     throw new Error("El usuario ya existe");
   }
 
+  const fechaNacDate = fechaNac instanceof Date ? fechaNac : new Date(fechaNac);
+
   // Hash de la contraseña
   const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -32,7 +34,7 @@ export async function createUser(userData: CreateUserData) {
       apellido,
       email,
       password: hashedPassword,
-      fechaNac,
+      fechaNac: fechaNacDate,
     },
   });
 

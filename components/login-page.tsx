@@ -1,10 +1,11 @@
+// components/login-page.tsx
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "./ui/button"
 import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react"
+import { useAuth } from "../app/hooks/useAuth"
 
 export function LoginForm() {
   const [formData, setFormData] = useState({
@@ -12,12 +13,20 @@ export function LoginForm() {
     password: "",
   })
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<{
     email?: string
     password?: string
-    general?: string
   }>({})
+
+  const { handleLogin, isLoading, error: authError } = useAuth({
+    onError: (error) => {
+      // El error ya se maneja en el hook, pero puedes hacer algo adicional aquí si necesitas
+    },
+    onSuccess: () => {
+      // Limpiar formulario después de éxito
+      setFormData({ email: "", password: "" });
+    }
+  })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -63,43 +72,16 @@ export function LoginForm() {
       return
     }
 
-    setIsLoading(true)
-    setErrors({})
-
-    try {
-      // Simular llamada a API
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // Aquí iría la lógica real de autenticación
-      console.log("Datos de login:", formData)
-
-      // Simular éxito o error
-      if (formData.email === "admin@babalu.com" && formData.password === "123456") {
-        alert("¡Inicio de sesión exitoso!")
-        // Redirigir al dashboard o página principal
-        window.location.href = "/"
-      } else {
-        setErrors({
-          general: "Credenciales incorrectas. Intenta con admin@babalu.com / 123456",
-        })
-      }
-      } catch (error) {
-        console.error("Error en login:", error)
-          setErrors({
-            general: "Error al iniciar sesión. Intenta nuevamente.",
-  })
-    } finally {
-      setIsLoading(false)
-    }
+    await handleLogin(formData.email, formData.password)
   }
 
   return (
     <div className="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200">
       <form className="space-y-6" onSubmit={handleSubmit}>
-        {/* Error general */}
-        {errors.general && (
+        {/* Error de autenticación */}
+        {authError && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-            {errors.general}
+            {authError}
           </div>
         )}
 
@@ -197,7 +179,7 @@ export function LoginForm() {
           </Button>
         </div>
 
-        {/* Credenciales de prueba */}
+        {/* Credenciales de prueba - Opcional: puedes eliminar esto en producción */}
         <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
           <p className="text-sm text-blue-800 font-medium mb-2">Credenciales de prueba:</p>
           <p className="text-sm text-blue-700">

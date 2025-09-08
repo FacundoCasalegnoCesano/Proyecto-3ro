@@ -3,14 +3,20 @@
 import type React from "react"
 import { useState } from "react"
 import { Button } from "./ui/button"
-import { Package, DollarSign, ImageIcon, Tag, FileText, Save, Loader2, ArrowLeft, Upload } from "lucide-react"
+import ImageUploader from "./imageUploader"
+import { Package, DollarSign, ImageIcon, Tag, FileText, Save, Loader2, ArrowLeft } from "lucide-react"
+
+interface UploadedImage {
+  publicId: string
+  url: string
+}
 
 interface ProductFormData {
   name: string
   price: string
   category: string
   description: string
-  image: string
+  images: UploadedImage[]
   shipping: string
 }
 
@@ -19,7 +25,7 @@ interface FormErrors {
   price?: string
   category?: string
   description?: string
-  image?: string
+  images?: string
   general?: string
 }
 
@@ -29,13 +35,14 @@ export function AgregarProductoForm() {
     price: "",
     category: "",
     description: "",
-    image: "",
+    images: [],
     shipping: "Envío Gratis",
   })
 
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [successMessage, setSuccessMessage] = useState("")
+  const [uploadMode, setUploadMode] = useState<'single' | 'multiple' | null>(null)
 
   const categories = [
     "Sahumerios",
@@ -72,6 +79,68 @@ export function AgregarProductoForm() {
     }
   }
 
+  const handleSingleImageMode = () => {
+    setUploadMode('single')
+    setFormData(prev => ({ ...prev, images: [] })) // Limpiar imágenes existentes
+    if (errors.images) {
+      setErrors(prev => ({ ...prev, images: undefined }))
+    }
+  }
+
+  const handleMultipleImageMode = () => {
+    setUploadMode('multiple')
+    if (errors.images) {
+      setErrors(prev => ({ ...prev, images: undefined }))
+    }
+  }
+
+  const handleImageUpload = (result: { publicId: string; url: string }) => {
+    if (!result.url) return // Si se elimina la imagen
+
+    const newImage: UploadedImage = {
+      publicId: result.publicId,
+      url: result.url
+    }
+
+    if (uploadMode === 'single') {
+      setFormData(prev => ({
+        ...prev,
+        images: [newImage] // Reemplazar con una sola imagen
+      }))
+    } else if (uploadMode === 'multiple') {
+      setFormData(prev => {
+        // Verificar que no exceda el límite de 5 imágenes
+        if (prev.images.length >= 5) {
+          setErrors(prevErrors => ({
+            ...prevErrors,
+            images: "Máximo 5 imágenes permitidas"
+          }))
+          return prev
+        }
+        
+        return {
+          ...prev,
+          images: [...prev.images, newImage]
+        }
+      })
+    }
+
+    // Limpiar errores si había
+    if (errors.images) {
+      setErrors(prev => ({
+        ...prev,
+        images: undefined
+      }))
+    }
+  }
+
+  const handleImageRemove = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }))
+  }
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
 
@@ -101,9 +170,9 @@ export function AgregarProductoForm() {
       newErrors.description = "La descripción debe tener al menos 10 caracteres"
     }
 
-    // Validar imagen
-    if (!formData.image.trim()) {
-      newErrors.image = "La URL de la imagen es requerida"
+    // Validar imágenes
+    if (formData.images.length === 0) {
+      newErrors.images = "Se requiere al menos una imagen del producto"
     }
 
     setErrors(newErrors)
@@ -121,22 +190,53 @@ export function AgregarProductoForm() {
     setErrors({})
 
     try {
-      // Simular guardado del producto
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // Crear el nuevo producto
-      const newProduct = {
-        id: Date.now(), // ID temporal
-        name: formData.name,
-        price: `$${formData.price}`,
+      console.log('Enviando datos:', {
+        nombre: formData.name,
+        precio: formData.price,
+        descripcion: formData.description,
+        imgUrl: formData.images[0]?.url || '',
+        imgPublicId: formData.images[0]?.publicId || '',
         category: formData.category,
-        description: formData.description,
-        image: formData.image,
         shipping: formData.shipping,
-        src: formData.image,
+      })
+
+      const response = await fetch('/api/agregarProd', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nombre: formData.name,
+          precio: formData.price,
+          descripcion: formData.description,
+          imgUrl: formData.images[0]?.url || '',
+          imgPublicId: formData.images[0]?.publicId || '',
+          category: formData.category,
+          shipping: formData.shipping,
+          allImages: formData.images
+        }),
+      })
+
+      console.log('Response status:', response.status)
+      
+      // Intentar leer la respuesta como texto primero para debuggear
+      const responseText = await response.text()
+      console.log('Response text:', responseText)
+
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error('Error parsing JSON:', parseError)
+        throw new Error('La respuesta del servidor no es válida. Verifica que la API esté funcionando correctamente.')
       }
 
-      console.log("Nuevo producto creado:", newProduct)
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Error al crear el producto')
+      }
+
+      console.log("Producto creado exitosamente:", data.data)
+      
       setSuccessMessage("¡Producto agregado exitosamente!")
 
       // Limpiar formulario después del éxito
@@ -146,14 +246,17 @@ export function AgregarProductoForm() {
           price: "",
           category: "",
           description: "",
-          image: "",
+          images: [],
           shipping: "Envío Gratis",
         })
+        setUploadMode(null)
         setSuccessMessage("")
       }, 2000)
+
     } catch (error) {
+      console.error('Error:', error)
       setErrors({
-        general: "Error al agregar el producto. Intenta nuevamente.",
+        general: error instanceof Error ? error.message : "Error al agregar el producto. Intenta nuevamente.",
       })
     } finally {
       setIsLoading(false)
@@ -310,53 +413,129 @@ export function AgregarProductoForm() {
           </div>
         </div>
 
-        {/* Imagen */}
+        {/* Imágenes del Producto */}
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <ImageIcon className="w-5 h-5 mr-2 text-babalu-primary" />
-            Imagen del Producto
+            Imágenes del Producto
           </h3>
 
-          <div>
-            <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
-              URL de la Imagen
-            </label>
-            <div className="flex space-x-4">
-              <input
-                id="image"
-                name="image"
-                type="url"
-                value={formData.image}
-                onChange={handleInputChange}
-                className={`flex-1 px-3 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary ${
-                  errors.image ? "border-red-300" : "border-gray-300"
-                }`}
-                placeholder="https://ejemplo.com/imagen.jpg"
-              />
-              <Button type="button" variant="outline" className="px-4 py-3 flex items-center space-x-2 bg-transparent">
-                <Upload className="w-4 h-4" />
-                <span>Subir</span>
-              </Button>
-            </div>
-            {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image}</p>}
+          <div className="space-y-4">
+            {/* Selección de modo */}
+            {!uploadMode && (
+              <>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSingleImageMode}
+                    className="flex items-center justify-center space-x-2 px-6 py-3 bg-transparent"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    <span>Seleccionar una imagen</span>
+                  </Button>
 
-            {/* Vista previa de la imagen */}
-            {formData.image && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-600 mb-2">Vista previa:</p>
-                <div className="w-32 h-32 border border-gray-300 rounded-lg overflow-hidden">
-                  <img
-                    src={formData.image || "/placeholder.svg"}
-                    alt="Vista previa"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = "/placeholder.svg?height=128&width=128&text=Error"
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleMultipleImageMode}
+                    className="flex items-center justify-center space-x-2 px-6 py-3 bg-transparent"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    <span>Seleccionar múltiples imágenes</span>
+                  </Button>
+                </div>
+
+                <div className="text-sm text-gray-600">
+                  <p>• Máximo 5 imágenes</p>
+                  <p>• Formatos soportados: JPG, PNG, GIF, WebP</p>
+                </div>
+              </>
+            )}
+
+            {/* Modo una imagen */}
+            {uploadMode === 'single' && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-medium text-gray-700">
+                    Imagen principal del producto
+                  </h4>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setUploadMode(null)
+                      setFormData(prev => ({ ...prev, images: [] }))
                     }}
-                  />
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    Cambiar modo
+                  </Button>
+                </div>
+                <ImageUploader
+                  label="Subir imagen"
+                  onUpload={handleImageUpload}
+                  maxImages={1}
+                />
+              </div>
+            )}
+
+            {/* Modo múltiples imágenes */}
+            {uploadMode === 'multiple' && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-medium text-gray-700">
+                    Galería de imágenes ({formData.images.length}/5)
+                  </h4>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setUploadMode(null)
+                      setFormData(prev => ({ ...prev, images: [] }))
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    Cambiar modo
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Imágenes subidas */}
+                  {formData.images.map((image, index) => (
+                    <div key={index} className="relative">
+                      <div className="aspect-square border border-gray-300 rounded-lg overflow-hidden">
+                        <img
+                          src={image.url}
+                          alt={`Imagen ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleImageRemove(index)}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {/* Slot para nueva imagen */}
+                  {formData.images.length < 5 && (
+                    <ImageUploader
+                      label="Agregar imagen"
+                      onUpload={handleImageUpload}
+                      maxImages={1}
+                    />
+                  )}
                 </div>
               </div>
             )}
+
+            {errors.images && <p className="text-sm text-red-600">{errors.images}</p>}
           </div>
         </div>
 

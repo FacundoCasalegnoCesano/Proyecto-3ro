@@ -8,7 +8,7 @@ export async function PUT(request: NextRequest) {
   try {
     console.log("PUT /api/user/address called")
     
-    // Verificar autenticación con más detalle
+    
     const session = await getServerSession(authOptions)
     console.log("Session in PUT:", {
       exists: !!session,
@@ -32,9 +32,9 @@ export async function PUT(request: NextRequest) {
 
     const { calle, ciudad, provincia, codigoPostal, pais } = body
 
-    // Validaciones básicas
+    
     if (codigoPostal) {
-      // Validación más específica según el país
+      
       let isValidPostalCode = false
       switch (pais) {
         case "Argentina":
@@ -61,7 +61,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Convertir el ID de string a número
+    
     const userId = parseInt(session.user.id)
     if (isNaN(userId)) {
       console.log("ID de usuario no es un número válido:", session.user.id)
@@ -71,7 +71,7 @@ export async function PUT(request: NextRequest) {
     console.log("User ID parsed:", userId)
 
     try {
-      // Primero verificar si el usuario existe
+      
       const existingUser = await prisma.user.findUnique({
         where: { id: userId },
         select: { id: true }
@@ -82,7 +82,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
       }
 
-      // Actualizar la dirección del usuario
+      
       // @ts-ignore - Temporal hasta que Prisma reconozca los nuevos campos
       const updatedUser = await prisma.user.update({
         where: { id: userId },
@@ -136,12 +136,12 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// GET para obtener la dirección actual
+
 export async function GET(request: NextRequest) {
   try {
     console.log("GET /api/user/address called")
     
-    // Verificar autenticación con más detalle
+    
     const session = await getServerSession(authOptions)
     console.log("Session in GET:", {
       exists: !!session,
@@ -209,7 +209,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Métodos no permitidos
+
 export async function POST() {
   return NextResponse.json(
     { error: "Método no permitido. Use PUT para actualizar o GET para obtener la dirección." },

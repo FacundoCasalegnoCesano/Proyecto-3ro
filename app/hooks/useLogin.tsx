@@ -27,16 +27,16 @@ export function useLogin(options?: UseLoginOptions): UseLoginReturn {
     setError(null)
 
     try {
-      // Usar NextAuth signIn para autenticación
+      
       const result = await signIn("credentials", {
         email,
         password,
-        redirect: false, // No redirigir automáticamente, manejamos nosotros
-        callbackUrl: "/#", // URL a la que redirigir después de éxito
+        redirect: false, 
+        callbackUrl: "/#", 
       })
 
       if (result?.error) {
-        // Mapear errores de NextAuth a mensajes más amigables
+        
         let errorMessage = "Error al iniciar sesión"
         
         switch (result.error) {
@@ -57,17 +57,17 @@ export function useLogin(options?: UseLoginOptions): UseLoginReturn {
       }
 
       if (result?.ok && result.url) {
-        // Si hay recordar sesión, podrías guardar algo en localStorage
+        
         if (rememberMe) {
           localStorage.setItem("rememberMe", "true")
         }
 
-        // Ejecutar callback de éxito si existe
+        
         options?.onSuccess?.()
 
-        // Redirigir a la página de dashboard o a la URL de callback
+        
         router.push(result.url)
-        router.refresh() // Para actualizar el estado de autenticación
+        router.refresh() 
       } else {
         throw new Error("Error desconocido al iniciar sesión")
       }

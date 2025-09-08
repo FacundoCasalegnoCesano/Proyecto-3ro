@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
     const { nombre, apellido, email, password, fechaNac } = body;
 
-    // Validaciones básicas
+    
     if (!nombre || !apellido || !email || !password || !fechaNac) {
       console.log("Faltan campos requeridos");
       return NextResponse.json(
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar formato de email
+    
     if (!/\S+@\S+\.\S+/.test(email)) {
       return NextResponse.json(
         { error: "Formato de email inválido" },
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     console.log("Intentando crear usuario...");
     
-    // Crear usuario
+    
     const user = await createUser({
       nombre,
       apellido,
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Error en API register:", error);
     
-    // Manejar errores específicos de Prisma
+    
     if (error.message.includes("ya existe")) {
       return NextResponse.json(
         { error: "El usuario ya existe con este email" },
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Agregar para preflight requests (CORS)
+
 export async function OPTIONS() {
   return new Response(null, {
     status: 200,

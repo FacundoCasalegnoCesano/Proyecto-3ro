@@ -1,4 +1,4 @@
-// types/api.ts
+
 export interface AddressResponse {
   success: boolean
   message?: string

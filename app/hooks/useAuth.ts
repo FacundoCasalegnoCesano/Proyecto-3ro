@@ -32,7 +32,7 @@ export const useAuth = ({ onSuccess, onError }: UseAuthProps = {}) => {
         onError?.(errorMessage);
       } else {
         onSuccess?.();
-        router.push('/dashboard'); // O la ruta que prefieras
+        router.push('/dashboard'); 
         router.refresh();
       }
     } catch (err) {

@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from 'next/navigation'
 import { HeroCarousel } from "../../components/hero-carousel"
 import { Button } from "../../components/ui/button"
 
-// Mover heroImages fuera del componente para evitar recreación en cada render
+
 const heroImages = [
   {
     src: "/img/cartas-tarot.jpg",
@@ -14,7 +15,8 @@ const heroImages = [
       title: "Descubre tu Destino con el Tarot",
       description: "Consultas personalizadas de Tarot Rider-Waite para guiar tu camino espiritual.",
       buttonText: "Reservar Lectura",
-      buttonAction: () => console.log("Reservar lectura de tarot")
+      buttonAction: () => {
+      }
     }
   },
   {
@@ -25,7 +27,8 @@ const heroImages = [
       title: "Sanación Energética con Reiki",
       description: "Sesiones de Reiki para equilibrar tu energía vital y reducir el estrés.",
       buttonText: "Agendar Sesión",
-      buttonAction: () => console.log("Agendar sesión de Reiki")
+      buttonAction: () => {
+      }
     }
   },
   {
@@ -36,7 +39,8 @@ const heroImages = [
       title: "Limpieza Espiritual Profunda",
       description: "Rituales de limpieza energética para purificar tu aura.",
       buttonText: "Conocer Más",
-      buttonAction: () => console.log("Mostrar información de limpieza espiritual")
+      buttonAction: () => {
+      }
     }
   }
 ]
@@ -44,6 +48,7 @@ const heroImages = [
 export function HeroSection() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isInitialized, setIsInitialized] = useState(false)
+  const router = useRouter()
 
   const handleSlideChange = (index: number) => {
     console.log("Slide cambiado a:", index)
@@ -51,13 +56,17 @@ export function HeroSection() {
     setIsInitialized(true)
   }
 
-  // Debug: Verificar cambios
+  const handleButtonAction = () => {
+    router.push("/servicios")
+  }
+
+  
   useEffect(() => {
     if (isInitialized) {
       console.log("Índice actual:", currentIndex)
       console.log("Contenido actual:", heroImages[currentIndex]?.content)
     }
-  }, [currentIndex, isInitialized]) // Ahora heroImages no es una dependencia porque está fuera del componente
+  }, [currentIndex, isInitialized])
 
   const currentContent = heroImages[currentIndex]?.content || {}
 
@@ -81,7 +90,7 @@ export function HeroSection() {
             </p>
             <Button
               className="bg-babalu-primary hover:bg-babalu-dark text-white"
-              onClick={currentContent.buttonAction}
+              onClick={handleButtonAction}
             >
               {currentContent.buttonText}
             </Button>

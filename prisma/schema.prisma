@@ -52,3 +52,4 @@ model Empresa {
   telefono  String?
   delivers  Deliver[]
 }
+

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { ProductsSidebar } from "../../components/products-sidebar"
 import { ProductsGridPage } from "../../components/products-grid-page"
 import { ProductsHeader } from "../../components/products-header"
+import { AgregarProducto } from "../agregar-producto"
 
 export function ProductsPageContent() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -19,6 +20,10 @@ export function ProductsPageContent() {
         </div>
       </div>
 
+            <div className="container mx-auto px-4 py-4">
+        <AgregarProducto />
+      </div>
+      
       <div className="container mx-auto px-4 py-8">
         <div className="flex gap-8">
           {/* Sidebar de categorías */}

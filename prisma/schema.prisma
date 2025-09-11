@@ -8,35 +8,36 @@ datasource db {
 }
 
 model Products {
-  id            Int      @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   nombre        String
   descripcion   String
   precio        String
   imgUrl        String
   imgPublicId   String
-  category      String?  @default("Sin categoría") @db.VarChar(255)
+  category      String? @default("Sin categoría") @db.VarChar(255)
   empresaEnvios Int
-  envios        deliver? @relation(fields: [empresaEnvios], references: [id], onDelete: Cascade)
-  
+  marca         String? @db.VarChar(255)
+  stock         Int     @default(0)
+  envios        deliver @relation(fields: [empresaEnvios], references: [id], onDelete: Cascade)
+  @@index([empresaEnvios])
   @@map("products")
 }
 
 model deliver {
-  id        Int        @id @default(autoincrement())
+  id        Int @id @default(autoincrement())
   empresaId Int
   empresa   empresa    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   productos Products[]
-  
+  @@index([empresaId])
   @@map("deliver")
 }
 
 model empresa {
-  id        Int       @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   nombre    String
   direccion String?
   telefono  String?
   delivers  deliver[]
-  
   @@map("empresa")
 }
 
@@ -52,6 +53,6 @@ model user {
   provincia    String?
   codigoPostal String?
   pais         String?  @default("Argentina")
-  
+
   @@map("user")
 }

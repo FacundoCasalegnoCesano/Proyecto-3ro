@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from 'lib/prisma'
 
-
 export async function POST(request: NextRequest) {
   try {
     console.log('📦 Recibiendo solicitud para crear producto...')
@@ -16,6 +15,8 @@ export async function POST(request: NextRequest) {
       imgUrl,
       imgPublicId,
       category,
+      marca,
+      stock = 0,
       shipping = 'Envío Gratis',
       allImages
     } = body
@@ -40,6 +41,19 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: 'El precio debe ser un número válido mayor a 0'
+        },
+        { status: 400 }
+      )
+    }
+
+    // Validar stock
+    const stockNumerico = parseInt(stock) || 0
+    if (stockNumerico < 0) {
+      console.log('❌ Stock inválido:', stock)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'El stock no puede ser negativo'
         },
         { status: 400 }
       )
@@ -94,6 +108,8 @@ export async function POST(request: NextRequest) {
         imgUrl: imgUrl,
         imgPublicId: imgPublicId || '',
         category: category || 'Sin categoría',
+        marca: marca?.trim() || null,
+        stock: stockNumerico,
         empresaEnvios: empresaEnviosId
       },
       include: {
@@ -125,12 +141,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     const category = searchParams.get('category')
+    const marca = searchParams.get('marca')
     const search = searchParams.get('search')
     const sort = searchParams.get('sort')
     const limit = searchParams.get('limit')
@@ -171,13 +187,22 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      
+      // Calcular status basado en stock
+      const calculateStatus = (stock: number) => {
+        if (stock === 0) return "agotado"
+        if (stock <= 5) return "bajo-stock"
+        return "disponible"
+      }
+
       const formattedProduct = {
         id: producto.id,
         name: producto.nombre,
         price: `$${producto.precio}`,
         image: producto.imgUrl,
         category: producto.category || 'Sin categoría',
+        marca: producto.marca || '',
+        stock: producto.stock,
+        status: calculateStatus(producto.stock),
         shipping: producto.envios?.empresa?.nombre || 'Envío Gratis',
         src: producto.imgUrl,
         description: producto.descripcion
@@ -192,7 +217,7 @@ export async function GET(request: NextRequest) {
     }
 
     
-    console.log('📦 Obteniendo productos con filtros:', { category, search, sort, limit })
+    console.log('📦 Obteniendo productos con filtros:', { category, marca, search, sort, limit })
 
     
     const where: any = {}
@@ -201,10 +226,15 @@ export async function GET(request: NextRequest) {
       where.category = category
     }
 
+    if (marca && marca !== 'all' && marca !== 'null') {
+      where.marca = marca
+    }
+
     if (search) {
       where.OR = [
         { nombre: { contains: search, mode: 'insensitive' } },
-        { descripcion: { contains: search, mode: 'insensitive' } }
+        { descripcion: { contains: search, mode: 'insensitive' } },
+        { marca: { contains: search, mode: 'insensitive' } }
       ]
     }
 
@@ -217,6 +247,10 @@ export async function GET(request: NextRequest) {
       orderBy = { precio: 'desc' }
     } else if (sort === 'name') {
       orderBy = { nombre: 'asc' }
+    } else if (sort === 'stock-low') {
+      orderBy = { stock: 'asc' }
+    } else if (sort === 'stock-high') {
+      orderBy = { stock: 'desc' }
     } else if (sort === 'newest') {
       orderBy = { id: 'desc' }
     }
@@ -239,13 +273,22 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ ${productos.length} productos encontrados`)
 
-    
+    // Calcular status basado en stock
+    const calculateStatus = (stock: number) => {
+      if (stock === 0) return "agotado"
+      if (stock <= 5) return "bajo-stock"
+      return "disponible"
+    }
+
     const formattedProducts = productos.map(producto => ({
       id: producto.id,
       name: producto.nombre,
       price: `$${producto.precio}`,
       image: producto.imgUrl,
       category: producto.category || 'Sin categoría',
+      marca: producto.marca || '',
+      stock: producto.stock,
+      status: calculateStatus(producto.stock),
       shipping: producto.envios?.empresa?.nombre || 'Envío Gratis',
       src: producto.imgUrl,
       description: producto.descripcion
@@ -268,7 +311,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
@@ -281,6 +323,8 @@ export async function PUT(request: NextRequest) {
       imgUrl,
       imgPublicId,
       category,
+      marca,
+      stock,
       shipping
     } = body
 
@@ -320,6 +364,21 @@ export async function PUT(request: NextRequest) {
         },
         { status: 400 }
       )
+    }
+
+    // Validar stock si se proporciona
+    let stockNumerico = productoExistente.stock
+    if (stock !== undefined) {
+      stockNumerico = parseInt(stock)
+      if (isNaN(stockNumerico) || stockNumerico < 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'El stock debe ser un número válido mayor o igual a 0'
+          },
+          { status: 400 }
+        )
+      }
     }
 
     
@@ -368,6 +427,8 @@ export async function PUT(request: NextRequest) {
         imgUrl: imgUrl,
         imgPublicId: imgPublicId || '',
         category: category || 'Sin categoría',
+        marca: marca?.trim() || null,
+        stock: stockNumerico,
         empresaEnvios: empresaEnviosId
       },
       include: {
@@ -397,6 +458,118 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+// Nueva función PATCH para manejar actualizaciones de stock específicamente
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { id, stock, operation } = body
+
+    if (!id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'ID del producto es requerido'
+        },
+        { status: 400 }
+      )
+    }
+
+    const productoExistente = await prisma.products.findUnique({
+      where: { id: parseInt(id) }
+    })
+
+    if (!productoExistente) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Producto no encontrado'
+        },
+        { status: 404 }
+      )
+    }
+
+    let nuevoStock: number
+
+    if (operation) {
+      // Operación de incremento/decremento
+      const amount = parseInt(stock) || 1
+      if (operation === 'increment') {
+        nuevoStock = productoExistente.stock + amount
+      } else if (operation === 'decrement') {
+        nuevoStock = Math.max(0, productoExistente.stock - amount)
+      } else {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Operación inválida. Use "increment" o "decrement"'
+          },
+          { status: 400 }
+        )
+      }
+    } else {
+      // Actualización directa de stock
+      nuevoStock = parseInt(stock)
+      if (isNaN(nuevoStock) || nuevoStock < 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'El stock debe ser un número válido mayor o igual a 0'
+          },
+          { status: 400 }
+        )
+      }
+    }
+
+    const productoActualizado = await prisma.products.update({
+      where: { id: parseInt(id) },
+      data: { stock: nuevoStock },
+      include: {
+        envios: {
+          include: {
+            empresa: true
+          }
+        }
+      }
+    })
+
+    // Calcular status
+    const calculateStatus = (stock: number) => {
+      if (stock === 0) return "agotado"
+      if (stock <= 5) return "bajo-stock"
+      return "disponible"
+    }
+
+    const formattedProduct = {
+      id: productoActualizado.id,
+      name: productoActualizado.nombre,
+      price: `$${productoActualizado.precio}`,
+      image: productoActualizado.imgUrl,
+      category: productoActualizado.category || 'Sin categoría',
+      marca: productoActualizado.marca || '',
+      stock: productoActualizado.stock,
+      status: calculateStatus(productoActualizado.stock),
+      shipping: productoActualizado.envios?.empresa?.nombre || 'Envío Gratis',
+      src: productoActualizado.imgUrl,
+      description: productoActualizado.descripcion
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Stock actualizado exitosamente',
+      data: formattedProduct
+    })
+
+  } catch (error) {
+    console.error('❌ Error al actualizar stock:', error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Error interno del servidor al actualizar el stock'
+      },
+      { status: 500 }
+    )
+  }
+}
 
 export async function DELETE(request: NextRequest) {
   try {

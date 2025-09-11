@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import ImageUploader from "./imageUploader"
-import { Package, DollarSign, ImageIcon, Tag, FileText, Save, Loader2, ArrowLeft } from "lucide-react"
+import { Package, DollarSign, ImageIcon, Tag, FileText, Save, Loader2, ArrowLeft, Plus, X } from "lucide-react"
 
 interface UploadedImage {
   publicId: string
@@ -15,18 +15,32 @@ interface ProductFormData {
   name: string
   price: string
   category: string
+  marca: string
   description: string
   images: UploadedImage[]
   shipping: string
+  stock: string
 }
 
 interface FormErrors {
   name?: string
   price?: string
   category?: string
+  marca?: string
   description?: string
   images?: string
+  stock?: string
   general?: string
+}
+
+interface CategoryOption {
+  value: string
+  label: string
+}
+
+interface MarcaOption {
+  value: string
+  label: string
 }
 
 export function AgregarProductoForm() {
@@ -34,9 +48,11 @@ export function AgregarProductoForm() {
     name: "",
     price: "",
     category: "",
+    marca: "",
     description: "",
     images: [],
     shipping: "Envío Gratis",
+    stock: "0",
   })
 
   const [isLoading, setIsLoading] = useState(false)
@@ -44,19 +60,47 @@ export function AgregarProductoForm() {
   const [successMessage, setSuccessMessage] = useState("")
   const [uploadMode, setUploadMode] = useState<'single' | 'multiple' | null>(null)
 
-  const categories = [
-    "Sahumerios",
-    "Aromatizante de ambiente",
-    "Aromatizante para auto",
-    "Inciensos",
-    "Bombas de Humo",
-    "Velas",
-    "Lamparas de Sal",
-    "Estatuas",
-    "Porta Sahumerios",
-    "Esencias",
-    "Palo santos",
-  ]
+  // Estados para categorías y marcas
+  const [categories, setCategories] = useState<CategoryOption[]>([])
+  const [marcas, setMarcas] = useState<MarcaOption[]>([])
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false)
+  const [showNewMarcaInput, setShowNewMarcaInput] = useState(false)
+  const [newCategoryValue, setNewCategoryValue] = useState("")
+  const [newMarcaValue, setNewMarcaValue] = useState("")
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true)
+
+  // Cargar categorías y marcas existentes al montar el componente
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        setIsLoadingOptions(true)
+        
+        // Obtener categorías únicas
+        const categoriesResponse = await fetch('/api/agregarProd')
+        if (categoriesResponse.ok) {
+          const categoriesData = await categoriesResponse.json()
+          if (categoriesData.success) {
+            setCategories(categoriesData.data.map((cat: string) => ({ value: cat, label: cat })))
+          }
+        }
+
+        // Obtener marcas únicas
+        const marcasResponse = await fetch('/api/agregarProd')
+        if (marcasResponse.ok) {
+          const marcasData = await marcasResponse.json()
+          if (marcasData.success) {
+            setMarcas(marcasData.data.map((marca: string) => ({ value: marca, label: marca })))
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando opciones:', error)
+      } finally {
+        setIsLoadingOptions(false)
+      }
+    }
+
+    loadOptions()
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -77,6 +121,68 @@ export function AgregarProductoForm() {
     if (successMessage) {
       setSuccessMessage("")
     }
+  }
+
+  const handleCategoryChange = (value: string) => {
+    if (value === "add-new") {
+      setShowNewCategoryInput(true)
+      setFormData(prev => ({ ...prev, category: "" }))
+    } else {
+      setFormData(prev => ({ ...prev, category: value }))
+      setShowNewCategoryInput(false)
+      if (errors.category) {
+        setErrors(prev => ({ ...prev, category: undefined }))
+      }
+    }
+  }
+
+  const handleMarcaChange = (value: string) => {
+    if (value === "add-new") {
+      setShowNewMarcaInput(true)
+      setFormData(prev => ({ ...prev, marca: "" }))
+    } else {
+      setFormData(prev => ({ ...prev, marca: value }))
+      setShowNewMarcaInput(false)
+      if (errors.marca) {
+        setErrors(prev => ({ ...prev, marca: undefined }))
+      }
+    }
+  }
+
+  const handleAddNewCategory = () => {
+    if (newCategoryValue.trim()) {
+      const newCategory = { value: newCategoryValue.trim(), label: newCategoryValue.trim() }
+      setCategories(prev => [...prev, newCategory])
+      setFormData(prev => ({ ...prev, category: newCategoryValue.trim() }))
+      setNewCategoryValue("")
+      setShowNewCategoryInput(false)
+      if (errors.category) {
+        setErrors(prev => ({ ...prev, category: undefined }))
+      }
+    }
+  }
+
+  const handleAddNewMarca = () => {
+    if (newMarcaValue.trim()) {
+      const newMarca = { value: newMarcaValue.trim(), label: newMarcaValue.trim() }
+      setMarcas(prev => [...prev, newMarca])
+      setFormData(prev => ({ ...prev, marca: newMarcaValue.trim() }))
+      setNewMarcaValue("")
+      setShowNewMarcaInput(false)
+      if (errors.marca) {
+        setErrors(prev => ({ ...prev, marca: undefined }))
+      }
+    }
+  }
+
+  const handleCancelNewCategory = () => {
+    setShowNewCategoryInput(false)
+    setNewCategoryValue("")
+  }
+
+  const handleCancelNewMarca = () => {
+    setShowNewMarcaInput(false)
+    setNewMarcaValue("")
   }
 
   const handleSingleImageMode = () => {
@@ -160,7 +266,12 @@ export function AgregarProductoForm() {
 
     // Validar categoría
     if (!formData.category) {
-      newErrors.category = "Selecciona una categoría"
+      newErrors.category = "Selecciona o agrega una categoría"
+    }
+
+    // Validar marca (opcional, pero si se ingresa debe tener al menos 2 caracteres)
+    if (formData.marca && formData.marca.trim().length < 2) {
+      newErrors.marca = "La marca debe tener al menos 2 caracteres"
     }
 
     // Validar descripción
@@ -168,6 +279,12 @@ export function AgregarProductoForm() {
       newErrors.description = "La descripción es requerida"
     } else if (formData.description.trim().length < 10) {
       newErrors.description = "La descripción debe tener al menos 10 caracteres"
+    }
+
+    // Validar stock
+    const stockValue = parseInt(formData.stock)
+    if (isNaN(stockValue) || stockValue < 0) {
+      newErrors.stock = "El stock debe ser un número válido mayor o igual a 0"
     }
 
     // Validar imágenes
@@ -197,7 +314,10 @@ export function AgregarProductoForm() {
         imgUrl: formData.images[0]?.url || '',
         imgPublicId: formData.images[0]?.publicId || '',
         category: formData.category,
+        marca: formData.marca || null,
+        stock: parseInt(formData.stock),
         shipping: formData.shipping,
+        allImages: formData.images
       })
 
       const response = await fetch('/api/agregarProd', {
@@ -212,6 +332,8 @@ export function AgregarProductoForm() {
           imgUrl: formData.images[0]?.url || '',
           imgPublicId: formData.images[0]?.publicId || '',
           category: formData.category,
+          marca: formData.marca || null,
+          stock: parseInt(formData.stock),
           shipping: formData.shipping,
           allImages: formData.images
         }),
@@ -245,9 +367,11 @@ export function AgregarProductoForm() {
           name: "",
           price: "",
           category: "",
+          marca: "",
           description: "",
           images: [],
           shipping: "Envío Gratis",
+          stock: "0",
         })
         setUploadMode(null)
         setSuccessMessage("")
@@ -342,29 +466,139 @@ export function AgregarProductoForm() {
               {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
             </div>
 
+            {/* Stock */}
+            <div>
+              <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-2">
+                Stock Disponible
+              </label>
+              <input
+                id="stock"
+                name="stock"
+                type="number"
+                min="0"
+                value={formData.stock}
+                onChange={handleInputChange}
+                className={`block w-full px-3 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary ${
+                  errors.stock ? "border-red-300" : "border-gray-300"
+                }`}
+                placeholder="0"
+              />
+              {errors.stock && <p className="mt-1 text-sm text-red-600">{errors.stock}</p>}
+            </div>
+
             {/* Categoría */}
             <div>
               <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
                 <Tag className="w-4 h-4 inline mr-1" />
                 Categoría
               </label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                className={`block w-full px-3 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary bg-white ${
-                  errors.category ? "border-red-300" : "border-gray-300"
-                }`}
-              >
-                <option value="">Selecciona una categoría</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+              {!showNewCategoryInput ? (
+                <select
+                  id="category"
+                  name="category"
+                  value={formData.category}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className={`block w-full px-3 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary bg-white ${
+                    errors.category ? "border-red-300" : "border-gray-300"
+                  }`}
+                  disabled={isLoadingOptions}
+                >
+                  <option value="">
+                    {isLoadingOptions ? "Cargando categorías..." : "Selecciona una categoría"}
                   </option>
-                ))}
-              </select>
+                  {categories.map((category) => (
+                    <option key={category.value} value={category.value}>
+                      {category.label}
+                    </option>
+                  ))}
+                  <option value="add-new">➕ Agregar nueva categoría</option>
+                </select>
+              ) : (
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={newCategoryValue}
+                    onChange={(e) => setNewCategoryValue(e.target.value)}
+                    placeholder="Nueva categoría"
+                    className="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary"
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddNewCategory()}
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddNewCategory}
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleCancelNewCategory}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
               {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category}</p>}
+            </div>
+
+            {/* Marca */}
+            <div>
+              <label htmlFor="marca" className="block text-sm font-medium text-gray-700 mb-2">
+                Marca (Opcional)
+              </label>
+              {!showNewMarcaInput ? (
+                <select
+                  id="marca"
+                  name="marca"
+                  value={formData.marca}
+                  onChange={(e) => handleMarcaChange(e.target.value)}
+                  className={`block w-full px-3 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary bg-white ${
+                    errors.marca ? "border-red-300" : "border-gray-300"
+                  }`}
+                  disabled={isLoadingOptions}
+                >
+                  <option value="">
+                    {isLoadingOptions ? "Cargando marcas..." : "Sin marca / Seleccionar marca"}
+                  </option>
+                  {marcas.map((marca) => (
+                    <option key={marca.value} value={marca.value}>
+                      {marca.label}
+                    </option>
+                  ))}
+                  <option value="add-new">➕ Agregar nueva marca</option>
+                </select>
+              ) : (
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={newMarcaValue}
+                    onChange={(e) => setNewMarcaValue(e.target.value)}
+                    placeholder="Nueva marca"
+                    className="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary"
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddNewMarca()}
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddNewMarca}
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleCancelNewMarca}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+              {errors.marca && <p className="mt-1 text-sm text-red-600">{errors.marca}</p>}
             </div>
 
             {/* Envío */}

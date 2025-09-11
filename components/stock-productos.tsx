@@ -1,6 +1,6 @@
 "use client"
 
-import { Edit, Trash2, Package, AlertCircle, Plus, Minus } from "lucide-react"
+import { Edit, Trash2, Package, AlertCircle, Plus, Minus, Tag } from "lucide-react"
 import { Button } from "./ui/button"
 import Image from "next/image"
 import { useState, useEffect } from "react"
@@ -10,6 +10,7 @@ interface Producto {
   name: string
   price: string
   category: string
+  marca: string
   image: string
   description: string
   shipping: string
@@ -22,6 +23,8 @@ export function StockProductos() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingStock, setEditingStock] = useState<{ [key: number]: number }>({})
+  const [filtroMarca, setFiltroMarca] = useState<string>('all')
+  const [filtroCategoria, setFiltroCategoria] = useState<string>('all')
 
   // Función para calcular el status basado en el stock
   const calculateStatus = (stock: number): string => {
@@ -34,16 +37,23 @@ export function StockProductos() {
   const fetchProductos = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/agregarProd') // Cambié a /api/productos que es donde tienes la lógica completa
+      
+      // Construir URL con filtros
+      const params = new URLSearchParams()
+      if (filtroMarca && filtroMarca !== 'all') {
+        params.append('marca', filtroMarca)
+      }
+      if (filtroCategoria && filtroCategoria !== 'all') {
+        params.append('category', filtroCategoria)
+      }
+      
+      const url = `/api/agregarProd${params.toString() ? '?' + params.toString() : ''}`
+      const response = await fetch(url)
       const data = await response.json()
 
       if (data.success) {
-        // Asegurar que cada producto tenga el status correcto
-        const productosConStatus = data.data.map((producto: any) => ({
-          ...producto,
-          status: calculateStatus(producto.stock)
-        }))
-        setProductos(productosConStatus)
+        // Los productos ya vienen con el status calculado desde la API
+        setProductos(data.data)
       } else {
         setError('Error al cargar productos: ' + data.error)
       }
@@ -55,10 +65,10 @@ export function StockProductos() {
     }
   }
 
-  // Cargar productos al montar el componente
+  // Cargar productos al montar el componente y cuando cambien los filtros
   useEffect(() => {
     fetchProductos()
-  }, [])
+  }, [filtroMarca, filtroCategoria])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -95,6 +105,12 @@ export function StockProductos() {
     return acc
   }, { disponibles: 0, bajoStock: 0, agotados: 0 })
 
+  // Obtener marcas únicas para el filtro
+  const marcasUnicas = Array.from(new Set(productos.map(p => p.marca).filter(marca => marca && marca.trim() !== '')))
+  
+  // Obtener categorías únicas para el filtro
+  const categoriasUnicas = Array.from(new Set(productos.map(p => p.category).filter(cat => cat && cat.trim() !== '')))
+
   // Función para actualizar stock
   const updateStock = async (id: number, newStock: number) => {
     if (newStock < 0) {
@@ -103,7 +119,7 @@ export function StockProductos() {
     }
 
     try {
-      const response = await fetch('/api/productos', {
+      const response = await fetch('/api/agregarProd', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -161,7 +177,7 @@ export function StockProductos() {
     }
 
     try {
-      const response = await fetch('/api/productos', {
+      const response = await fetch('/api/agregarProd', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -224,7 +240,7 @@ export function StockProductos() {
     }
 
     try {
-      const response = await fetch(`/api/productos?id=${id}`, {
+      const response = await fetch(`/api/agregarProd?id=${id}`, {
         method: 'DELETE'
       })
 
@@ -266,7 +282,7 @@ export function StockProductos() {
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-babalu-primary/10 rounded-lg flex items-center justify-center">
               <Package className="w-6 h-6 text-babalu-primary" />
@@ -293,6 +309,39 @@ export function StockProductos() {
             </div>
           </div>
         </div>
+
+        {/* Filtros */}
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Tag className="w-4 h-4 text-gray-500" />
+            <label className="text-sm font-medium text-gray-700">Marca:</label>
+            <select 
+              value={filtroMarca} 
+              onChange={(e) => setFiltroMarca(e.target.value)}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary"
+            >
+              <option value="all">Todas las marcas</option>
+              {marcasUnicas.map(marca => (
+                <option key={marca} value={marca}>{marca}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Package className="w-4 h-4 text-gray-500" />
+            <label className="text-sm font-medium text-gray-700">Categoría:</label>
+            <select 
+              value={filtroCategoria} 
+              onChange={(e) => setFiltroCategoria(e.target.value)}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary"
+            >
+              <option value="all">Todas las categorías</option>
+              {categoriasUnicas.map(categoria => (
+                <option key={categoria} value={categoria}>{categoria}</option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Tabla de productos */}
@@ -309,6 +358,9 @@ export function StockProductos() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Producto
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Marca
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Categoría
@@ -341,6 +393,17 @@ export function StockProductos() {
                         <div className="text-sm text-gray-500">ID: #{producto.id}</div>
                       </div>
                     </div>
+                  </td>
+
+                  {/* Marca */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {producto.marca ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        {producto.marca}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-400">Sin marca</span>
+                    )}
                   </td>
 
                   {/* Categoría */}
@@ -477,7 +540,15 @@ export function StockProductos() {
       {/* Footer con información adicional */}
       <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
         <div className="flex items-center justify-between text-sm text-gray-600">
-          <div>Mostrando {productos.length} productos</div>
+          <div>
+            Mostrando {productos.length} productos
+            {filtroMarca !== 'all' && (
+              <span className="ml-2 text-purple-600 font-medium">• Marca: {filtroMarca}</span>
+            )}
+            {filtroCategoria !== 'all' && (
+              <span className="ml-2 text-babalu-primary font-medium">• Categoría: {filtroCategoria}</span>
+            )}
+          </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>

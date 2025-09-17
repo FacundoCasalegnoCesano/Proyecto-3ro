@@ -23,6 +23,16 @@ model Products {
   @@map("products")
 }
 
+// Nueva tabla para gestionar marcas por categoría
+model CategoryMarca {
+  id       Int    @id @default(autoincrement())
+  category String @db.VarChar(255)
+  marca    String @db.VarChar(255)
+  
+  @@unique([category, marca]) // Evitar duplicados de la misma marca en la misma categoría
+  @@map("category_marca")
+}
+
 model deliver {
   id        Int @id @default(autoincrement())
   empresaId Int

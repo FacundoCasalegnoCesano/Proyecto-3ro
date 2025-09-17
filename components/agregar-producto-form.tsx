@@ -18,8 +18,6 @@ interface ProductFormData {
   marca: string
   description: string
   images: UploadedImage[]
-  shipping: string
-  stock: string
 }
 
 interface FormErrors {
@@ -29,7 +27,6 @@ interface FormErrors {
   marca?: string
   description?: string
   images?: string
-  stock?: string
   general?: string
 }
 
@@ -43,6 +40,80 @@ interface MarcaOption {
   label: string
 }
 
+// Función para calcular stock automáticamente
+const calculateAutoStock = (category: string, marca: string, productName: string): number => {
+  // Convertir a lowercase para comparaciones más flexibles
+  const cat = category.toLowerCase()
+  const brand = marca.toLowerCase()
+  const name = productName.toLowerCase()
+
+  // Lógica específica para sahumerios
+  if (cat.includes('sahumerio') || name.includes('sahumerio')) {
+    // Para sahumerios, el stock base depende de la marca
+    let baseStock = 10 // stock por defecto
+    
+    // Marcas premium tienen menos stock inicial
+    if (brand.includes('premium') || brand.includes('artesanal')) {
+      baseStock = 5
+    } else if (brand.includes('natural') || brand.includes('organico')) {
+      baseStock = 8
+    } else if (brand.includes('economico') || brand.includes('basico')) {
+      baseStock = 15
+    }
+
+    // Ajustar por aroma específico (algunos aromas son más populares)
+    if (name.includes('lavanda') || name.includes('rosa') || name.includes('jasmin')) {
+      baseStock += 3 // aromas populares
+    } else if (name.includes('pachuli') || name.includes('copal') || name.includes('mirra')) {
+      baseStock += 1 // aromas especializados
+    }
+
+    return baseStock
+  }
+
+  // Lógica para velas
+  if (cat.includes('vela') || name.includes('vela')) {
+    let baseStock = 8
+    
+    if (brand.includes('artesanal') || brand.includes('premium')) {
+      baseStock = 4
+    } else if (brand.includes('industrial') || brand.includes('masivo')) {
+      baseStock = 12
+    }
+
+    return baseStock
+  }
+
+  // Lógica para aceites esenciales
+  if (cat.includes('aceite') || name.includes('aceite')) {
+    let baseStock = 6
+    
+    if (brand.includes('pure') || brand.includes('organico')) {
+      baseStock = 3
+    } else if (brand.includes('sintetico')) {
+      baseStock = 10
+    }
+
+    return baseStock
+  }
+
+  // Lógica para cristales/piedras
+  if (cat.includes('cristal') || cat.includes('piedra') || name.includes('cristal') || name.includes('cuarzo')) {
+    let baseStock = 5
+    
+    if (name.includes('amatista') || name.includes('cuarzo rosa')) {
+      baseStock = 7 // cristales populares
+    } else if (name.includes('obsidiana') || name.includes('turmalina')) {
+      baseStock = 3 // cristales menos comunes
+    }
+
+    return baseStock
+  }
+
+  // Stock por defecto para otras categorías
+  return 8
+}
+
 export function AgregarProductoForm() {
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
@@ -51,8 +122,6 @@ export function AgregarProductoForm() {
     marca: "",
     description: "",
     images: [],
-    shipping: "Envío Gratis",
-    stock: "0",
   })
 
   const [isLoading, setIsLoading] = useState(false)
@@ -69,38 +138,72 @@ export function AgregarProductoForm() {
   const [newMarcaValue, setNewMarcaValue] = useState("")
   const [isLoadingOptions, setIsLoadingOptions] = useState(true)
 
+  // Estado para mostrar el stock calculado
+  const [calculatedStock, setCalculatedStock] = useState<number>(0)
+
   // Cargar categorías y marcas existentes al montar el componente
   useEffect(() => {
-    const loadOptions = async () => {
+    const loadCategories = async () => {
       try {
         setIsLoadingOptions(true)
         
         // Obtener categorías únicas
-        const categoriesResponse = await fetch('/api/agregarProd')
+        const categoriesResponse = await fetch('/api/agregarProd?getCategories=true')
         if (categoriesResponse.ok) {
           const categoriesData = await categoriesResponse.json()
           if (categoriesData.success) {
             setCategories(categoriesData.data.map((cat: string) => ({ value: cat, label: cat })))
           }
         }
-
-        // Obtener marcas únicas
-        const marcasResponse = await fetch('/api/agregarProd')
-        if (marcasResponse.ok) {
-          const marcasData = await marcasResponse.json()
-          if (marcasData.success) {
-            setMarcas(marcasData.data.map((marca: string) => ({ value: marca, label: marca })))
-          }
-        }
       } catch (error) {
-        console.error('Error cargando opciones:', error)
+        console.error('Error cargando categorías:', error)
       } finally {
         setIsLoadingOptions(false)
       }
     }
 
-    loadOptions()
+    loadCategories()
   }, [])
+
+  // Cargar marcas cuando cambie la categoría
+  useEffect(() => {
+    const loadMarcas = async () => {
+      if (!formData.category) {
+        setMarcas([])
+        return
+      }
+
+      try {
+        // Obtener marcas únicas para la categoría seleccionada
+        const marcasResponse = await fetch(`/api/agregarProd?getMarcas=true&category=${encodeURIComponent(formData.category)}`)
+        if (marcasResponse.ok) {
+          const marcasData = await marcasResponse.json()
+          if (marcasData.success) {
+            setMarcas(marcasData.data.map((marca: string) => ({ value: marca, label: marca })))
+            // Si la marca actual no está en la nueva lista, resetearla
+            if (formData.marca && !marcasData.data.includes(formData.marca)) {
+              setFormData(prev => ({ ...prev, marca: "" }))
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando marcas:', error)
+        setMarcas([])
+      }
+    }
+
+    loadMarcas()
+  }, [formData.category])
+
+  // Efecto para recalcular stock cuando cambien los campos relevantes
+  useEffect(() => {
+    if (formData.category && formData.marca && formData.name) {
+      const newStock = calculateAutoStock(formData.category, formData.marca, formData.name)
+      setCalculatedStock(newStock)
+    } else {
+      setCalculatedStock(0)
+    }
+  }, [formData.category, formData.marca, formData.name])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -126,12 +229,16 @@ export function AgregarProductoForm() {
   const handleCategoryChange = (value: string) => {
     if (value === "add-new") {
       setShowNewCategoryInput(true)
-      setFormData(prev => ({ ...prev, category: "" }))
+      setFormData(prev => ({ ...prev, category: "", marca: "" }))
+      setMarcas([]) // Limpiar marcas cuando se va a agregar nueva categoría
     } else {
-      setFormData(prev => ({ ...prev, category: value }))
+      setFormData(prev => ({ ...prev, category: value, marca: "" })) // Limpiar marca cuando cambia categoría
       setShowNewCategoryInput(false)
       if (errors.category) {
         setErrors(prev => ({ ...prev, category: undefined }))
+      }
+      if (errors.marca) {
+        setErrors(prev => ({ ...prev, marca: undefined }))
       }
     }
   }
@@ -149,8 +256,9 @@ export function AgregarProductoForm() {
     }
   }
 
-  const handleAddNewCategory = () => {
+  const handleAddNewCategory = async () => {
     if (newCategoryValue.trim()) {
+      // Solo agregamos localmente, ya que las categorías se crean automáticamente cuando se crea un producto
       const newCategory = { value: newCategoryValue.trim(), label: newCategoryValue.trim() }
       setCategories(prev => [...prev, newCategory])
       setFormData(prev => ({ ...prev, category: newCategoryValue.trim() }))
@@ -159,18 +267,43 @@ export function AgregarProductoForm() {
       if (errors.category) {
         setErrors(prev => ({ ...prev, category: undefined }))
       }
+      console.log(`✅ Nueva categoría añadida localmente: "${newCategoryValue.trim()}"`)
     }
   }
 
-  const handleAddNewMarca = () => {
-    if (newMarcaValue.trim()) {
-      const newMarca = { value: newMarcaValue.trim(), label: newMarcaValue.trim() }
-      setMarcas(prev => [...prev, newMarca])
-      setFormData(prev => ({ ...prev, marca: newMarcaValue.trim() }))
-      setNewMarcaValue("")
-      setShowNewMarcaInput(false)
-      if (errors.marca) {
-        setErrors(prev => ({ ...prev, marca: undefined }))
+  const handleAddNewMarca = async () => {
+    if (newMarcaValue.trim() && formData.category) {
+      try {
+        // Guardar la marca en la base de datos
+        const response = await fetch(`/api/agregarProd?saveMarca=true&category=${encodeURIComponent(formData.category)}&marca=${encodeURIComponent(newMarcaValue.trim())}`)
+        
+        if (response.ok) {
+          const newMarca = { value: newMarcaValue.trim(), label: newMarcaValue.trim() }
+          setMarcas(prev => [...prev, newMarca])
+          setFormData(prev => ({ ...prev, marca: newMarcaValue.trim() }))
+          setNewMarcaValue("")
+          setShowNewMarcaInput(false)
+          if (errors.marca) {
+            setErrors(prev => ({ ...prev, marca: undefined }))
+          }
+          console.log(`✅ Marca "${newMarcaValue.trim()}" guardada en categoría "${formData.category}"`)
+        } else {
+          console.error('Error al guardar la marca')
+          // Aún así agregamos la marca localmente para no interrumpir el flujo
+          const newMarca = { value: newMarcaValue.trim(), label: newMarcaValue.trim() }
+          setMarcas(prev => [...prev, newMarca])
+          setFormData(prev => ({ ...prev, marca: newMarcaValue.trim() }))
+          setNewMarcaValue("")
+          setShowNewMarcaInput(false)
+        }
+      } catch (error) {
+        console.error('Error al guardar marca:', error)
+        // En caso de error, aún así agregamos localmente
+        const newMarca = { value: newMarcaValue.trim(), label: newMarcaValue.trim() }
+        setMarcas(prev => [...prev, newMarca])
+        setFormData(prev => ({ ...prev, marca: newMarcaValue.trim() }))
+        setNewMarcaValue("")
+        setShowNewMarcaInput(false)
       }
     }
   }
@@ -269,8 +402,10 @@ export function AgregarProductoForm() {
       newErrors.category = "Selecciona o agrega una categoría"
     }
 
-    // Validar marca (opcional, pero si se ingresa debe tener al menos 2 caracteres)
-    if (formData.marca && formData.marca.trim().length < 2) {
+    // Validar marca (requerida para el cálculo de stock)
+    if (!formData.marca) {
+      newErrors.marca = "La marca es requerida para calcular el stock automáticamente"
+    } else if (formData.marca.trim().length < 2) {
       newErrors.marca = "La marca debe tener al menos 2 caracteres"
     }
 
@@ -279,12 +414,6 @@ export function AgregarProductoForm() {
       newErrors.description = "La descripción es requerida"
     } else if (formData.description.trim().length < 10) {
       newErrors.description = "La descripción debe tener al menos 10 caracteres"
-    }
-
-    // Validar stock
-    const stockValue = parseInt(formData.stock)
-    if (isNaN(stockValue) || stockValue < 0) {
-      newErrors.stock = "El stock debe ser un número válido mayor o igual a 0"
     }
 
     // Validar imágenes
@@ -307,6 +436,8 @@ export function AgregarProductoForm() {
     setErrors({})
 
     try {
+      const finalStock = calculateAutoStock(formData.category, formData.marca, formData.name)
+
       console.log('Enviando datos:', {
         nombre: formData.name,
         precio: formData.price,
@@ -314,9 +445,9 @@ export function AgregarProductoForm() {
         imgUrl: formData.images[0]?.url || '',
         imgPublicId: formData.images[0]?.publicId || '',
         category: formData.category,
-        marca: formData.marca || null,
-        stock: parseInt(formData.stock),
-        shipping: formData.shipping,
+        marca: formData.marca,
+        stock: finalStock,
+        shipping: 'Envío Gratis', // Valor por defecto
         allImages: formData.images
       })
 
@@ -332,16 +463,15 @@ export function AgregarProductoForm() {
           imgUrl: formData.images[0]?.url || '',
           imgPublicId: formData.images[0]?.publicId || '',
           category: formData.category,
-          marca: formData.marca || null,
-          stock: parseInt(formData.stock),
-          shipping: formData.shipping,
+          marca: formData.marca,
+          stock: finalStock,
+          shipping: 'Envío Gratis',
           allImages: formData.images
         }),
       })
 
       console.log('Response status:', response.status)
       
-      // Intentar leer la respuesta como texto primero para debuggear
       const responseText = await response.text()
       console.log('Response text:', responseText)
 
@@ -359,7 +489,7 @@ export function AgregarProductoForm() {
 
       console.log("Producto creado exitosamente:", data.data)
       
-      setSuccessMessage("¡Producto agregado exitosamente!")
+      setSuccessMessage(`¡Producto agregado exitosamente! Stock calculado: ${finalStock} unidades`)
 
       // Limpiar formulario después del éxito
       setTimeout(() => {
@@ -370,12 +500,11 @@ export function AgregarProductoForm() {
           marca: "",
           description: "",
           images: [],
-          shipping: "Envío Gratis",
-          stock: "0",
         })
         setUploadMode(null)
         setSuccessMessage("")
-      }, 2000)
+        setCalculatedStock(0)
+      }, 3000)
 
     } catch (error) {
       console.error('Error:', error)
@@ -466,24 +595,25 @@ export function AgregarProductoForm() {
               {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
             </div>
 
-            {/* Stock */}
+            {/* Stock calculado automáticamente - Solo mostrar */}
             <div>
-              <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-2">
-                Stock Disponible
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Stock Calculado Automáticamente
               </label>
-              <input
-                id="stock"
-                name="stock"
-                type="number"
-                min="0"
-                value={formData.stock}
-                onChange={handleInputChange}
-                className={`block w-full px-3 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary ${
-                  errors.stock ? "border-red-300" : "border-gray-300"
-                }`}
-                placeholder="0"
-              />
-              {errors.stock && <p className="mt-1 text-sm text-red-600">{errors.stock}</p>}
+              <div className="px-3 py-3 border border-gray-200 bg-gray-50 rounded-md text-sm text-gray-600">
+                {calculatedStock > 0 ? (
+                  <span className="text-green-600 font-medium">
+                    {calculatedStock} unidades
+                  </span>
+                ) : (
+                  <span className="text-gray-400">
+                    Completa categoría, marca y nombre para ver el stock
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                El stock se calcula automáticamente basado en la categoría, marca y nombre del producto
+              </p>
             </div>
 
             {/* Categoría */}
@@ -547,7 +677,7 @@ export function AgregarProductoForm() {
             {/* Marca */}
             <div>
               <label htmlFor="marca" className="block text-sm font-medium text-gray-700 mb-2">
-                Marca (Opcional)
+                Marca <span className="text-red-500">*</span>
               </label>
               {!showNewMarcaInput ? (
                 <select
@@ -558,10 +688,15 @@ export function AgregarProductoForm() {
                   className={`block w-full px-3 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary bg-white ${
                     errors.marca ? "border-red-300" : "border-gray-300"
                   }`}
-                  disabled={isLoadingOptions}
+                  disabled={!formData.category || isLoadingOptions}
                 >
                   <option value="">
-                    {isLoadingOptions ? "Cargando marcas..." : "Sin marca / Seleccionar marca"}
+                    {!formData.category 
+                      ? "Primero selecciona una categoría" 
+                      : marcas.length === 0 
+                        ? "No hay marcas para esta categoría"
+                        : "Seleccionar marca"
+                    }
                   </option>
                   {marcas.map((marca) => (
                     <option key={marca.value} value={marca.value}>
@@ -599,24 +734,11 @@ export function AgregarProductoForm() {
                 </div>
               )}
               {errors.marca && <p className="mt-1 text-sm text-red-600">{errors.marca}</p>}
-            </div>
-
-            {/* Envío */}
-            <div className="md:col-span-2">
-              <label htmlFor="shipping" className="block text-sm font-medium text-gray-700 mb-2">
-                Información de Envío
-              </label>
-              <select
-                id="shipping"
-                name="shipping"
-                value={formData.shipping}
-                onChange={handleInputChange}
-                className="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary bg-white"
-              >
-                <option value="Envío Gratis">Envío Gratis</option>
-                <option value="Envío Pago">Envío Pago</option>
-                <option value="Retiro en Local">Retiro en Local</option>
-              </select>
+              {formData.category && marcas.length === 0 && !showNewMarcaInput && (
+                <p className="mt-1 text-xs text-blue-600">
+                  Esta es una categoría nueva. Agrega la primera marca para esta categoría.
+                </p>
+              )}
             </div>
           </div>
         </div>

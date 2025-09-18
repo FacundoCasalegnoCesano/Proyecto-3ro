@@ -1,78 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from 'lib/prisma'
 
-// Función para calcular stock automáticamente
-const calculateAutoStock = (category: string, marca: string, productName: string): number => {
-  const cat = category.toLowerCase()
-  const brand = marca.toLowerCase()
-  const name = productName.toLowerCase()
-
-  // Lógica específica para sahumerios
-  if (cat.includes('sahumerio') || name.includes('sahumerio')) {
-    let baseStock = 10 // stock por defecto
-    
-    // Marcas premium tienen menos stock inicial
-    if (brand.includes('premium') || brand.includes('artesanal')) {
-      baseStock = 5
-    } else if (brand.includes('natural') || brand.includes('organico')) {
-      baseStock = 8
-    } else if (brand.includes('economico') || brand.includes('basico')) {
-      baseStock = 15
-    }
-
-    // Ajustar por aroma específico
-    if (name.includes('lavanda') || name.includes('rosa') || name.includes('jasmin')) {
-      baseStock += 3 // aromas populares
-    } else if (name.includes('pachuli') || name.includes('copal') || name.includes('mirra')) {
-      baseStock += 1 // aromas especializados
-    }
-
-    return baseStock
-  }
-
-  // Lógica para velas
-  if (cat.includes('vela') || name.includes('vela')) {
-    let baseStock = 8
-    
-    if (brand.includes('artesanal') || brand.includes('premium')) {
-      baseStock = 4
-    } else if (brand.includes('industrial') || brand.includes('masivo')) {
-      baseStock = 12
-    }
-
-    return baseStock
-  }
-
-  // Lógica para aceites esenciales
-  if (cat.includes('aceite') || name.includes('aceite')) {
-    let baseStock = 6
-    
-    if (brand.includes('pure') || brand.includes('organico')) {
-      baseStock = 3
-    } else if (brand.includes('sintetico')) {
-      baseStock = 10
-    }
-
-    return baseStock
-  }
-
-  // Lógica para cristales/piedras
-  if (cat.includes('cristal') || cat.includes('piedra') || name.includes('cristal') || name.includes('cuarzo')) {
-    let baseStock = 5
-    
-    if (name.includes('amatista') || name.includes('cuarzo rosa')) {
-      baseStock = 7 // cristales populares
-    } else if (name.includes('obsidiana') || name.includes('turmalina')) {
-      baseStock = 3 // cristales menos comunes
-    }
-
-    return baseStock
-  }
-
-  // Stock por defecto para otras categorías
-  return 8
-}
-
 export async function POST(request: NextRequest) {
   try {
     console.log('📦 Recibiendo solicitud para crear producto...')
@@ -88,16 +16,30 @@ export async function POST(request: NextRequest) {
       imgPublicId,
       category,
       marca,
+      aroma,
+      cantidad, // Nueva propiedad: cantidad a agregar
       allImages
     } = body
 
     // Validar campos requeridos
-    if (!nombre || !precio || !descripcion || !imgUrl || !category || !marca) {
+    if (!nombre || !precio || !descripcion || !imgUrl || !category || !marca || !cantidad) {
       console.log('❌ Faltan campos requeridos')
       return NextResponse.json(
         {
           success: false,
-          error: 'Faltan campos requeridos: nombre, precio, descripcion, imgUrl, category, marca'
+          error: 'Faltan campos requeridos: nombre, precio, descripcion, imgUrl, category, marca, cantidad'
+        },
+        { status: 400 }
+      )
+    }
+
+    // Validar aroma si la categoría es sahumerio
+    if (category.toLowerCase().includes('sahumerio') && !aroma) {
+      console.log('❌ Aroma requerido para sahumerios')
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'El aroma es requerido para productos de categoría Sahumerio'
         },
         { status: 400 }
       )
@@ -116,35 +58,111 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Guardar la relación categoría-marca en la base de datos si no existe
+    // Validar cantidad
+    const cantidadNumerica = parseInt(cantidad)
+    if (isNaN(cantidadNumerica) || cantidadNumerica <= 0) {
+      console.log('❌ Cantidad inválida:', cantidad)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'La cantidad debe ser un número válido mayor a 0'
+        },
+        { status: 400 }
+      )
+    }
+
+    // Buscar producto existente
+    let productoExistente = null
+    
+    if (category.toLowerCase().includes('sahumerio') && aroma) {
+      console.log('🔍 Buscando sahumerio existente con categoría:', category, 'marca:', marca, 'aroma:', aroma)
+      
+      productoExistente = await prisma.products.findFirst({
+        where: {
+          category: category.trim(),
+          marca: marca.trim(),
+          aroma: aroma.trim()
+        }
+      })
+    } else {
+      console.log('🔍 Buscando producto existente con categoría:', category, 'marca:', marca)
+      
+      productoExistente = await prisma.products.findFirst({
+        where: {
+          category: category.trim(),
+          marca: marca.trim(),
+          nombre: nombre.trim()
+        }
+      })
+    }
+
+    // Si existe un producto, incrementar su stock
+    if (productoExistente) {
+      console.log('✅ Producto existente encontrado, incrementando stock...')
+      
+      const nuevoStock = productoExistente.stock + cantidadNumerica
+      
+      // Actualizar el producto existente
+      const productoActualizado = await prisma.products.update({
+        where: { id: productoExistente.id },
+        data: {
+          stock: nuevoStock,
+          // Opcionalmente actualizar otros campos si es necesario
+          precio: precio.toString(), // Actualizar precio al más reciente
+          descripcion: descripcion.trim(), // Actualizar descripción
+          imgUrl: imgUrl, // Actualizar imagen
+          imgPublicId: imgPublicId || productoExistente.imgPublicId
+        },
+        include: {
+          envios: {
+            include: {
+              empresa: true
+            }
+          }
+        }
+      })
+
+      console.log(`✅ Stock actualizado para producto existente. Stock anterior: ${productoExistente.stock}, Stock agregado: ${cantidadNumerica}, Stock nuevo: ${nuevoStock}`)
+
+      return NextResponse.json({
+        success: true,
+        message: `Stock incrementado para el producto existente. Stock anterior: ${productoExistente.stock}, Stock nuevo: ${nuevoStock}`,
+        data: {
+          ...productoActualizado,
+          stockAnterior: productoExistente.stock,
+          stockAgregado: cantidadNumerica,
+          stockNuevo: nuevoStock
+        }
+      }, { status: 200 })
+    }
+
+    // Si no existe un producto similar, crear nuevo producto con stock inicial = cantidad
+    
+    // Guardar la relación categoría-marca-aroma en la base de datos si no existe
     try {
       await prisma.categoryMarca.upsert({
         where: {
-          category_marca: {
+          category_marca_aroma: {
             category: category.trim(),
-            marca: marca.trim()
+            marca: marca.trim(),
+            aroma: aroma?.trim() || ''
           }
         },
-        update: {}, // No actualizar nada si ya existe
+        update: {},
         create: {
           category: category.trim(),
-          marca: marca.trim()
+          marca: marca.trim(),
+          aroma: aroma?.trim() || ''
         }
       })
-      console.log('✅ Relación categoría-marca guardada:', category.trim(), '-', marca.trim())
+      console.log('✅ Relación categoría-marca-aroma guardada:', category.trim(), '-', marca.trim(), '-', aroma?.trim() || 'sin aroma')
     } catch (error) {
-      console.log('⚠️ Error al guardar relación categoría-marca (puede ser duplicado):', error)
+      console.log('⚠️ Error al guardar relación categoría-marca-aroma (puede ser duplicado):', error)
     }
-
-    // Calcular stock automáticamente
-    const stockCalculado = calculateAutoStock(category, marca, nombre)
-    console.log('🔢 Stock calculado automáticamente:', stockCalculado)
 
     console.log('🔍 Buscando empresa de envíos...')
     
     let empresaEnviosId: number
-
-    // Siempre usar "Envío Gratis" como valor por defecto
     const shippingDefault = 'Envío Gratis'
 
     const deliverExistente = await prisma.deliver.findFirst({
@@ -182,7 +200,7 @@ export async function POST(request: NextRequest) {
       console.log('✅ Nueva empresa creada:', nuevoDeliver.id)
     }
 
-    console.log('🛒 Creando producto...')
+    console.log('🛒 Creando producto nuevo...')
     
     const nuevoProducto = await prisma.products.create({
       data: {
@@ -193,7 +211,8 @@ export async function POST(request: NextRequest) {
         imgPublicId: imgPublicId || '',
         category: category.trim(),
         marca: marca.trim(),
-        stock: stockCalculado,
+        aroma: aroma?.trim() || null,
+        stock: cantidadNumerica, // Usar la cantidad como stock inicial
         empresaEnvios: empresaEnviosId
       },
       include: {
@@ -212,7 +231,7 @@ export async function POST(request: NextRequest) {
       message: 'Producto creado exitosamente',
       data: {
         ...nuevoProducto,
-        stockCalculado: stockCalculado
+        stockInicial: cantidadNumerica
       }
     }, { status: 201 })
 
@@ -234,14 +253,62 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get('id')
     const category = searchParams.get('category')
     const marca = searchParams.get('marca')
+    const aroma = searchParams.get('aroma')
     const search = searchParams.get('search')
     const sort = searchParams.get('sort')
     const limit = searchParams.get('limit')
     const getCategories = searchParams.get('getCategories')
     const getMarcas = searchParams.get('getMarcas')
+    const getAromas = searchParams.get('getAromas')
     const saveMarca = searchParams.get('saveMarca')
+    const saveAroma = searchParams.get('saveAroma')
 
-    // Endpoint para guardar una nueva marca en una categoría
+    // Endpoint para guardar un nuevo aroma
+    if (saveAroma === 'true') {
+      try {
+        const categoryParam = searchParams.get('category')
+        const marcaParam = searchParams.get('marca')
+        const aromaParam = searchParams.get('aroma')
+        
+        if (!categoryParam || !marcaParam || !aromaParam) {
+          return NextResponse.json({
+            success: false,
+            error: 'Se requiere categoría, marca y aroma'
+          }, { status: 400 })
+        }
+
+        await prisma.categoryMarca.upsert({
+          where: {
+            category_marca_aroma: {
+              category: categoryParam.trim(),
+              marca: marcaParam.trim(),
+              aroma: aromaParam.trim()
+            }
+          },
+          update: {},
+          create: {
+            category: categoryParam.trim(),
+            marca: marcaParam.trim(),
+            aroma: aromaParam.trim()
+          }
+        })
+
+        console.log(`✅ Nuevo aroma guardado: ${aromaParam} para marca ${marcaParam} en categoría ${categoryParam}`)
+
+        return NextResponse.json({
+          success: true,
+          message: 'Aroma guardado exitosamente'
+        })
+      } catch (error) {
+        console.error('❌ Error al guardar aroma:', error)
+        return NextResponse.json({
+          success: false,
+          error: 'Error al guardar el aroma'
+        }, { status: 500 })
+      }
+    }
+
+    // Endpoint para guardar una nueva marca
     if (saveMarca === 'true') {
       try {
         const categoryParam = searchParams.get('category')
@@ -254,18 +321,19 @@ export async function GET(request: NextRequest) {
           }, { status: 400 })
         }
 
-        // Guardar la relación categoría-marca
         await prisma.categoryMarca.upsert({
           where: {
-            category_marca: {
+            category_marca_aroma: {
               category: categoryParam.trim(),
-              marca: marcaParam.trim()
+              marca: marcaParam.trim(),
+              aroma: ''
             }
           },
-          update: {}, // No actualizar nada si ya existe
+          update: {},
           create: {
             category: categoryParam.trim(),
-            marca: marcaParam.trim()
+            marca: marcaParam.trim(),
+            aroma: ''
           }
         })
 
@@ -281,6 +349,53 @@ export async function GET(request: NextRequest) {
           success: false,
           error: 'Error al guardar la marca'
         }, { status: 500 })
+      }
+    }
+
+    // Endpoint para obtener aromas únicos por categoría y marca
+    if (getAromas === 'true') {
+      try {
+        const categoryFilter = searchParams.get('category')
+        const marcaFilter = searchParams.get('marca')
+        
+        if (!categoryFilter || !marcaFilter) {
+          return NextResponse.json({
+            success: false,
+            data: []
+          })
+        }
+
+        const categoryAromas = await prisma.categoryMarca.findMany({
+          where: {
+            category: categoryFilter,
+            marca: marcaFilter,
+            aroma: {
+              not: ''
+            }
+          },
+          select: {
+            aroma: true
+          },
+          distinct: ['aroma']
+        })
+        
+        const uniqueAromas = categoryAromas
+          .map(ca => ca.aroma)
+          .filter((aroma): aroma is string => aroma !== null && aroma.trim() !== '')
+          .sort()
+          
+        console.log(`✅ Aromas encontrados para "${marcaFilter}" en "${categoryFilter}":`, uniqueAromas.length)
+
+        return NextResponse.json({
+          success: true,
+          data: uniqueAromas
+        })
+      } catch (error) {
+        console.error('❌ Error al obtener aromas:', error)
+        return NextResponse.json({
+          success: false,
+          data: []
+        })
       }
     }
 
@@ -323,10 +438,8 @@ export async function GET(request: NextRequest) {
     if (getMarcas === 'true') {
       try {
         const categoryFilter = searchParams.get('category')
-        
         let uniqueMarcas: string[] = []
         
-        // Si se especifica una categoría, obtener marcas de la tabla CategoryMarca
         if (categoryFilter && categoryFilter.trim() !== '') {
           const categoryMarcas = await prisma.categoryMarca.findMany({
             where: {
@@ -334,7 +447,8 @@ export async function GET(request: NextRequest) {
             },
             select: {
               marca: true
-            }
+            },
+            distinct: ['marca']
           })
           
           uniqueMarcas = categoryMarcas
@@ -344,7 +458,6 @@ export async function GET(request: NextRequest) {
             
           console.log(`✅ Marcas encontradas en CategoryMarca para "${categoryFilter}":`, uniqueMarcas.length)
           
-          // Si no hay marcas en CategoryMarca, buscar en Products (para migración de datos existentes)
           if (uniqueMarcas.length === 0) {
             const productoMarcas = await prisma.products.findMany({
               select: {
@@ -366,23 +479,21 @@ export async function GET(request: NextRequest) {
               
             console.log(`✅ Marcas encontradas en Products para migración "${categoryFilter}":`, uniqueMarcas.length)
             
-            // Migrar las marcas encontradas a la tabla CategoryMarca
             for (const marca of uniqueMarcas) {
               try {
                 await prisma.categoryMarca.create({
                   data: {
                     category: categoryFilter,
-                    marca: marca
+                    marca: marca,
+                    aroma: ''
                   }
                 })
               } catch (error) {
-                // Ignorar errores de duplicados
                 console.log(`⚠️ Marca ya existe en CategoryMarca: ${marca}`)
               }
             }
           }
         } else {
-          // Si no se especifica categoría, obtener todas las marcas únicas
           const allMarcas = await prisma.categoryMarca.findMany({
             select: {
               marca: true
@@ -447,7 +558,6 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      // Calcular status basado en stock
       const calculateStatus = (stock: number) => {
         if (stock === 0) return "agotado"
         if (stock <= 5) return "bajo-stock"
@@ -461,6 +571,7 @@ export async function GET(request: NextRequest) {
         image: producto.imgUrl,
         category: producto.category || 'Sin categoría',
         marca: producto.marca || '',
+        aroma: producto.aroma || '',
         stock: producto.stock,
         status: calculateStatus(producto.stock),
         shipping: producto.envios?.empresa?.nombre || 'Envío Gratis',
@@ -477,7 +588,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener lista de productos con filtros
-    console.log('📦 Obteniendo productos con filtros:', { category, marca, search, sort, limit })
+    console.log('📦 Obteniendo productos con filtros:', { category, marca, aroma, search, sort, limit })
 
     const where: any = {}
 
@@ -489,11 +600,16 @@ export async function GET(request: NextRequest) {
       where.marca = marca
     }
 
+    if (aroma && aroma !== 'all' && aroma !== 'null') {
+      where.aroma = aroma
+    }
+
     if (search) {
       where.OR = [
         { nombre: { contains: search, mode: 'insensitive' } },
         { descripcion: { contains: search, mode: 'insensitive' } },
-        { marca: { contains: search, mode: 'insensitive' } }
+        { marca: { contains: search, mode: 'insensitive' } },
+        { aroma: { contains: search, mode: 'insensitive' } }
       ]
     }
 
@@ -530,7 +646,6 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ ${productos.length} productos encontrados`)
 
-    // Calcular status basado en stock
     const calculateStatus = (stock: number) => {
       if (stock === 0) return "agotado"
       if (stock <= 5) return "bajo-stock"
@@ -544,6 +659,7 @@ export async function GET(request: NextRequest) {
       image: producto.imgUrl,
       category: producto.category || 'Sin categoría',
       marca: producto.marca || '',
+      aroma: producto.aroma || '',
       stock: producto.stock,
       status: calculateStatus(producto.stock),
       shipping: producto.envios?.empresa?.nombre || 'Envío Gratis',
@@ -581,6 +697,7 @@ export async function PUT(request: NextRequest) {
       imgPublicId,
       category,
       marca,
+      aroma,
       stock,
       shipping
     } = body
@@ -620,7 +737,6 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Calcular stock automáticamente si se actualizan campos relevantes
     let stockFinal = productoExistente.stock
     if (stock !== undefined) {
       stockFinal = parseInt(stock)
@@ -633,13 +749,6 @@ export async function PUT(request: NextRequest) {
           { status: 400 }
         )
       }
-    } else if (category || marca || nombre) {
-      // Recalcular stock si cambiaron campos que afectan el cálculo
-      stockFinal = calculateAutoStock(
-        category || productoExistente.category || '',
-        marca || productoExistente.marca || '',
-        nombre || productoExistente.nombre
-      )
     }
 
     let empresaEnviosId = productoExistente.empresaEnvios
@@ -687,6 +796,7 @@ export async function PUT(request: NextRequest) {
         imgPublicId: imgPublicId || '',
         category: category || productoExistente.category,
         marca: marca?.trim() || productoExistente.marca,
+        aroma: aroma?.trim() || productoExistente.aroma,
         stock: stockFinal,
         empresaEnvios: empresaEnviosId
       },
@@ -797,10 +907,11 @@ export async function PATCH(request: NextRequest) {
     const formattedProduct = {
       id: productoActualizado.id,
       name: productoActualizado.nombre,
-      price: `$${productoActualizado.precio}`,
+      price: `${productoActualizado.precio}`,
       image: productoActualizado.imgUrl,
       category: productoActualizado.category || 'Sin categoría',
       marca: productoActualizado.marca || '',
+      aroma: productoActualizado.aroma || '',
       stock: productoActualizado.stock,
       status: calculateStatus(productoActualizado.stock),
       shipping: productoActualizado.envios?.empresa?.nombre || 'Envío Gratis',

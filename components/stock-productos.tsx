@@ -4,6 +4,7 @@ import { Edit, Trash2, Package, AlertCircle, Plus, Minus, Tag } from "lucide-rea
 import { Button } from "./ui/button"
 import Image from "next/image"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 interface Producto {
   id: number
@@ -11,11 +12,14 @@ interface Producto {
   price: string
   category: string
   marca: string
+  aroma: string
   image: string
   description: string
   shipping: string
   stock: number
   status: string
+  imgUrl?: string
+  imgPublicId?: string
 }
 
 export function StockProductos() {
@@ -25,6 +29,7 @@ export function StockProductos() {
   const [editingStock, setEditingStock] = useState<{ [key: number]: number }>({})
   const [filtroMarca, setFiltroMarca] = useState<string>('all')
   const [filtroCategoria, setFiltroCategoria] = useState<string>('all')
+  const router = useRouter()
 
   // Función para calcular el status basado en el stock
   const calculateStatus = (stock: number): string => {
@@ -69,6 +74,53 @@ export function StockProductos() {
   useEffect(() => {
     fetchProductos()
   }, [filtroMarca, filtroCategoria])
+
+  // Función para manejar la edición de producto
+  const handleEditarProducto = async (producto: Producto) => {
+    try {
+      // Obtener información completa del producto incluyendo imgPublicId
+      const response = await fetch(`/api/agregarProd?id=${producto.id}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        const productoCompleto = data.data
+        
+        // Preparar datos para edición
+        const datosProducto = {
+          id: productoCompleto.id,
+          nombre: productoCompleto.name,
+          precio: productoCompleto.price.replace('$', ''), // Remover el símbolo de dólar
+          descripcion: productoCompleto.description,
+          imgUrl: productoCompleto.imgUrl || productoCompleto.image,
+          imgPublicId: productoCompleto.imgPublicId || '',
+          category: productoCompleto.category,
+          marca: productoCompleto.marca,
+          aroma: productoCompleto.aroma || '',
+          stock: productoCompleto.stock,
+          shipping: productoCompleto.shipping,
+          // Para imágenes múltiples si las hay
+          allImages: productoCompleto.imgUrl ? [
+            {
+              url: productoCompleto.imgUrl,
+              publicId: productoCompleto.imgPublicId || ''
+            }
+          ] : []
+        }
+
+        // Guardar en localStorage para recuperar en la página de edición
+        localStorage.setItem('productoEditar', JSON.stringify(datosProducto))
+        
+        // Redirigir a la página de agregar/editar producto
+        router.push('/productos/agregar')
+      } else {
+        console.error('Error al obtener detalles del producto:', data.error)
+        alert('Error al cargar los datos del producto para editar')
+      }
+    } catch (error) {
+      console.error('Error al preparar edición:', error)
+      alert('Error al preparar la edición del producto')
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -391,6 +443,9 @@ export function StockProductos() {
                       <div>
                         <div className="text-sm font-medium text-gray-900">{producto.name}</div>
                         <div className="text-sm text-gray-500">ID: #{producto.id}</div>
+                        {producto.aroma && (
+                          <div className="text-xs text-gray-400">Aroma: {producto.aroma}</div>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -512,9 +567,7 @@ export function StockProductos() {
                         variant="outline"
                         size="sm"
                         className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 bg-transparent"
-                        onClick={() => {
-                          console.log('Editar producto:', producto.id)
-                        }}
+                        onClick={() => handleEditarProducto(producto)}
                       >
                         <Edit className="w-4 h-4 mr-1" />
                         Editar

@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import ImageUploader from "./imageUploader"
-import { Package, DollarSign, ImageIcon, Tag, FileText, Save, Loader2, ArrowLeft, Plus, X } from "lucide-react"
+import { Package, DollarSign, ImageIcon, Tag, FileText, Save, Loader2, ArrowLeft, Plus, X, Flower2, Box } from "lucide-react"
 
 interface UploadedImage {
   publicId: string
@@ -16,8 +16,10 @@ interface ProductFormData {
   price: string
   category: string
   marca: string
+  aroma: string
   description: string
   images: UploadedImage[]
+  cantidad: string // Nuevo campo para la cantidad a agregar
 }
 
 interface FormErrors {
@@ -25,8 +27,10 @@ interface FormErrors {
   price?: string
   category?: string
   marca?: string
+  aroma?: string
   description?: string
   images?: string
+  cantidad?: string
   general?: string
 }
 
@@ -40,78 +44,9 @@ interface MarcaOption {
   label: string
 }
 
-// Función para calcular stock automáticamente
-const calculateAutoStock = (category: string, marca: string, productName: string): number => {
-  // Convertir a lowercase para comparaciones más flexibles
-  const cat = category.toLowerCase()
-  const brand = marca.toLowerCase()
-  const name = productName.toLowerCase()
-
-  // Lógica específica para sahumerios
-  if (cat.includes('sahumerio') || name.includes('sahumerio')) {
-    // Para sahumerios, el stock base depende de la marca
-    let baseStock = 10 // stock por defecto
-    
-    // Marcas premium tienen menos stock inicial
-    if (brand.includes('premium') || brand.includes('artesanal')) {
-      baseStock = 5
-    } else if (brand.includes('natural') || brand.includes('organico')) {
-      baseStock = 8
-    } else if (brand.includes('economico') || brand.includes('basico')) {
-      baseStock = 15
-    }
-
-    // Ajustar por aroma específico (algunos aromas son más populares)
-    if (name.includes('lavanda') || name.includes('rosa') || name.includes('jasmin')) {
-      baseStock += 3 // aromas populares
-    } else if (name.includes('pachuli') || name.includes('copal') || name.includes('mirra')) {
-      baseStock += 1 // aromas especializados
-    }
-
-    return baseStock
-  }
-
-  // Lógica para velas
-  if (cat.includes('vela') || name.includes('vela')) {
-    let baseStock = 8
-    
-    if (brand.includes('artesanal') || brand.includes('premium')) {
-      baseStock = 4
-    } else if (brand.includes('industrial') || brand.includes('masivo')) {
-      baseStock = 12
-    }
-
-    return baseStock
-  }
-
-  // Lógica para aceites esenciales
-  if (cat.includes('aceite') || name.includes('aceite')) {
-    let baseStock = 6
-    
-    if (brand.includes('pure') || brand.includes('organico')) {
-      baseStock = 3
-    } else if (brand.includes('sintetico')) {
-      baseStock = 10
-    }
-
-    return baseStock
-  }
-
-  // Lógica para cristales/piedras
-  if (cat.includes('cristal') || cat.includes('piedra') || name.includes('cristal') || name.includes('cuarzo')) {
-    let baseStock = 5
-    
-    if (name.includes('amatista') || name.includes('cuarzo rosa')) {
-      baseStock = 7 // cristales populares
-    } else if (name.includes('obsidiana') || name.includes('turmalina')) {
-      baseStock = 3 // cristales menos comunes
-    }
-
-    return baseStock
-  }
-
-  // Stock por defecto para otras categorías
-  return 8
+interface AromaOption {
+  value: string
+  label: string
 }
 
 export function AgregarProductoForm() {
@@ -120,28 +55,36 @@ export function AgregarProductoForm() {
     price: "",
     category: "",
     marca: "",
+    aroma: "",
     description: "",
     images: [],
+    cantidad: "1" // Valor por defecto
   })
 
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [successMessage, setSuccessMessage] = useState("")
   const [uploadMode, setUploadMode] = useState<'single' | 'multiple' | null>(null)
+  const [productoExistente, setProductoExistente] = useState<any>(null)
 
-  // Estados para categorías y marcas
+  // Estados para categorías, marcas y aromas
   const [categories, setCategories] = useState<CategoryOption[]>([])
   const [marcas, setMarcas] = useState<MarcaOption[]>([])
+  const [aromas, setAromas] = useState<AromaOption[]>([])
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false)
   const [showNewMarcaInput, setShowNewMarcaInput] = useState(false)
+  const [showNewAromaInput, setShowNewAromaInput] = useState(false)
   const [newCategoryValue, setNewCategoryValue] = useState("")
   const [newMarcaValue, setNewMarcaValue] = useState("")
+  const [newAromaValue, setNewAromaValue] = useState("")
   const [isLoadingOptions, setIsLoadingOptions] = useState(true)
 
-  // Estado para mostrar el stock calculado
-  const [calculatedStock, setCalculatedStock] = useState<number>(0)
+  // Función para verificar si la categoría es sahumerio
+  const isSahumerioCategory = (category: string): boolean => {
+    return category.toLowerCase().includes('sahumerio')
+  }
 
-  // Cargar categorías y marcas existentes al montar el componente
+  // Cargar categorías al montar el componente
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -170,6 +113,7 @@ export function AgregarProductoForm() {
     const loadMarcas = async () => {
       if (!formData.category) {
         setMarcas([])
+        setAromas([])
         return
       }
 
@@ -182,7 +126,7 @@ export function AgregarProductoForm() {
             setMarcas(marcasData.data.map((marca: string) => ({ value: marca, label: marca })))
             // Si la marca actual no está en la nueva lista, resetearla
             if (formData.marca && !marcasData.data.includes(formData.marca)) {
-              setFormData(prev => ({ ...prev, marca: "" }))
+              setFormData(prev => ({ ...prev, marca: "", aroma: "" }))
             }
           }
         }
@@ -195,15 +139,90 @@ export function AgregarProductoForm() {
     loadMarcas()
   }, [formData.category])
 
-  // Efecto para recalcular stock cuando cambien los campos relevantes
+  // Cargar aromas cuando cambien la categoría y marca (solo para sahumerios)
   useEffect(() => {
-    if (formData.category && formData.marca && formData.name) {
-      const newStock = calculateAutoStock(formData.category, formData.marca, formData.name)
-      setCalculatedStock(newStock)
-    } else {
-      setCalculatedStock(0)
+    const loadAromas = async () => {
+      if (!formData.category || !formData.marca || !isSahumerioCategory(formData.category)) {
+        setAromas([])
+        return
+      }
+
+      try {
+        // Obtener aromas únicos para la categoría y marca seleccionadas
+        const aromasResponse = await fetch(`/api/agregarProd?getAromas=true&category=${encodeURIComponent(formData.category)}&marca=${encodeURIComponent(formData.marca)}`)
+        if (aromasResponse.ok) {
+          const aromasData = await aromasResponse.json()
+          if (aromasData.success) {
+            setAromas(aromasData.data.map((aroma: string) => ({ value: aroma, label: aroma })))
+            // Si el aroma actual no está en la nueva lista, resetearla
+            if (formData.aroma && !aromasData.data.includes(formData.aroma)) {
+              setFormData(prev => ({ ...prev, aroma: "" }))
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando aromas:', error)
+        setAromas([])
+      }
     }
-  }, [formData.category, formData.marca, formData.name])
+
+    loadAromas()
+  }, [formData.category, formData.marca])
+
+  // Verificar si existe un producto similar cuando cambien los campos relevantes
+  useEffect(() => {
+    const verificarProductoExistente = async () => {
+      if (!formData.category || !formData.marca || !formData.name) {
+        setProductoExistente(null)
+        return
+      }
+
+      // Para sahumerios, necesitamos también el aroma
+      if (isSahumerioCategory(formData.category) && !formData.aroma) {
+        setProductoExistente(null)
+        return
+      }
+
+      try {
+        // Construir URL de búsqueda
+        let url = `/api/agregarProd?search=${encodeURIComponent(formData.name)}&category=${encodeURIComponent(formData.category)}&marca=${encodeURIComponent(formData.marca)}`
+        
+        if (isSahumerioCategory(formData.category) && formData.aroma) {
+          url += `&aroma=${encodeURIComponent(formData.aroma)}`
+        }
+
+        const response = await fetch(url)
+        if (response.ok) {
+          const data = await response.json()
+          
+          if (data.success && data.data.length > 0) {
+            // Encontrar el producto más similar
+            const productoSimilar = data.data.find((p: any) => {
+              const mismoNombre = p.name.toLowerCase() === formData.name.toLowerCase()
+              const mismaCategoria = p.category.toLowerCase() === formData.category.toLowerCase()
+              const mismaMarca = p.marca.toLowerCase() === formData.marca.toLowerCase()
+              
+              if (isSahumerioCategory(formData.category)) {
+                const mismoAroma = p.aroma.toLowerCase() === formData.aroma.toLowerCase()
+                return mismoNombre && mismaCategoria && mismaMarca && mismoAroma
+              }
+              
+              return mismoNombre && mismaCategoria && mismaMarca
+            })
+            
+            setProductoExistente(productoSimilar || null)
+          } else {
+            setProductoExistente(null)
+          }
+        }
+      } catch (error) {
+        console.error('Error verificando producto existente:', error)
+        setProductoExistente(null)
+      }
+    }
+
+    verificarProductoExistente()
+  }, [formData.name, formData.category, formData.marca, formData.aroma])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -229,10 +248,16 @@ export function AgregarProductoForm() {
   const handleCategoryChange = (value: string) => {
     if (value === "add-new") {
       setShowNewCategoryInput(true)
-      setFormData(prev => ({ ...prev, category: "", marca: "" }))
+      setFormData(prev => ({ ...prev, category: "", marca: "", aroma: "" }))
       setMarcas([]) // Limpiar marcas cuando se va a agregar nueva categoría
+      setAromas([]) // Limpiar aromas cuando se va a agregar nueva categoría
     } else {
-      setFormData(prev => ({ ...prev, category: value, marca: "" })) // Limpiar marca cuando cambia categoría
+      setFormData(prev => ({ 
+        ...prev, 
+        category: value, 
+        marca: "", 
+        aroma: "" // Limpiar aroma cuando cambia categoría
+      }))
       setShowNewCategoryInput(false)
       if (errors.category) {
         setErrors(prev => ({ ...prev, category: undefined }))
@@ -240,18 +265,37 @@ export function AgregarProductoForm() {
       if (errors.marca) {
         setErrors(prev => ({ ...prev, marca: undefined }))
       }
+      if (errors.aroma) {
+        setErrors(prev => ({ ...prev, aroma: undefined }))
+      }
     }
   }
 
   const handleMarcaChange = (value: string) => {
     if (value === "add-new") {
       setShowNewMarcaInput(true)
-      setFormData(prev => ({ ...prev, marca: "" }))
+      setFormData(prev => ({ ...prev, marca: "", aroma: "" }))
     } else {
-      setFormData(prev => ({ ...prev, marca: value }))
+      setFormData(prev => ({ ...prev, marca: value, aroma: "" })) // Limpiar aroma cuando cambia marca
       setShowNewMarcaInput(false)
       if (errors.marca) {
         setErrors(prev => ({ ...prev, marca: undefined }))
+      }
+      if (errors.aroma) {
+        setErrors(prev => ({ ...prev, aroma: undefined }))
+      }
+    }
+  }
+
+  const handleAromaChange = (value: string) => {
+    if (value === "add-new") {
+      setShowNewAromaInput(true)
+      setFormData(prev => ({ ...prev, aroma: "" }))
+    } else {
+      setFormData(prev => ({ ...prev, aroma: value }))
+      setShowNewAromaInput(false)
+      if (errors.aroma) {
+        setErrors(prev => ({ ...prev, aroma: undefined }))
       }
     }
   }
@@ -308,6 +352,43 @@ export function AgregarProductoForm() {
     }
   }
 
+  const handleAddNewAroma = async () => {
+    if (newAromaValue.trim() && formData.category && formData.marca) {
+      try {
+        // Guardar el aroma en la base de datos
+        const response = await fetch(`/api/agregarProd?saveAroma=true&category=${encodeURIComponent(formData.category)}&marca=${encodeURIComponent(formData.marca)}&aroma=${encodeURIComponent(newAromaValue.trim())}`)
+        
+        if (response.ok) {
+          const newAroma = { value: newAromaValue.trim(), label: newAromaValue.trim() }
+          setAromas(prev => [...prev, newAroma])
+          setFormData(prev => ({ ...prev, aroma: newAromaValue.trim() }))
+          setNewAromaValue("")
+      setShowNewAromaInput(false)
+      if (errors.aroma) {
+        setErrors(prev => ({ ...prev, aroma: undefined }))
+      }
+      console.log(`✅ Aroma "${newAromaValue.trim()}" guardado para marca "${formData.marca}" en categoría "${formData.category}"`)
+    } else {
+      console.error('Error al guardar el aroma')
+      // Aún así agregamos el aroma localmente para no interrumpir el flujo
+      const newAroma = { value: newAromaValue.trim(), label: newAromaValue.trim() }
+      setAromas(prev => [...prev, newAroma])
+      setFormData(prev => ({ ...prev, aroma: newAromaValue.trim() }))
+      setNewAromaValue("")
+      setShowNewAromaInput(false)
+    }
+  } catch (error) {
+    console.error('Error al guardar aroma:', error)
+    // En caso de error, aún así agregamos localmente
+    const newAroma = { value: newAromaValue.trim(), label: newAromaValue.trim() }
+    setAromas(prev => [...prev, newAroma])
+    setFormData(prev => ({ ...prev, aroma: newAromaValue.trim() }))
+    setNewAromaValue("")
+    setShowNewAromaInput(false)
+  }
+}
+  }
+
   const handleCancelNewCategory = () => {
     setShowNewCategoryInput(false)
     setNewCategoryValue("")
@@ -316,6 +397,11 @@ export function AgregarProductoForm() {
   const handleCancelNewMarca = () => {
     setShowNewMarcaInput(false)
     setNewMarcaValue("")
+  }
+
+  const handleCancelNewAroma = () => {
+    setShowNewAromaInput(false)
+    setNewAromaValue("")
   }
 
   const handleSingleImageMode = () => {
@@ -402,11 +488,20 @@ export function AgregarProductoForm() {
       newErrors.category = "Selecciona o agrega una categoría"
     }
 
-    // Validar marca (requerida para el cálculo de stock)
+    // Validar marca
     if (!formData.marca) {
-      newErrors.marca = "La marca es requerida para calcular el stock automáticamente"
+      newErrors.marca = "La marca es requerida"
     } else if (formData.marca.trim().length < 2) {
       newErrors.marca = "La marca debe tener al menos 2 caracteres"
+    }
+
+    // Validar aroma solo si la categoría es sahumerio
+    if (isSahumerioCategory(formData.category)) {
+      if (!formData.aroma) {
+        newErrors.aroma = "El aroma es requerido para productos de categoría Sahumerio"
+      } else if (formData.aroma.trim().length < 2) {
+        newErrors.aroma = "El aroma debe tener al menos 2 caracteres"
+      }
     }
 
     // Validar descripción
@@ -414,6 +509,15 @@ export function AgregarProductoForm() {
       newErrors.description = "La descripción es requerida"
     } else if (formData.description.trim().length < 10) {
       newErrors.description = "La descripción debe tener al menos 10 caracteres"
+    }
+
+    // Validar cantidad
+    if (!formData.cantidad.trim()) {
+      newErrors.cantidad = "La cantidad es requerida"
+    } else if (!/^\d+$/.test(formData.cantidad)) {
+      newErrors.cantidad = "La cantidad debe ser un número entero"
+    } else if (parseInt(formData.cantidad) <= 0) {
+      newErrors.cantidad = "La cantidad debe ser mayor a 0"
     }
 
     // Validar imágenes
@@ -436,8 +540,6 @@ export function AgregarProductoForm() {
     setErrors({})
 
     try {
-      const finalStock = calculateAutoStock(formData.category, formData.marca, formData.name)
-
       console.log('Enviando datos:', {
         nombre: formData.name,
         precio: formData.price,
@@ -446,7 +548,8 @@ export function AgregarProductoForm() {
         imgPublicId: formData.images[0]?.publicId || '',
         category: formData.category,
         marca: formData.marca,
-        stock: finalStock,
+        aroma: formData.aroma,
+        cantidad: formData.cantidad, // Nueva propiedad
         shipping: 'Envío Gratis', // Valor por defecto
         allImages: formData.images
       })
@@ -464,7 +567,8 @@ export function AgregarProductoForm() {
           imgPublicId: formData.images[0]?.publicId || '',
           category: formData.category,
           marca: formData.marca,
-          stock: finalStock,
+          aroma: formData.aroma,
+          cantidad: formData.cantidad, // Nueva propiedad
           shipping: 'Envío Gratis',
           allImages: formData.images
         }),
@@ -489,7 +593,11 @@ export function AgregarProductoForm() {
 
       console.log("Producto creado exitosamente:", data.data)
       
-      setSuccessMessage(`¡Producto agregado exitosamente! Stock calculado: ${finalStock} unidades`)
+      if (productoExistente) {
+        setSuccessMessage(`¡Stock incrementado exitosamente! Se agregaron ${formData.cantidad} unidades al producto existente. Stock total: ${data.data.stockNuevo || data.data.stock} unidades`)
+      } else {
+        setSuccessMessage(`¡Producto agregado exitosamente! Se creó un nuevo producto con ${formData.cantidad} unidades de stock inicial.`)
+      }
 
       // Limpiar formulario después del éxito
       setTimeout(() => {
@@ -498,12 +606,14 @@ export function AgregarProductoForm() {
           price: "",
           category: "",
           marca: "",
+          aroma: "",
           description: "",
           images: [],
+          cantidad: "1"
         })
         setUploadMode(null)
         setSuccessMessage("")
-        setCalculatedStock(0)
+        setProductoExistente(null)
       }, 3000)
 
     } catch (error) {
@@ -595,26 +705,42 @@ export function AgregarProductoForm() {
               {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
             </div>
 
-            {/* Stock calculado automáticamente - Solo mostrar */}
+            {/* Cantidad a agregar */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Stock Calculado Automáticamente
+              <label htmlFor="cantidad" className="block text-sm font-medium text-gray-700 mb-2">
+                <Box className="w-4 h-4 inline mr-1" />
+                Cantidad a Agregar
               </label>
-              <div className="px-3 py-3 border border-gray-200 bg-gray-50 rounded-md text-sm text-gray-600">
-                {calculatedStock > 0 ? (
-                  <span className="text-green-600 font-medium">
-                    {calculatedStock} unidades
-                  </span>
-                ) : (
-                  <span className="text-gray-400">
-                    Completa categoría, marca y nombre para ver el stock
-                  </span>
-                )}
-              </div>
+              <input
+                id="cantidad"
+                name="cantidad"
+                type="number"
+                min="1"
+                value={formData.cantidad}
+                onChange={handleInputChange}
+                className={`block w-full px-3 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary ${
+                  errors.cantidad ? "border-red-300" : "border-gray-300"
+                }`}
+                placeholder="1"
+              />
+              {errors.cantidad && <p className="mt-1 text-sm text-red-600">{errors.cantidad}</p>}
               <p className="mt-1 text-xs text-gray-500">
-                El stock se calcula automáticamente basado en la categoría, marca y nombre del producto
+                Esta cantidad se sumará al stock del producto existente o será el stock inicial si es un producto nuevo.
               </p>
             </div>
+
+            {/* Información de producto existente */}
+            {productoExistente && (
+              <div className="md:col-span-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <h4 className="text-sm font-medium text-blue-800 mb-2">⚠️ Producto existente detectado</h4>
+                <p className="text-xs text-blue-700">
+                  Ya existe un producto con las mismas características. Al guardar, se incrementará el stock del producto existente en <span className="font-semibold">{formData.cantidad}</span> unidades.
+                </p>
+                <p className="text-xs text-blue-700 mt-1">
+                  Stock actual: <span className="font-semibold">{productoExistente.stock}</span> unidades.
+                </p>
+              </div>
+            )}
 
             {/* Categoría */}
             <div>
@@ -740,6 +866,79 @@ export function AgregarProductoForm() {
                 </p>
               )}
             </div>
+
+            {/* Aroma - Solo mostrar si la categoría es sahumerio */}
+            {isSahumerioCategory(formData.category) && (
+              <div className="md:col-span-2">
+                <label htmlFor="aroma" className="block text-sm font-medium text-gray-700 mb-2">
+                  <Flower2 className="w-4 h-4 inline mr-1" />
+                  Aroma <span className="text-red-500">*</span>
+                </label>
+                {!showNewAromaInput ? (
+                  <select
+                    id="aroma"
+                    name="aroma"
+                    value={formData.aroma}
+                    onChange={(e) => handleAromaChange(e.target.value)}
+                    className={`block w-full px-3 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary bg-white ${
+                      errors.aroma ? "border-red-300" : "border-gray-300"
+                    }`}
+                    disabled={!formData.marca || isLoadingOptions}
+                  >
+                    <option value="">
+                      {!formData.marca 
+                        ? "Primero selecciona una marca" 
+                        : aromas.length === 0 
+                          ? "No hay aromas para esta marca"
+                          : "Seleccionar aroma"
+                      }
+                    </option>
+                    {aromas.map((aroma) => (
+                      <option key={aroma.value} value={aroma.value}>
+                        {aroma.label}
+                      </option>
+                    ))}
+                    <option value="add-new">➕ Agregar nuevo aroma</option>
+                  </select>
+                ) : (
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={newAromaValue}
+                      onChange={(e) => setNewAromaValue(e.target.value)}
+                      placeholder="Nuevo aroma (ej: Lavanda, Rosa, Sándalo)"
+                      className="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary"
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddNewAroma()}
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddNewAroma}
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleCancelNewAroma}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+                {errors.aroma && <p className="mt-1 text-sm text-red-600">{errors.aroma}</p>}
+                {formData.marca && aromas.length === 0 && !showNewAromaInput && (
+                  <p className="mt-1 text-xs text-blue-600">
+                    Agrega el primer aroma para esta marca de sahumerios.
+                  </p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  El aroma es requerido para productos de categoría Sahumerio.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -914,7 +1113,7 @@ export function AgregarProductoForm() {
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                Agregar Producto
+                {productoExistente ? 'Incrementar Stock' : 'Agregar Producto'}
               </>
             )}
           </Button>

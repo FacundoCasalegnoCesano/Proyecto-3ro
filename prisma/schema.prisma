@@ -20,7 +20,7 @@ model Products {
   aroma         String? @db.VarChar(255)
   stock         Int     @default(0)
   envios        deliver @relation(fields: [empresaEnvios], references: [id], onDelete: Cascade)
-  @@index([empresaEnvios])
+  @@index([empresaEnvios, category])
   @@map("products")
 }
 

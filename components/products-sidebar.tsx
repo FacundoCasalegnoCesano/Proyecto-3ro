@@ -1,85 +1,137 @@
 "use client"
 
-import { useState } from "react"
-import { 
-  ChevronDown, 
-  ChevronRight, 
+import { useState, useEffect } from "react"
+import {
+  ChevronDown,
+  ChevronRight,
+  X // Importar el icono X para el botón de limpiar
 } from "lucide-react"
 import Image from "next/image"
+import { useRouter, useSearchParams } from "next/navigation"
 
-// Define las props que aceptan los íconos
 interface IconProps {
   className?: string
   size?: number
   strokeWidth?: number
-  // otras props que puedan tener los íconos
 }
 
 interface Subcategory {
   name: string
-  icon?: React.ComponentType<IconProps> // Icono de Lucide con tipo específico
-  image?: string // URL de imagen personalizada
-  emoji?: string // Emoji como alternativa
+  image?: string
+  emoji?: string
+  icon?: React.ComponentType<IconProps>
 }
 
-interface Category {
+interface ProductCategoryGroup {
   id: string
   name: string
   subcategories: Subcategory[]
 }
 
 interface ProductsSidebarProps {
-  selectedCategory: string | null
-  onCategoryChange: (category: string | null) => void
+  selectedCategory?: string | null
+  onCategoryChange?: (category: string | null) => void
 }
 
-export function ProductsSidebar({ selectedCategory, onCategoryChange }: ProductsSidebarProps) {
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(["aromatizantes"])
+export function ProductsSidebar({
+  selectedCategory: externalSelectedCategory,
+  onCategoryChange: externalOnCategoryChange
+}: ProductsSidebarProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(["Aromatizantes", "Decoracion Espiritual"])
+  const [internalSelectedCategory, setInternalSelectedCategory] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const categories: Category[] = [
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category')
+    setInternalSelectedCategory(categoryFromUrl)
+
+    if (externalOnCategoryChange && categoryFromUrl !== externalSelectedCategory) {
+      externalOnCategoryChange(categoryFromUrl)
+    }
+  }, [searchParams, externalSelectedCategory, externalOnCategoryChange])
+
+  const productCategoryGroups: ProductCategoryGroup[] = [
     {
-      id: "aromatizantes",
+      id: "aromatizantes_group",
       name: "Aromatizantes",
       subcategories: [
         { name: "Aromatizante para auto", image: "/img/air-freshener.png" },
         { name: "Aromatizante de ambiente", image: "/img/diffuser.png" },
-        { name: "Esencias", image: "/img/essence.png" },
-        { name: "Inciensos", image: "/img/copal.png" },
-        { name: "Bombas de Humo", image: "/img/smoke-bomb.png" },
-        { name: "Sahumerios", image: "/img/sahumerios.png" },
+        { name: "Esencia", image: "/img/essence.png" },
+        { name: "Incienso", image: "/img/copal.png" },
+        { name: "Bomba de Humo", image: "/img/smoke-bomb.png" },
+        { name: "Sahumerio", image: "/img/sahumerios.png" },
       ],
     },
     {
-      id: "decoracion",
-      name: "Decoracion Espiritual",  
+      id: "decoracion_group",
+      name: "Decoracion Espiritual",
       subcategories: [
-        { name: "Velas", image: "/img/candles.png" },
-        { name: "Cascadas de humo", image: "/img/fountain.png" },
-        { name: "Estatuas", image: "/img/buddha.png" },
-        { name: "Lamparas de Sal", image: "/img/salt-lamp.png" },
-        { name: "Porta Sahumerios", image: "/img/incense.png" },
+        { name: "Vela", image: "/img/candles.png" },
+        { name: "Cascada de humo", image: "/img/fountain.png" },
+        { name: "Estatua", image: "/img/buddha.png" },
+        { name: "Lampara de Sal", image: "/img/salt-lamp.png" },
+        { name: "Porta Sahumerio", image: "/img/incense.png" },
       ],
     },
   ]
 
-  const toggleCategory = (categoryId: string) => {
+  const toggleCategoryGroup = (groupId: string) => {
     setExpandedCategories((prev) =>
-      prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
+      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId],
     )
   }
 
-  const handleSubcategoryClick = (subcategoryName: string) => {
-    onCategoryChange(selectedCategory === subcategoryName ? null : subcategoryName)
+  const handleSubcategoryClick = async (subcategoryName: string) => {
+    setIsLoading(true)
+    const newCategory = internalSelectedCategory === subcategoryName ? null : subcategoryName
+
+    setInternalSelectedCategory(newCategory)
+
+    const params = new URLSearchParams(searchParams.toString())
+
+    if (newCategory) {
+      params.set('category', newCategory)
+    } else {
+      params.delete('category')
+    }
+
+    params.delete('page')
+
+    router.push(`/productos?${params.toString()}`, { scroll: false })
+
+    if (externalOnCategoryChange) {
+      externalOnCategoryChange(newCategory)
+    }
+
+    setIsLoading(false)
   }
 
-  // Componente para renderizar el ícono/imagen
-  const renderIcon = (subcategory: Subcategory) => {
-    if (subcategory.image) {
+  const clearFilters = () => {
+    setInternalSelectedCategory(null)
+
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('category')
+    params.delete('page')
+
+    router.push(`/productos?${params.toString()}`, { scroll: false })
+
+    if (externalOnCategoryChange) {
+      externalOnCategoryChange(null)
+    }
+  }
+
+  const currentSelectedCategory = externalSelectedCategory !== undefined ? externalSelectedCategory : internalSelectedCategory
+
+  const renderIcon = (item: Subcategory) => {
+    if (item.image) {
       return (
         <div className="w-10 h-10 bg-white/20 rounded flex items-center justify-center">
-          <Image 
-            src={subcategory.image} 
-            alt={subcategory.name}
+          <Image
+            src={item.image}
+            alt={item.name}
             width={24}
             height={24}
             className="object-contain"
@@ -87,17 +139,17 @@ export function ProductsSidebar({ selectedCategory, onCategoryChange }: Products
         </div>
       )
     }
-    
-    if (subcategory.emoji) {
+
+    if (item.emoji) {
       return (
         <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
-          <span className="text-xs">{subcategory.emoji}</span>
+          <span className="text-xs">{item.emoji}</span>
         </div>
       )
     }
-    
-    if (subcategory.icon) {
-      const IconComponent = subcategory.icon
+
+    if (item.icon) {
+      const IconComponent = item.icon
       return (
         <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
           <IconComponent className="w-4 h-4" />
@@ -105,7 +157,6 @@ export function ProductsSidebar({ selectedCategory, onCategoryChange }: Products
       )
     }
 
-    // Fallback por si no hay ningún tipo de ícono
     return (
       <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
         <span className="text-xs">📦</span>
@@ -115,31 +166,43 @@ export function ProductsSidebar({ selectedCategory, onCategoryChange }: Products
 
   return (
     <div className="bg-babalu-primary rounded-lg p-4 text-black">
-      <h2 className="text-xl font-bold mb-4">Categorías</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">Categorías</h2>
+      </div>
 
-      {categories.map((category) => (
-        <div key={category.id} className="mb-4">
+      {isLoading && (
+        <div className="text-center py-2">
+          <div className="animate-pulse text-sm text-gray-600">Cargando...</div>
+        </div>
+      )}
+
+      {productCategoryGroups.map((group) => (
+        <div key={group.id} className="mb-4">
           <button
-            onClick={() => toggleCategory(category.id)}
+            onClick={() => toggleCategoryGroup(group.name)}
             className="flex items-center justify-between w-full text-left font-semibold mb-2 hover:text-orange-200 transition-colors"
+            disabled={isLoading}
           >
-            <span>{category.name}</span>
-            {expandedCategories.includes(category.id) ? (
+            <span>{group.name}</span>
+            {expandedCategories.includes(group.name) ? (
               <ChevronDown className="w-4 h-4" />
             ) : (
               <ChevronRight className="w-4 h-4" />
             )}
           </button>
 
-          {expandedCategories.includes(category.id) && (
+          {expandedCategories.includes(group.name) && (
             <div className="ml-4 space-y-2">
-              {category.subcategories.map((subcategory) => (
+              {group.subcategories.map((subcategory) => (
                 <button
                   key={subcategory.name}
                   onClick={() => handleSubcategoryClick(subcategory.name)}
                   className={`flex items-center space-x-2 text-sm hover:text-orange-200 transition-colors w-full text-left p-2 rounded ${
-                    selectedCategory === subcategory.name ? "bg-white/20" : ""
+                    currentSelectedCategory === subcategory.name
+                      ? "bg-white/20 font-medium border-l-4 border-orange-500"
+                      : "border-l-4 border-transparent"
                   }`}
+                  disabled={isLoading}
                 >
                   {renderIcon(subcategory)}
                   <span>{subcategory.name}</span>

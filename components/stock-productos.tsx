@@ -76,50 +76,9 @@ export function StockProductos() {
   }, [filtroMarca, filtroCategoria])
 
   // Función para manejar la edición de producto
-  const handleEditarProducto = async (producto: Producto) => {
-    try {
-      // Obtener información completa del producto incluyendo imgPublicId
-      const response = await fetch(`/api/agregarProd?id=${producto.id}`)
-      const data = await response.json()
-      
-      if (data.success) {
-        const productoCompleto = data.data
-        
-        // Preparar datos para edición
-        const datosProducto = {
-          id: productoCompleto.id,
-          nombre: productoCompleto.name,
-          precio: productoCompleto.price.replace('$', ''), // Remover el símbolo de dólar
-          descripcion: productoCompleto.description,
-          imgUrl: productoCompleto.imgUrl || productoCompleto.image,
-          imgPublicId: productoCompleto.imgPublicId || '',
-          category: productoCompleto.category,
-          marca: productoCompleto.marca,
-          aroma: productoCompleto.aroma || '',
-          stock: productoCompleto.stock,
-          shipping: productoCompleto.shipping,
-          // Para imágenes múltiples si las hay
-          allImages: productoCompleto.imgUrl ? [
-            {
-              url: productoCompleto.imgUrl,
-              publicId: productoCompleto.imgPublicId || ''
-            }
-          ] : []
-        }
-
-        // Guardar en localStorage para recuperar en la página de edición
-        localStorage.setItem('productoEditar', JSON.stringify(datosProducto))
-        
-        // Redirigir a la página de agregar/editar producto
-        router.push('/productos/agregar')
-      } else {
-        console.error('Error al obtener detalles del producto:', data.error)
-        alert('Error al cargar los datos del producto para editar')
-      }
-    } catch (error) {
-      console.error('Error al preparar edición:', error)
-      alert('Error al preparar la edición del producto')
-    }
+  const handleEditarProducto = (producto: Producto) => {
+    // Redirigir a la página de modificación con el ID del producto
+    router.push(`/productos/modificar?id=${producto.id}`);
   }
 
   const getStatusColor = (status: string) => {

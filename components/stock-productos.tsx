@@ -13,6 +13,7 @@ interface Producto {
   category: string
   marca: string
   aroma: string
+  linea?: string
   image: string
   description: string
   shipping: string
@@ -29,7 +30,28 @@ export function StockProductos() {
   const [editingStock, setEditingStock] = useState<{ [key: number]: number }>({})
   const [filtroMarca, setFiltroMarca] = useState<string>('all')
   const [filtroCategoria, setFiltroCategoria] = useState<string>('all')
+  const [filtroAroma, setFiltroAroma] = useState<string>('all')
   const router = useRouter()
+
+  // Función para capitalizar palabras
+  const capitalizarPalabras = (texto: string | undefined | null): string => {
+    if (!texto || typeof texto !== 'string') return '';
+    return texto
+      .toLowerCase()
+      .split(' ')
+      .map(palabra => palabra.charAt(0).toUpperCase() + palabra.slice(1))
+      .join(' ');
+  }
+
+  // Función para verificar si tiene línea específica
+  const tieneLineaEspecifica = (linea: string | undefined | null): boolean => {
+    return !!linea && 
+           typeof linea === 'string' && 
+           linea.trim() !== '' && 
+           linea.trim().toLowerCase() !== 'sin-linea' &&
+           linea.trim().toLowerCase() !== 'sin línea' &&
+           linea.trim().toLowerCase() !== 'sin_linea';
+  }
 
   // Función para calcular el status basado en el stock
   const calculateStatus = (stock: number): string => {
@@ -38,7 +60,7 @@ export function StockProductos() {
     return "disponible"
   }
 
-  // Función para obtener productos de la API
+  // Función para obtener productos de la API SIN AGRUPAR
   const fetchProductos = async () => {
     try {
       setLoading(true)
@@ -51,14 +73,27 @@ export function StockProductos() {
       if (filtroCategoria && filtroCategoria !== 'all') {
         params.append('category', filtroCategoria)
       }
+      if (filtroAroma && filtroAroma !== 'all') {
+        params.append('aroma', filtroAroma)
+      }
       
       const url = `/api/agregarProd${params.toString() ? '?' + params.toString() : ''}`
       const response = await fetch(url)
       const data = await response.json()
 
       if (data.success) {
-        // Los productos ya vienen con el status calculado desde la API
-        setProductos(data.data)
+        // NO AGRUPAR - Mostrar todos los productos individuales con su stock real
+        const productosCapitalizados = data.data.map((producto: Producto) => ({
+          ...producto,
+          name: capitalizarPalabras(producto.name),
+          marca: capitalizarPalabras(producto.marca),
+          category: capitalizarPalabras(producto.category),
+          aroma: capitalizarPalabras(producto.aroma),
+          linea: tieneLineaEspecifica(producto.linea) ? capitalizarPalabras(producto.linea) : '',
+          description: capitalizarPalabras(producto.description)
+        }))
+        
+        setProductos(productosCapitalizados)
       } else {
         setError('Error al cargar productos: ' + data.error)
       }
@@ -73,11 +108,10 @@ export function StockProductos() {
   // Cargar productos al montar el componente y cuando cambien los filtros
   useEffect(() => {
     fetchProductos()
-  }, [filtroMarca, filtroCategoria])
+  }, [filtroMarca, filtroCategoria, filtroAroma])
 
   // Función para manejar la edición de producto
   const handleEditarProducto = (producto: Producto) => {
-    // Redirigir a la página de modificación con el ID del producto
     router.push(`/productos/modificar?id=${producto.id}`);
   }
 
@@ -116,11 +150,10 @@ export function StockProductos() {
     return acc
   }, { disponibles: 0, bajoStock: 0, agotados: 0 })
 
-  // Obtener marcas únicas para el filtro
+  // Obtener valores únicos para los filtros
   const marcasUnicas = Array.from(new Set(productos.map(p => p.marca).filter(marca => marca && marca.trim() !== '')))
-  
-  // Obtener categorías únicas para el filtro
   const categoriasUnicas = Array.from(new Set(productos.map(p => p.category).filter(cat => cat && cat.trim() !== '')))
+  const aromasUnicos = Array.from(new Set(productos.map(p => p.aroma).filter(aroma => aroma && aroma.trim() !== '')))
 
   // Función para actualizar stock
   const updateStock = async (id: number, newStock: number) => {
@@ -144,7 +177,6 @@ export function StockProductos() {
       const data = await response.json()
 
       if (data.success) {
-        // Actualizar el producto en el estado local con el nuevo status
         setProductos(prev => prev.map(producto => {
           if (producto.id === id) {
             const newStatus = calculateStatus(newStock)
@@ -157,7 +189,6 @@ export function StockProductos() {
           return producto
         }))
         
-        // Limpiar el estado de edición
         setEditingStock(prev => {
           const newState = { ...prev }
           delete newState[id]
@@ -179,7 +210,6 @@ export function StockProductos() {
     const producto = productos.find(p => p.id === id)
     if (!producto) return
 
-    // Calcular el nuevo stock antes de enviarlo
     let newStock: number
     if (operation === 'increment') {
       newStock = producto.stock + amount
@@ -203,7 +233,6 @@ export function StockProductos() {
       const data = await response.json()
 
       if (data.success) {
-        // Actualizar directamente con el stock calculado
         setProductos(prev => prev.map(producto => {
           if (producto.id === id) {
             const newStatus = calculateStatus(newStock)
@@ -228,7 +257,7 @@ export function StockProductos() {
 
   // Función para manejar cambio en input de stock
   const handleStockChange = (productId: number, value: string) => {
-    const numValue = Math.max(0, parseInt(value) || 0) // Asegurar que no sea negativo
+    const numValue = Math.max(0, parseInt(value) || 0)
     setEditingStock(prev => ({
       ...prev,
       [productId]: numValue
@@ -299,8 +328,8 @@ export function StockProductos() {
               <Package className="w-6 h-6 text-babalu-primary" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Stock de Productos</h2>
-              <p className="text-sm text-gray-600">Gestiona el inventario de tu tienda</p>
+              <h2 className="text-2xl font-bold text-gray-800">Stock Individual de Productos</h2>
+              <p className="text-sm text-gray-600">Gestiona el inventario individual de cada producto por aroma</p>
             </div>
           </div>
 
@@ -321,8 +350,8 @@ export function StockProductos() {
           </div>
         </div>
 
-        {/* Filtros */}
-        <div className="flex items-center space-x-4">
+        {/* Filtros mejorados */}
+        <div className="flex items-center space-x-4 flex-wrap gap-y-2">
           <div className="flex items-center space-x-2">
             <Tag className="w-4 h-4 text-gray-500" />
             <label className="text-sm font-medium text-gray-700">Marca:</label>
@@ -352,6 +381,22 @@ export function StockProductos() {
               ))}
             </select>
           </div>
+
+          {/* NUEVO FILTRO POR AROMA */}
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 rounded-full bg-pink-500"></div>
+            <label className="text-sm font-medium text-gray-700">Aroma:</label>
+            <select 
+              value={filtroAroma} 
+              onChange={(e) => setFiltroAroma(e.target.value)}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary"
+            >
+              <option value="all">Todos los aromas</option>
+              {aromasUnicos.map(aroma => (
+                <option key={aroma} value={aroma}>{aroma}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -376,8 +421,14 @@ export function StockProductos() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Categoría
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Línea
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Aroma
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Individual</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Acciones
@@ -402,9 +453,6 @@ export function StockProductos() {
                       <div>
                         <div className="text-sm font-medium text-gray-900">{producto.name}</div>
                         <div className="text-sm text-gray-500">ID: #{producto.id}</div>
-                        {producto.aroma && (
-                          <div className="text-xs text-gray-400">Aroma: {producto.aroma}</div>
-                        )}
                       </div>
                     </div>
                   </td>
@@ -427,12 +475,30 @@ export function StockProductos() {
                     </span>
                   </td>
 
+                  {/* Línea */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {producto.linea && producto.linea.trim() !== '' ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {producto.linea}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-400">Sin línea</span>
+                    )}
+                  </td>
+
+                  {/* Aroma - DESTACADO */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800 border border-pink-200">
+                      {producto.aroma || 'Sin aroma'}
+                    </span>
+                  </td>
+
                   {/* Precio */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-semibold text-gray-900">{producto.price}</div>
                   </td>
 
-                  {/* Stock con controles */}
+                  {/* Stock INDIVIDUAL con controles */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
                       {editingStock[producto.id] !== undefined ? (
@@ -476,12 +542,12 @@ export function StockProductos() {
                           </Button>
                           
                           <span 
-                            className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 min-w-[2rem] text-center"
+                            className="text-sm font-bold text-gray-900 cursor-pointer hover:text-blue-600 min-w-[2rem] text-center bg-gray-50 px-2 py-1 rounded border"
                             onClick={() => setEditingStock(prev => ({
                               ...prev,
                               [producto.id]: producto.stock
                             }))}
-                            title="Click para editar"
+                            title="Click para editar stock individual"
                           >
                             {producto.stock}
                           </span>
@@ -496,12 +562,12 @@ export function StockProductos() {
                           </Button>
                           
                           {producto.stock <= 5 && producto.stock > 0 && (
-                            <span title="Bajo stock">
+                            <span title="Bajo stock individual">
                               <AlertCircle className="w-4 h-4 text-yellow-500" />
                             </span>
                           )}
                           {producto.stock === 0 && (
-                            <span title="Agotado">
+                            <span title="Agotado individualmente">
                               <AlertCircle className="w-4 h-4 text-red-500" />
                             </span>
                           )}
@@ -553,12 +619,15 @@ export function StockProductos() {
       <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
         <div className="flex items-center justify-between text-sm text-gray-600">
           <div>
-            Mostrando {productos.length} productos
+            Mostrando {productos.length} productos individuales
             {filtroMarca !== 'all' && (
               <span className="ml-2 text-purple-600 font-medium">• Marca: {filtroMarca}</span>
             )}
             {filtroCategoria !== 'all' && (
               <span className="ml-2 text-babalu-primary font-medium">• Categoría: {filtroCategoria}</span>
+            )}
+            {filtroAroma !== 'all' && (
+              <span className="ml-2 text-pink-600 font-medium">• Aroma: {filtroAroma}</span>
             )}
           </div>
           <div className="flex items-center space-x-4">

@@ -17,11 +17,12 @@ export async function POST(request: NextRequest) {
       category,
       marca,
       aroma,
-      cantidad, // Nueva propiedad: cantidad a agregar
-      allImages
+      cantidad,
+      allImages,
+      linea
     } = body
 
-    // Validar campos requeridos
+    // Validar campos requeridos básicos
     if (!nombre || !precio || !descripcion || !imgUrl || !category || !marca || !cantidad) {
       console.log('❌ Faltan campos requeridos')
       return NextResponse.json(
@@ -33,16 +34,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validar aroma si la categoría es sahumerio
-    if (category.toLowerCase().includes('sahumerio') && !aroma) {
-      console.log('❌ Aroma requerido para sahumerios')
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'El aroma es requerido para productos de categoría Sahumerio'
-        },
-        { status: 400 }
-      )
+    // Validar categorías que requieren aroma
+    const categoriasQueRequierenAroma = [
+      'sahumerio',
+      'rocio aurico',
+      'aromatizante para auto',
+      'aromatizante de ambiente',
+      'incienso',
+      'esencia'
+    ];
+
+    const categoriaRequiereAroma = categoriasQueRequierenAroma.some(cat => 
+      category.toLowerCase().includes(cat.toLowerCase())
+    );
+
+    if (categoriaRequiereAroma) {
+      if (!aroma) {
+        console.log('❌ Aroma requerido para categoría:', category)
+        return NextResponse.json(
+          {
+            success: false,
+            error: `El aroma es requerido para productos de categoría ${category}`
+          },
+          { status: 400 }
+        )
+      }
     }
 
     // Validar precio
@@ -74,18 +90,24 @@ export async function POST(request: NextRequest) {
     // Buscar producto existente
     let productoExistente = null
     
-    if (category.toLowerCase().includes('sahumerio') && aroma) {
-      console.log('🔍 Buscando sahumerio existente con categoría:', category, 'marca:', marca, 'aroma:', aroma)
+    if (categoriaRequiereAroma && aroma) {
+      console.log('🔍 Buscando producto existente con categoría:', category, 'marca:', marca, 'aroma:', aroma, 'línea:', linea)
       
+      const whereClause: any = {
+        category: category.trim(),
+        marca: marca.trim(),
+        aroma: aroma.trim()
+      }
+
+      if (linea && linea.trim() !== '') {
+        whereClause.Linea = linea.trim();
+      }
+
       productoExistente = await prisma.products.findFirst({
-        where: {
-          category: category.trim(),
-          marca: marca.trim(),
-          aroma: aroma.trim()
-        }
+        where: whereClause
       })
     } else {
-      console.log('🔍 Buscando producto existente con categoría:', category, 'marca:', marca)
+      console.log('🔍 Buscando producto existente con categoría:', category, 'marca:', marca, 'nombre:', nombre)
       
       productoExistente = await prisma.products.findFirst({
         where: {
@@ -102,16 +124,15 @@ export async function POST(request: NextRequest) {
       
       const nuevoStock = productoExistente.stock + cantidadNumerica
       
-      // Actualizar el producto existente
       const productoActualizado = await prisma.products.update({
         where: { id: productoExistente.id },
         data: {
           stock: nuevoStock,
-          // Opcionalmente actualizar otros campos si es necesario
-          precio: precio.toString(), // Actualizar precio al más reciente
-          descripcion: descripcion.trim(), // Actualizar descripción
-          imgUrl: imgUrl, // Actualizar imagen
-          imgPublicId: imgPublicId || productoExistente.imgPublicId
+          precio: precio.toString(),
+          descripcion: descripcion.trim(),
+          imgUrl: imgUrl,
+          imgPublicId: imgPublicId || productoExistente.imgPublicId,
+          Linea: linea?.trim() || productoExistente.Linea
         },
         include: {
           envios: {
@@ -136,32 +157,33 @@ export async function POST(request: NextRequest) {
       }, { status: 200 })
     }
 
-    // Si no existe un producto similar, crear nuevo producto con stock inicial = cantidad
+    // Si no existe un producto similar, crear nuevo producto
     
-    // Guardar la relación categoría-marca-aroma en la base de datos si no existe
+    // Guardar la relación categoría-marca-aroma-línea
     try {
       await prisma.categoryMarca.upsert({
         where: {
-          category_marca_aroma: {
+          category_marca_aroma_Linea: {
             category: category.trim(),
             marca: marca.trim(),
-            aroma: aroma?.trim() || ''
+            aroma: aroma?.trim() || '',
+            Linea: linea?.trim() || ''
           }
         },
         update: {},
         create: {
           category: category.trim(),
           marca: marca.trim(),
-          aroma: aroma?.trim() || ''
+          aroma: aroma?.trim() || '',
+          Linea: linea?.trim() || ''
         }
       })
-      console.log('✅ Relación categoría-marca-aroma guardada:', category.trim(), '-', marca.trim(), '-', aroma?.trim() || 'sin aroma')
+      console.log('✅ Relación categoría-marca-aroma-línea guardada')
     } catch (error) {
-      console.log('⚠️ Error al guardar relación categoría-marca-aroma (puede ser duplicado):', error)
+      console.log('⚠️ Error al guardar relación (puede ser duplicado):', error)
     }
 
-    console.log('🔍 Buscando empresa de envíos...')
-    
+    // Buscar o crear empresa de envíos
     let empresaEnviosId: number
     const shippingDefault = 'Envío Gratis'
 
@@ -200,6 +222,7 @@ export async function POST(request: NextRequest) {
       console.log('✅ Nueva empresa creada:', nuevoDeliver.id)
     }
 
+    // Crear nuevo producto
     console.log('🛒 Creando producto nuevo...')
     
     const nuevoProducto = await prisma.products.create({
@@ -212,7 +235,8 @@ export async function POST(request: NextRequest) {
         category: category.trim(),
         marca: marca.trim(),
         aroma: aroma?.trim() || null,
-        stock: cantidadNumerica, // Usar la cantidad como stock inicial
+        Linea: linea?.trim() || null,
+        stock: cantidadNumerica,
         empresaEnvios: empresaEnviosId
       },
       include: {
@@ -254,14 +278,65 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const marca = searchParams.get('marca')
     const aroma = searchParams.get('aroma')
+    const linea = searchParams.get('linea')
     const search = searchParams.get('search')
     const sort = searchParams.get('sort')
     const limit = searchParams.get('limit')
     const getCategories = searchParams.get('getCategories')
     const getMarcas = searchParams.get('getMarcas')
     const getAromas = searchParams.get('getAromas')
+    const getLineas = searchParams.get('getLineas')
     const saveMarca = searchParams.get('saveMarca')
     const saveAroma = searchParams.get('saveAroma')
+    const saveLinea = searchParams.get('saveLinea')
+
+    // Endpoint para guardar una nueva línea
+    if (saveLinea === 'true') {
+      try {
+        const categoryParam = searchParams.get('category')
+        const marcaParam = searchParams.get('marca')
+        const aromaParam = searchParams.get('aroma')
+        const lineaParam = searchParams.get('linea')
+        
+        if (!categoryParam || !marcaParam || !lineaParam) {
+          return NextResponse.json({
+            success: false,
+            error: 'Se requiere categoría, marca y línea'
+          }, { status: 400 })
+        }
+
+        await prisma.categoryMarca.upsert({
+          where: {
+            category_marca_aroma_Linea: {
+              category: categoryParam.trim(),
+              marca: marcaParam.trim(),
+              aroma: aromaParam?.trim() || '',
+              Linea: lineaParam.trim()
+            }
+          },
+          update: {},
+          create: {
+            category: categoryParam.trim(),
+            marca: marcaParam.trim(),
+            aroma: aromaParam?.trim() || '',
+            Linea: lineaParam.trim()
+          }
+        })
+
+        console.log(`✅ Nueva línea guardada: ${lineaParam} para marca ${marcaParam} en categoría ${categoryParam}`)
+
+        return NextResponse.json({
+          success: true,
+          message: 'Línea guardada exitosamente'
+        })
+      } catch (error) {
+        console.error('❌ Error al guardar línea:', error)
+        return NextResponse.json({
+          success: false,
+          error: 'Error al guardar la línea'
+        }, { status: 500 })
+      }
+    }
 
     // Endpoint para guardar un nuevo aroma
     if (saveAroma === 'true') {
@@ -269,6 +344,7 @@ export async function GET(request: NextRequest) {
         const categoryParam = searchParams.get('category')
         const marcaParam = searchParams.get('marca')
         const aromaParam = searchParams.get('aroma')
+        const lineaParam = searchParams.get('linea')
         
         if (!categoryParam || !marcaParam || !aromaParam) {
           return NextResponse.json({
@@ -279,17 +355,19 @@ export async function GET(request: NextRequest) {
 
         await prisma.categoryMarca.upsert({
           where: {
-            category_marca_aroma: {
+            category_marca_aroma_Linea: {
               category: categoryParam.trim(),
               marca: marcaParam.trim(),
-              aroma: aromaParam.trim()
+              aroma: aromaParam.trim(),
+              Linea: lineaParam?.trim() || ''
             }
           },
           update: {},
           create: {
             category: categoryParam.trim(),
             marca: marcaParam.trim(),
-            aroma: aromaParam.trim()
+            aroma: aromaParam.trim(),
+            Linea: lineaParam?.trim() || ''
           }
         })
 
@@ -313,6 +391,7 @@ export async function GET(request: NextRequest) {
       try {
         const categoryParam = searchParams.get('category')
         const marcaParam = searchParams.get('marca')
+        const lineaParam = searchParams.get('linea')
         
         if (!categoryParam || !marcaParam) {
           return NextResponse.json({
@@ -323,17 +402,19 @@ export async function GET(request: NextRequest) {
 
         await prisma.categoryMarca.upsert({
           where: {
-            category_marca_aroma: {
+            category_marca_aroma_Linea: {
               category: categoryParam.trim(),
               marca: marcaParam.trim(),
-              aroma: ''
+              aroma: '',
+              Linea: lineaParam?.trim() || ''
             }
           },
           update: {},
           create: {
             category: categoryParam.trim(),
             marca: marcaParam.trim(),
-            aroma: ''
+            aroma: '',
+            Linea: lineaParam?.trim() || ''
           }
         })
 
@@ -352,11 +433,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Endpoint para obtener aromas únicos por categoría y marca
-    if (getAromas === 'true') {
+    // Endpoint para obtener líneas únicas por categoría, marca y aroma
+    if (getLineas === 'true') {
       try {
         const categoryFilter = searchParams.get('category')
         const marcaFilter = searchParams.get('marca')
+        const aromaFilter = searchParams.get('aroma')
         
         if (!categoryFilter || !marcaFilter) {
           return NextResponse.json({
@@ -365,14 +447,74 @@ export async function GET(request: NextRequest) {
           })
         }
 
-        const categoryAromas = await prisma.categoryMarca.findMany({
-          where: {
-            category: categoryFilter,
-            marca: marcaFilter,
-            aroma: {
-              not: ''
-            }
+        const whereClause: any = {
+          category: categoryFilter,
+          marca: marcaFilter,
+          Linea: {
+            not: ''
+          }
+        }
+
+        if (aromaFilter && aromaFilter.trim() !== '') {
+          whereClause.aroma = aromaFilter
+        }
+
+        const categoryLineas = await prisma.categoryMarca.findMany({
+          where: whereClause,
+          select: {
+            Linea: true
           },
+          distinct: ['Linea']
+        })
+        
+        const uniqueLineas = categoryLineas
+          .map(cl => cl.Linea)
+          .filter((linea): linea is string => linea !== null && linea.trim() !== '')
+          .sort()
+          
+        console.log(`✅ Líneas encontradas para "${marcaFilter}" en "${categoryFilter}"${aromaFilter ? ` con aroma "${aromaFilter}"` : ''}:`, uniqueLineas.length)
+
+        return NextResponse.json({
+          success: true,
+          data: uniqueLineas
+        })
+      } catch (error) {
+        console.error('❌ Error al obtener líneas:', error)
+        return NextResponse.json({
+          success: false,
+          data: []
+        })
+      }
+    }
+
+    // Endpoint para obtener aromas únicos por categoría, marca y línea
+    if (getAromas === 'true') {
+      try {
+        const categoryFilter = searchParams.get('category')
+        const marcaFilter = searchParams.get('marca')
+        const lineaFilter = searchParams.get('linea')
+        
+        if (!categoryFilter || !marcaFilter) {
+          return NextResponse.json({
+            success: false,
+            data: []
+          })
+        }
+
+        const whereClause: any = {
+          category: categoryFilter,
+          marca: marcaFilter,
+          aroma: {
+            not: ''
+          }
+        }
+
+        if (lineaFilter && lineaFilter.trim() !== '') {
+          whereClause.Linea = lineaFilter
+        }
+
+        const categoryAromas = await prisma.categoryMarca.findMany({
+          where: whereClause,
           select: {
             aroma: true
           },
@@ -384,7 +526,7 @@ export async function GET(request: NextRequest) {
           .filter((aroma): aroma is string => aroma !== null && aroma.trim() !== '')
           .sort()
           
-        console.log(`✅ Aromas encontrados para "${marcaFilter}" en "${categoryFilter}":`, uniqueAromas.length)
+        console.log(`✅ Aromas encontrados para "${marcaFilter}" en "${categoryFilter}"${lineaFilter ? ` de línea "${lineaFilter}"` : ''}:`, uniqueAromas.length)
 
         return NextResponse.json({
           success: true,
@@ -485,7 +627,8 @@ export async function GET(request: NextRequest) {
                   data: {
                     category: categoryFilter,
                     marca: marca,
-                    aroma: ''
+                    aroma: '',
+                    Linea: ''
                   }
                 })
               } catch (error) {
@@ -572,6 +715,7 @@ export async function GET(request: NextRequest) {
         category: producto.category || 'Sin categoría',
         marca: producto.marca || '',
         aroma: producto.aroma || '',
+        linea: producto.Linea || '',
         stock: producto.stock,
         status: calculateStatus(producto.stock),
         shipping: producto.envios?.empresa?.nombre || 'Envío Gratis',
@@ -587,8 +731,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Obtener lista de productos con filtros
-    console.log('📦 Obteniendo productos con filtros:', { category, marca, aroma, search, sort, limit })
+    // Obtener lista de productos con filtros - SIN LIMIT POR DEFECTO
+    console.log('📦 Obteniendo productos con filtros:', { category, marca, aroma, linea, search, sort, limit })
 
     const where: any = {}
 
@@ -604,12 +748,17 @@ export async function GET(request: NextRequest) {
       where.aroma = aroma
     }
 
+    if (linea && linea !== 'all' && linea !== 'null') {
+      where.Linea = linea
+    }
+
     if (search) {
       where.OR = [
         { nombre: { contains: search, mode: 'insensitive' } },
         { descripcion: { contains: search, mode: 'insensitive' } },
         { marca: { contains: search, mode: 'insensitive' } },
-        { aroma: { contains: search, mode: 'insensitive' } }
+        { aroma: { contains: search, mode: 'insensitive' } },
+        { Linea: { contains: search, mode: 'insensitive' } }
       ]
     }
 
@@ -629,7 +778,10 @@ export async function GET(request: NextRequest) {
       orderBy = { id: 'desc' }
     }
 
+    // Solo aplicar limit si se especifica explícitamente
     const take = limit ? parseInt(limit) : undefined
+
+    console.log('🔍 Consulta a la base de datos:', { where, orderBy, take })
 
     const productos = await prisma.products.findMany({
       where,
@@ -660,6 +812,7 @@ export async function GET(request: NextRequest) {
       category: producto.category || 'Sin categoría',
       marca: producto.marca || '',
       aroma: producto.aroma || '',
+      linea: producto.Linea || '',
       stock: producto.stock,
       status: calculateStatus(producto.stock),
       shipping: producto.envios?.empresa?.nombre || 'Envío Gratis',
@@ -698,6 +851,7 @@ export async function PUT(request: NextRequest) {
       category,
       marca,
       aroma,
+      linea,
       stock,
       shipping
     } = body
@@ -797,6 +951,7 @@ export async function PUT(request: NextRequest) {
         category: category || productoExistente.category,
         marca: marca?.trim() || productoExistente.marca,
         aroma: aroma?.trim() || productoExistente.aroma,
+        Linea: linea?.trim() || productoExistente.Linea,
         stock: stockFinal,
         empresaEnvios: empresaEnviosId
       },
@@ -912,6 +1067,7 @@ export async function PATCH(request: NextRequest) {
       category: productoActualizado.category || 'Sin categoría',
       marca: productoActualizado.marca || '',
       aroma: productoActualizado.aroma || '',
+      linea: productoActualizado.Linea || '',
       stock: productoActualizado.stock,
       status: calculateStatus(productoActualizado.stock),
       shipping: productoActualizado.envios?.empresa?.nombre || 'Envío Gratis',

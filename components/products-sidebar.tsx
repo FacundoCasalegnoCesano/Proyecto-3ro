@@ -57,6 +57,7 @@ export function ProductsSidebar({
       id: "aromatizantes_group",
       name: "Aromatizantes",
       subcategories: [
+        { name: "Rocio Aurico", image: "" },
         { name: "Aromatizante para auto", image: "/img/air-freshener.png" },
         { name: "Aromatizante de ambiente", image: "/img/diffuser.png" },
         { name: "Esencia", image: "/img/essence.png" },
@@ -74,6 +75,8 @@ export function ProductsSidebar({
         { name: "Estatua", image: "/img/buddha.png" },
         { name: "Lampara de Sal", image: "/img/salt-lamp.png" },
         { name: "Porta Sahumerio", image: "/img/incense.png" },
+        { name: "Accesorios", image:""},
+        { name: "Atrapaluz", image:""},
       ],
     },
   ]

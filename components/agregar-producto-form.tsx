@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import ImageUploader from "./imageUploader"
-import { Package, DollarSign, ImageIcon, Tag, FileText, Save, Loader2, ArrowLeft, Plus, X, Flower2, Box } from "lucide-react"
+import { Package, DollarSign, ImageIcon, Tag, FileText, Save, Loader2, ArrowLeft, Plus, X, Flower2, Box, Layers } from "lucide-react"
 
 interface UploadedImage {
   publicId: string
@@ -17,9 +17,10 @@ interface ProductFormData {
   category: string
   marca: string
   aroma: string
+  linea: string // Nuevo campo: línea
   description: string
   images: UploadedImage[]
-  cantidad: string // Nuevo campo para la cantidad a agregar
+  cantidad: string
 }
 
 interface FormErrors {
@@ -28,6 +29,7 @@ interface FormErrors {
   category?: string
   marca?: string
   aroma?: string
+  linea?: string
   description?: string
   images?: string
   cantidad?: string
@@ -49,6 +51,11 @@ interface AromaOption {
   label: string
 }
 
+interface LineaOption {
+  value: string
+  label: string
+}
+
 export function AgregarProductoForm() {
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
@@ -56,9 +63,10 @@ export function AgregarProductoForm() {
     category: "",
     marca: "",
     aroma: "",
+    linea: "", // Nuevo campo: línea
     description: "",
     images: [],
-    cantidad: "1" // Valor por defecto
+    cantidad: "1"
   })
 
   const [isLoading, setIsLoading] = useState(false)
@@ -67,21 +75,46 @@ export function AgregarProductoForm() {
   const [uploadMode, setUploadMode] = useState<'single' | 'multiple' | null>(null)
   const [productoExistente, setProductoExistente] = useState<any>(null)
 
-  // Estados para categorías, marcas y aromas
+  // Estados para categorías, marcas, aromas y líneas
   const [categories, setCategories] = useState<CategoryOption[]>([])
   const [marcas, setMarcas] = useState<MarcaOption[]>([])
   const [aromas, setAromas] = useState<AromaOption[]>([])
+  const [lineas, setLineas] = useState<LineaOption[]>([])
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false)
   const [showNewMarcaInput, setShowNewMarcaInput] = useState(false)
   const [showNewAromaInput, setShowNewAromaInput] = useState(false)
+  const [showNewLineaInput, setShowNewLineaInput] = useState(false)
   const [newCategoryValue, setNewCategoryValue] = useState("")
   const [newMarcaValue, setNewMarcaValue] = useState("")
   const [newAromaValue, setNewAromaValue] = useState("")
+  const [newLineaValue, setNewLineaValue] = useState("")
   const [isLoadingOptions, setIsLoadingOptions] = useState(true)
 
-  // Función para verificar si la categoría es sahumerio
-  const isSahumerioCategory = (category: string): boolean => {
-    return category.toLowerCase().includes('sahumerio')
+  // Función para verificar si la categoría requiere aroma
+  const categoriaRequiereAroma = (category: string): boolean => {
+    const categoriasConAroma = [
+      'sahumerio',
+      'rocio aurico',
+      'aromatizante para auto',
+      'aromatizante de ambiente',
+      'incienso',
+      'esencia'
+    ]
+    
+    return categoriasConAroma.some(cat => 
+      category.toLowerCase().includes(cat.toLowerCase())
+    )
+  }
+
+  // Función para verificar si la categoría permite línea
+  const categoriaPermiteLinea = (category: string): boolean => {
+    const categoriasConLinea = [
+      'sahumerio',
+    ]
+    
+    return categoriasConLinea.some(cat => 
+      category.toLowerCase().includes(cat.toLowerCase())
+    )
   }
 
   // Cargar categorías al montar el componente
@@ -114,6 +147,7 @@ export function AgregarProductoForm() {
       if (!formData.category) {
         setMarcas([])
         setAromas([])
+        setLineas([])
         return
       }
 
@@ -126,7 +160,7 @@ export function AgregarProductoForm() {
             setMarcas(marcasData.data.map((marca: string) => ({ value: marca, label: marca })))
             // Si la marca actual no está en la nueva lista, resetearla
             if (formData.marca && !marcasData.data.includes(formData.marca)) {
-              setFormData(prev => ({ ...prev, marca: "", aroma: "" }))
+              setFormData(prev => ({ ...prev, marca: "", aroma: "", linea: "" }))
             }
           }
         }
@@ -139,10 +173,10 @@ export function AgregarProductoForm() {
     loadMarcas()
   }, [formData.category])
 
-  // Cargar aromas cuando cambien la categoría y marca (solo para sahumerios)
+  // Cargar aromas cuando cambien la categoría y marca (para categorías que requieren aroma)
   useEffect(() => {
     const loadAromas = async () => {
-      if (!formData.category || !formData.marca || !isSahumerioCategory(formData.category)) {
+      if (!formData.category || !formData.marca || !categoriaRequiereAroma(formData.category)) {
         setAromas([])
         return
       }
@@ -154,7 +188,7 @@ export function AgregarProductoForm() {
           const aromasData = await aromasResponse.json()
           if (aromasData.success) {
             setAromas(aromasData.data.map((aroma: string) => ({ value: aroma, label: aroma })))
-            // Si el aroma actual no está en la nueva lista, resetearla
+            // Si el aroma actual no está en la nueva lista, resetearlo
             if (formData.aroma && !aromasData.data.includes(formData.aroma)) {
               setFormData(prev => ({ ...prev, aroma: "" }))
             }
@@ -169,6 +203,36 @@ export function AgregarProductoForm() {
     loadAromas()
   }, [formData.category, formData.marca])
 
+  // Cargar líneas cuando cambien la categoría, marca y aroma (para categorías que permiten línea)
+  useEffect(() => {
+    const loadLineas = async () => {
+      if (!formData.category || !formData.marca || !categoriaPermiteLinea(formData.category)) {
+        setLineas([])
+        return
+      }
+
+      try {
+        // Obtener líneas únicas para la categoría, marca y aroma seleccionados
+        const lineasResponse = await fetch(`/api/agregarProd?getLineas=true&category=${encodeURIComponent(formData.category)}&marca=${encodeURIComponent(formData.marca)}&aroma=${encodeURIComponent(formData.aroma || '')}`)
+        if (lineasResponse.ok) {
+          const lineasData = await lineasResponse.json()
+          if (lineasData.success) {
+            setLineas(lineasData.data.map((linea: string) => ({ value: linea, label: linea })))
+            // Si la línea actual no está en la nueva lista, resetearla
+            if (formData.linea && !lineasData.data.includes(formData.linea)) {
+              setFormData(prev => ({ ...prev, linea: "" }))
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando líneas:', error)
+        setLineas([])
+      }
+    }
+
+    loadLineas()
+  }, [formData.category, formData.marca, formData.aroma])
+
   // Verificar si existe un producto similar cuando cambien los campos relevantes
   useEffect(() => {
     const verificarProductoExistente = async () => {
@@ -177,8 +241,8 @@ export function AgregarProductoForm() {
         return
       }
 
-      // Para sahumerios, necesitamos también el aroma
-      if (isSahumerioCategory(formData.category) && !formData.aroma) {
+      // Para categorías con aroma, necesitamos también el aroma
+      if (categoriaRequiereAroma(formData.category) && !formData.aroma) {
         setProductoExistente(null)
         return
       }
@@ -187,8 +251,11 @@ export function AgregarProductoForm() {
         // Construir URL de búsqueda
         let url = `/api/agregarProd?search=${encodeURIComponent(formData.name)}&category=${encodeURIComponent(formData.category)}&marca=${encodeURIComponent(formData.marca)}`
         
-        if (isSahumerioCategory(formData.category) && formData.aroma) {
+        if (categoriaRequiereAroma(formData.category) && formData.aroma) {
           url += `&aroma=${encodeURIComponent(formData.aroma)}`
+        }
+        if (categoriaPermiteLinea(formData.category) && formData.linea) {
+          url += `&linea=${encodeURIComponent(formData.linea)}`
         }
 
         const response = await fetch(url)
@@ -202,8 +269,12 @@ export function AgregarProductoForm() {
               const mismaCategoria = p.category.toLowerCase() === formData.category.toLowerCase()
               const mismaMarca = p.marca.toLowerCase() === formData.marca.toLowerCase()
               
-              if (isSahumerioCategory(formData.category)) {
+              if (categoriaRequiereAroma(formData.category)) {
                 const mismoAroma = p.aroma.toLowerCase() === formData.aroma.toLowerCase()
+                if (categoriaPermiteLinea(formData.category)) {
+                  const mismaLinea = (p.linea || '').toLowerCase() === (formData.linea || '').toLowerCase()
+                  return mismoNombre && mismaCategoria && mismaMarca && mismoAroma && mismaLinea
+                }
                 return mismoNombre && mismaCategoria && mismaMarca && mismoAroma
               }
               
@@ -222,7 +293,7 @@ export function AgregarProductoForm() {
     }
 
     verificarProductoExistente()
-  }, [formData.name, formData.category, formData.marca, formData.aroma])
+  }, [formData.name, formData.category, formData.marca, formData.aroma, formData.linea])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -248,15 +319,17 @@ export function AgregarProductoForm() {
   const handleCategoryChange = (value: string) => {
     if (value === "add-new") {
       setShowNewCategoryInput(true)
-      setFormData(prev => ({ ...prev, category: "", marca: "", aroma: "" }))
-      setMarcas([]) // Limpiar marcas cuando se va a agregar nueva categoría
-      setAromas([]) // Limpiar aromas cuando se va a agregar nueva categoría
+      setFormData(prev => ({ ...prev, category: "", marca: "", aroma: "", linea: "" }))
+      setMarcas([])
+      setAromas([])
+      setLineas([])
     } else {
       setFormData(prev => ({ 
         ...prev, 
         category: value, 
         marca: "", 
-        aroma: "" // Limpiar aroma cuando cambia categoría
+        aroma: "",
+        linea: ""
       }))
       setShowNewCategoryInput(false)
       if (errors.category) {
@@ -268,15 +341,18 @@ export function AgregarProductoForm() {
       if (errors.aroma) {
         setErrors(prev => ({ ...prev, aroma: undefined }))
       }
+      if (errors.linea) {
+        setErrors(prev => ({ ...prev, linea: undefined }))
+      }
     }
   }
 
   const handleMarcaChange = (value: string) => {
     if (value === "add-new") {
       setShowNewMarcaInput(true)
-      setFormData(prev => ({ ...prev, marca: "", aroma: "" }))
+      setFormData(prev => ({ ...prev, marca: "", aroma: "", linea: "" }))
     } else {
-      setFormData(prev => ({ ...prev, marca: value, aroma: "" })) // Limpiar aroma cuando cambia marca
+      setFormData(prev => ({ ...prev, marca: value, aroma: "", linea: "" }))
       setShowNewMarcaInput(false)
       if (errors.marca) {
         setErrors(prev => ({ ...prev, marca: undefined }))
@@ -284,25 +360,43 @@ export function AgregarProductoForm() {
       if (errors.aroma) {
         setErrors(prev => ({ ...prev, aroma: undefined }))
       }
+      if (errors.linea) {
+        setErrors(prev => ({ ...prev, linea: undefined }))
+      }
     }
   }
 
   const handleAromaChange = (value: string) => {
     if (value === "add-new") {
       setShowNewAromaInput(true)
-      setFormData(prev => ({ ...prev, aroma: "" }))
+      setFormData(prev => ({ ...prev, aroma: "", linea: "" }))
     } else {
       setFormData(prev => ({ ...prev, aroma: value }))
       setShowNewAromaInput(false)
       if (errors.aroma) {
         setErrors(prev => ({ ...prev, aroma: undefined }))
       }
+      if (errors.linea) {
+        setErrors(prev => ({ ...prev, linea: undefined }))
+      }
+    }
+  }
+
+  const handleLineaChange = (value: string) => {
+    if (value === "add-new") {
+      setShowNewLineaInput(true)
+      setFormData(prev => ({ ...prev, linea: "" }))
+    } else {
+      setFormData(prev => ({ ...prev, linea: value }))
+      setShowNewLineaInput(false)
+      if (errors.linea) {
+        setErrors(prev => ({ ...prev, linea: undefined }))
+      }
     }
   }
 
   const handleAddNewCategory = async () => {
     if (newCategoryValue.trim()) {
-      // Solo agregamos localmente, ya que las categorías se crean automáticamente cuando se crea un producto
       const newCategory = { value: newCategoryValue.trim(), label: newCategoryValue.trim() }
       setCategories(prev => [...prev, newCategory])
       setFormData(prev => ({ ...prev, category: newCategoryValue.trim() }))
@@ -333,7 +427,6 @@ export function AgregarProductoForm() {
           console.log(`✅ Marca "${newMarcaValue.trim()}" guardada en categoría "${formData.category}"`)
         } else {
           console.error('Error al guardar la marca')
-          // Aún así agregamos la marca localmente para no interrumpir el flujo
           const newMarca = { value: newMarcaValue.trim(), label: newMarcaValue.trim() }
           setMarcas(prev => [...prev, newMarca])
           setFormData(prev => ({ ...prev, marca: newMarcaValue.trim() }))
@@ -342,7 +435,6 @@ export function AgregarProductoForm() {
         }
       } catch (error) {
         console.error('Error al guardar marca:', error)
-        // En caso de error, aún así agregamos localmente
         const newMarca = { value: newMarcaValue.trim(), label: newMarcaValue.trim() }
         setMarcas(prev => [...prev, newMarca])
         setFormData(prev => ({ ...prev, marca: newMarcaValue.trim() }))
@@ -363,30 +455,63 @@ export function AgregarProductoForm() {
           setAromas(prev => [...prev, newAroma])
           setFormData(prev => ({ ...prev, aroma: newAromaValue.trim() }))
           setNewAromaValue("")
-      setShowNewAromaInput(false)
-      if (errors.aroma) {
-        setErrors(prev => ({ ...prev, aroma: undefined }))
+          setShowNewAromaInput(false)
+          if (errors.aroma) {
+            setErrors(prev => ({ ...prev, aroma: undefined }))
+          }
+          console.log(`✅ Aroma "${newAromaValue.trim()}" guardado para marca "${formData.marca}" en categoría "${formData.category}"`)
+        } else {
+          console.error('Error al guardar el aroma')
+          const newAroma = { value: newAromaValue.trim(), label: newAromaValue.trim() }
+          setAromas(prev => [...prev, newAroma])
+          setFormData(prev => ({ ...prev, aroma: newAromaValue.trim() }))
+          setNewAromaValue("")
+          setShowNewAromaInput(false)
+        }
+      } catch (error) {
+        console.error('Error al guardar aroma:', error)
+        const newAroma = { value: newAromaValue.trim(), label: newAromaValue.trim() }
+        setAromas(prev => [...prev, newAroma])
+        setFormData(prev => ({ ...prev, aroma: newAromaValue.trim() }))
+        setNewAromaValue("")
+        setShowNewAromaInput(false)
       }
-      console.log(`✅ Aroma "${newAromaValue.trim()}" guardado para marca "${formData.marca}" en categoría "${formData.category}"`)
-    } else {
-      console.error('Error al guardar el aroma')
-      // Aún así agregamos el aroma localmente para no interrumpir el flujo
-      const newAroma = { value: newAromaValue.trim(), label: newAromaValue.trim() }
-      setAromas(prev => [...prev, newAroma])
-      setFormData(prev => ({ ...prev, aroma: newAromaValue.trim() }))
-      setNewAromaValue("")
-      setShowNewAromaInput(false)
     }
-  } catch (error) {
-    console.error('Error al guardar aroma:', error)
-    // En caso de error, aún así agregamos localmente
-    const newAroma = { value: newAromaValue.trim(), label: newAromaValue.trim() }
-    setAromas(prev => [...prev, newAroma])
-    setFormData(prev => ({ ...prev, aroma: newAromaValue.trim() }))
-    setNewAromaValue("")
-    setShowNewAromaInput(false)
   }
-}
+
+  const handleAddNewLinea = async () => {
+    if (newLineaValue.trim() && formData.category && formData.marca) {
+      try {
+        // Guardar la línea en la base de datos
+        const response = await fetch(`/api/agregarProd?saveLinea=true&category=${encodeURIComponent(formData.category)}&marca=${encodeURIComponent(formData.marca)}&aroma=${encodeURIComponent(formData.aroma || '')}&linea=${encodeURIComponent(newLineaValue.trim())}`)
+        
+        if (response.ok) {
+          const newLinea = { value: newLineaValue.trim(), label: newLineaValue.trim() }
+          setLineas(prev => [...prev, newLinea])
+          setFormData(prev => ({ ...prev, linea: newLineaValue.trim() }))
+          setNewLineaValue("")
+          setShowNewLineaInput(false)
+          if (errors.linea) {
+            setErrors(prev => ({ ...prev, linea: undefined }))
+          }
+          console.log(`✅ Línea "${newLineaValue.trim()}" guardada para marca "${formData.marca}" en categoría "${formData.category}"`)
+        } else {
+          console.error('Error al guardar la línea')
+          const newLinea = { value: newLineaValue.trim(), label: newLineaValue.trim() }
+          setLineas(prev => [...prev, newLinea])
+          setFormData(prev => ({ ...prev, linea: newLineaValue.trim() }))
+          setNewLineaValue("")
+          setShowNewLineaInput(false)
+        }
+      } catch (error) {
+        console.error('Error al guardar línea:', error)
+        const newLinea = { value: newLineaValue.trim(), label: newLineaValue.trim() }
+        setLineas(prev => [...prev, newLinea])
+        setFormData(prev => ({ ...prev, linea: newLineaValue.trim() }))
+        setNewLineaValue("")
+        setShowNewLineaInput(false)
+      }
+    }
   }
 
   const handleCancelNewCategory = () => {
@@ -404,9 +529,14 @@ export function AgregarProductoForm() {
     setNewAromaValue("")
   }
 
+  const handleCancelNewLinea = () => {
+    setShowNewLineaInput(false)
+    setNewLineaValue("")
+  }
+
   const handleSingleImageMode = () => {
     setUploadMode('single')
-    setFormData(prev => ({ ...prev, images: [] })) // Limpiar imágenes existentes
+    setFormData(prev => ({ ...prev, images: [] }))
     if (errors.images) {
       setErrors(prev => ({ ...prev, images: undefined }))
     }
@@ -420,7 +550,7 @@ export function AgregarProductoForm() {
   }
 
   const handleImageUpload = (result: { publicId: string; url: string }) => {
-    if (!result.url) return // Si se elimina la imagen
+    if (!result.url) return
 
     const newImage: UploadedImage = {
       publicId: result.publicId,
@@ -430,11 +560,10 @@ export function AgregarProductoForm() {
     if (uploadMode === 'single') {
       setFormData(prev => ({
         ...prev,
-        images: [newImage] // Reemplazar con una sola imagen
+        images: [newImage]
       }))
     } else if (uploadMode === 'multiple') {
       setFormData(prev => {
-        // Verificar que no exceda el límite de 5 imágenes
         if (prev.images.length >= 5) {
           setErrors(prevErrors => ({
             ...prevErrors,
@@ -450,7 +579,6 @@ export function AgregarProductoForm() {
       })
     }
 
-    // Limpiar errores si había
     if (errors.images) {
       setErrors(prev => ({
         ...prev,
@@ -495,13 +623,14 @@ export function AgregarProductoForm() {
       newErrors.marca = "La marca debe tener al menos 2 caracteres"
     }
 
-    // Validar aroma solo si la categoría es sahumerio
-    if (isSahumerioCategory(formData.category)) {
+    // Validar aroma solo si la categoría requiere aroma
+    if (categoriaRequiereAroma(formData.category)) {
       if (!formData.aroma) {
-        newErrors.aroma = "El aroma es requerido para productos de categoría Sahumerio"
+        newErrors.aroma = `El aroma es requerido para productos de categoría ${formData.category}`
       } else if (formData.aroma.trim().length < 2) {
         newErrors.aroma = "El aroma debe tener al menos 2 caracteres"
       }
+      // La línea es opcional, no se valida
     }
 
     // Validar descripción
@@ -549,8 +678,9 @@ export function AgregarProductoForm() {
         category: formData.category,
         marca: formData.marca,
         aroma: formData.aroma,
-        cantidad: formData.cantidad, // Nueva propiedad
-        shipping: 'Envío Gratis', // Valor por defecto
+        linea: formData.linea, // Nuevo campo: línea
+        cantidad: formData.cantidad,
+        shipping: 'Envío Gratis',
         allImages: formData.images
       })
 
@@ -568,7 +698,8 @@ export function AgregarProductoForm() {
           category: formData.category,
           marca: formData.marca,
           aroma: formData.aroma,
-          cantidad: formData.cantidad, // Nueva propiedad
+          linea: formData.linea, // Nuevo campo: línea
+          cantidad: formData.cantidad,
           shipping: 'Envío Gratis',
           allImages: formData.images
         }),
@@ -607,6 +738,7 @@ export function AgregarProductoForm() {
           category: "",
           marca: "",
           aroma: "",
+          linea: "",
           description: "",
           images: [],
           cantidad: "1"
@@ -867,81 +999,142 @@ export function AgregarProductoForm() {
               )}
             </div>
 
-            {/* Aroma - Solo mostrar si la categoría es sahumerio */}
-            {isSahumerioCategory(formData.category) && (
-              <div className="md:col-span-2">
-                <label htmlFor="aroma" className="block text-sm font-medium text-gray-700 mb-2">
-                  <Flower2 className="w-4 h-4 inline mr-1" />
-                  Aroma <span className="text-red-500">*</span>
-                </label>
-                {!showNewAromaInput ? (
-                  <select
-                    id="aroma"
-                    name="aroma"
-                    value={formData.aroma}
-                    onChange={(e) => handleAromaChange(e.target.value)}
-                    className={`block w-full px-3 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary bg-white ${
-                      errors.aroma ? "border-red-300" : "border-gray-300"
-                    }`}
-                    disabled={!formData.marca || isLoadingOptions}
-                  >
-                    <option value="">
-                      {!formData.marca 
-                        ? "Primero selecciona una marca" 
-                        : aromas.length === 0 
-                          ? "No hay aromas para esta marca"
-                          : "Seleccionar aroma"
-                      }
-                    </option>
-                    {aromas.map((aroma) => (
-                      <option key={aroma.value} value={aroma.value}>
-                        {aroma.label}
+            {/* Aroma - Mostrar para categorías que requieren aroma */}
+            {categoriaRequiereAroma(formData.category) && (
+              <>
+                <div>
+                  <label htmlFor="aroma" className="block text-sm font-medium text-gray-700 mb-2">
+                    <Flower2 className="w-4 h-4 inline mr-1" />
+                    Aroma <span className="text-red-500">*</span>
+                  </label>
+                  {!showNewAromaInput ? (
+                    <select
+                      id="aroma"
+                      name="aroma"
+                      value={formData.aroma}
+                      onChange={(e) => handleAromaChange(e.target.value)}
+                      className={`block w-full px-3 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary bg-white ${
+                        errors.aroma ? "border-red-300" : "border-gray-300"
+                      }`}
+                      disabled={!formData.marca || isLoadingOptions}
+                    >
+                      <option value="">
+                        {!formData.marca 
+                          ? "Primero selecciona una marca" 
+                          : aromas.length === 0 
+                            ? "No hay aromas para esta marca"
+                            : "Seleccionar aroma"
+                        }
                       </option>
-                    ))}
-                    <option value="add-new">➕ Agregar nuevo aroma</option>
-                  </select>
-                ) : (
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      value={newAromaValue}
-                      onChange={(e) => setNewAromaValue(e.target.value)}
-                      placeholder="Nuevo aroma (ej: Lavanda, Rosa, Sándalo)"
-                      className="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary"
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddNewAroma()}
-                    />
-                    <Button
-                      type="button"
-                      onClick={handleAddNewAroma}
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={handleCancelNewAroma}
-                      size="sm"
-                      variant="outline"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
+                      {aromas.map((aroma) => (
+                        <option key={aroma.value} value={aroma.value}>
+                          {aroma.label}
+                        </option>
+                      ))}
+                      <option value="add-new">➕ Agregar nuevo aroma</option>
+                    </select>
+                  ) : (
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={newAromaValue}
+                        onChange={(e) => setNewAromaValue(e.target.value)}
+                        placeholder="Nuevo aroma (ej: Lavanda, Rosa, Sándalo)"
+                        className="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary"
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddNewAroma()}
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleAddNewAroma}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handleCancelNewAroma}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                  {errors.aroma && <p className="mt-1 text-sm text-red-600">{errors.aroma}</p>}
+                  {formData.marca && aromas.length === 0 && !showNewAromaInput && (
+                    <p className="mt-1 text-xs text-blue-600">
+                      Agrega el primer aroma para esta marca de {formData.category.toLowerCase()}.
+                    </p>
+                  )}
+                </div>
+
+                {/* Línea - Mostrar para categorías que permiten línea */}
+                {categoriaPermiteLinea(formData.category) && (
+                  <div>
+                    <label htmlFor="linea" className="block text-sm font-medium text-gray-700 mb-2">
+                      <Layers className="w-4 h-4 inline mr-1" />
+                      Línea (Opcional)
+                    </label>
+                    {!showNewLineaInput ? (
+                      <select
+                        id="linea"
+                        name="linea"
+                        value={formData.linea}
+                        onChange={(e) => handleLineaChange(e.target.value)}
+                        className={`block w-full px-3 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary bg-white ${
+                          errors.linea ? "border-red-300" : "border-gray-300"
+                        }`}
+                        disabled={!formData.marca || isLoadingOptions}
+                      >
+                        <option value="">Seleccionar línea (opcional)</option>
+                        {lineas.map((linea) => (
+                          <option key={linea.value} value={linea.value}>
+                            {linea.label}
+                          </option>
+                        ))}
+                        <option value="add-new">➕ Agregar nueva línea</option>
+                      </select>
+                    ) : (
+                      <div className="flex space-x-2">
+                        <input
+                          type="text"
+                          value={newLineaValue}
+                          onChange={(e) => setNewLineaValue(e.target.value)}
+                          placeholder="Nueva línea (ej: Clásica, Premium, Especial)"
+                          className="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary"
+                          onKeyPress={(e) => e.key === 'Enter' && handleAddNewLinea()}
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleAddNewLinea}
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handleCancelNewLinea}
+                          size="sm"
+                          variant="outline"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                    {errors.linea && <p className="mt-1 text-sm text-red-600">{errors.linea}</p>}
+                    <p className="mt-1 text-xs text-gray-500">
+                      La línea es opcional. Útil para marcas que tienen diferentes líneas de productos.
+                    </p>
                   </div>
                 )}
-                {errors.aroma && <p className="mt-1 text-sm text-red-600">{errors.aroma}</p>}
-                {formData.marca && aromas.length === 0 && !showNewAromaInput && (
-                  <p className="mt-1 text-xs text-blue-600">
-                    Agrega el primer aroma para esta marca de sahumerios.
-                  </p>
-                )}
-                <p className="mt-1 text-xs text-gray-500">
-                  El aroma es requerido para productos de categoría Sahumerio.
-                </p>
-              </div>
+              </>
             )}
           </div>
         </div>
 
+        {/* Resto del formulario (Descripción, Imágenes, Botones) se mantiene igual */}
         {/* Descripción */}
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">

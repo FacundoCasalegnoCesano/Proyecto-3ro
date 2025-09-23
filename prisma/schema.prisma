@@ -14,10 +14,11 @@ model Products {
   precio        String
   imgUrl        String
   imgPublicId   String
-  category      String? @default("Sin categoría") @db.VarChar(255)
+  category      String? @default("Sin categoría") @db.VarChar(100)
   empresaEnvios Int
-  marca         String? @db.VarChar(255)
-  aroma         String? @db.VarChar(255)
+  Linea         String? @db.VarChar(100)
+  marca         String? @db.VarChar(100)
+  aroma         String? @db.VarChar(100)
   stock         Int     @default(0)
   envios        deliver @relation(fields: [empresaEnvios], references: [id], onDelete: Cascade)
   @@index([empresaEnvios, category])
@@ -27,11 +28,12 @@ model Products {
 // Nueva tabla para gestionar marcas por categoría
 model CategoryMarca {
   id       Int    @id @default(autoincrement())
-  category String @db.VarChar(255)
-  marca    String @db.VarChar(255)
-  aroma    String @db.VarChar(255)
+  category String @db.VarChar(100)
+  marca    String @db.VarChar(100)
+  Linea    String @db.VarChar(100)
+  aroma    String @db.VarChar(100)
 
-  @@unique([category, marca, aroma]) // Evitar duplicados de la misma marca en la misma categoría
+  @@unique([category, marca, aroma, Linea]) // Evitar duplicados de la misma marca en la misma categoría
   @@map("category_marca")
 }
 

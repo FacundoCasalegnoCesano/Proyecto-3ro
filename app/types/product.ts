@@ -1,4 +1,9 @@
 export interface Product {
+  tamaño: boolean
+  cantidad: boolean
+  color: boolean
+  tipo: boolean
+  piedra: boolean
   linea: string | boolean
   metadata: any
   marca: string

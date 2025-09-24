@@ -19,42 +19,148 @@ export async function POST(request: NextRequest) {
       aroma,
       cantidad,
       allImages,
-      linea
+      linea,
+      tamaño,
+      color,
+      tipo,
+      piedra
     } = body
 
     // Validar campos requeridos básicos
-    if (!nombre || !precio || !descripcion || !imgUrl || !category || !marca || !cantidad) {
+    if (!nombre || !precio || !descripcion || !imgUrl || !category || !cantidad) {
       console.log('❌ Faltan campos requeridos')
       return NextResponse.json(
         {
           success: false,
-          error: 'Faltan campos requeridos: nombre, precio, descripcion, imgUrl, category, marca, cantidad'
+          error: 'Faltan campos requeridos: nombre, precio, descripcion, imgUrl, category, cantidad'
         },
         { status: 400 }
       )
     }
 
-    // Validar categorías que requieren aroma
-    const categoriasQueRequierenAroma = [
-      'sahumerio',
-      'rocio aurico',
-      'aromatizante para auto',
-      'aromatizante de ambiente',
-      'incienso',
-      'esencia'
-    ];
+    // Determinar campos requeridos según la categoría
+    const getCamposRequeridos = (category: string) => {
+      if (!category) return { marca: false, aroma: false, linea: false, tamaño: false, color: false, tipo: false, piedra: false, cantidad: false }
+      
+      const cat = category.toLowerCase();
+      
+      if (cat.includes('rocio aurico')) {
+        return { marca: true, aroma: true, linea: true, tamaño: false, color: false, tipo: false, piedra: false, cantidad: false }
+      }
+      if (cat.includes('aromatizante de ambiente') || cat.includes('aromatizante de ambientes')) {
+        return { marca: true, aroma: true, linea: true, tamaño: false, color: false, tipo: false, piedra: false, cantidad: false }
+      }
+      if (cat.includes('aromatizante para auto') || cat.includes('aromatizante de auto')) {
+        return { marca: true, aroma: true, linea: true, tamaño: false, color: false, tipo: false, piedra: false, cantidad: false }
+      }
+      if (cat.includes('esencia')) {
+        return { marca: true, aroma: true, linea: true, tamaño: false, color: false, tipo: false, piedra: false, cantidad: false }
+      }
+      if (cat.includes('incienso')) {
+        return { marca: true, aroma: true, linea: true, tamaño: false, color: false, tipo: false, piedra: false, cantidad: false }
+      }
+      if (cat.includes('bombas de humo')) {
+        return { marca: true, aroma: true, linea: true, tamaño: false, color: false, tipo: false, piedra: false, cantidad: false }
+      }
+      if (cat.includes('vela')) {
+        return { marca: true, aroma: false, linea: false, tamaño: true, color: false, tipo: false, piedra: false, cantidad: true }
+      }
+      if (cat.includes('cascada de humo')) {
+        return { marca: false, aroma: false, linea: false, tamaño: true, color: false, tipo: false, piedra: false, cantidad: false }
+      }
+      if (cat.includes('estatua')) {
+        return { marca: false, aroma: false, linea: false, tamaño: true, color: false, tipo: false, piedra: false, cantidad: false }
+      }
+      if (cat.includes('lampara de sal')) {
+        return { marca: false, aroma: false, linea: false, tamaño: true, color: true, tipo: false, piedra: false, cantidad: false }
+      }
+      if (cat.includes('porta sahumerios')) {
+        return { marca: false, aroma: false, linea: false, tamaño: true, color: false, tipo: false, piedra: false, cantidad: false }
+      }
+      if (cat.includes('accesorios')) {
+        return { marca: false, aroma: false, linea: false, tamaño: false, color: false, tipo: true, piedra: false, cantidad: false }
+      }
+      // Para sahumerios y otros por defecto
+      return { marca: true, aroma: true, linea: true, tamaño: false, color: false, tipo: false, piedra: false, cantidad: false }
+    }
 
-    const categoriaRequiereAroma = categoriasQueRequierenAroma.some(cat => 
-      category.toLowerCase().includes(cat.toLowerCase())
-    );
+    // Función para determinar si se requiere piedra (solo para collares en accesorios)
+    const requierePiedra = (category: string, tipo: string) => {
+      return category.toLowerCase().includes('accesorios') && 
+             tipo && tipo.toLowerCase().includes('collar')
+    }
 
-    if (categoriaRequiereAroma) {
-      if (!aroma) {
-        console.log('❌ Aroma requerido para categoría:', category)
+    const camposRequeridos = getCamposRequeridos(category)
+
+    // Validar campos según la categoría
+    if (camposRequeridos.marca && !marca) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'La marca es requerida para esta categoría'
+        },
+        { status: 400 }
+      )
+    }
+
+    if (camposRequeridos.aroma && !aroma) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `El aroma es requerido para productos de categoría ${category}`
+        },
+        { status: 400 }
+      )
+    }
+
+    if (camposRequeridos.tamaño && !tamaño) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `El tamaño es requerido para productos de categoría ${category}`
+        },
+        { status: 400 }
+      )
+    }
+
+    if (camposRequeridos.color && !color) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `El color es requerido para productos de categoría ${category}`
+        },
+        { status: 400 }
+      )
+    }
+
+    if (camposRequeridos.tipo && !tipo) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `El tipo es requerido para productos de categoría ${category}`
+        },
+        { status: 400 }
+      )
+    }
+
+    // Validar cantidad solo si la categoría requiere cantidad (velas)
+    if (camposRequeridos.cantidad && !cantidad) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `La cantidad por pack es requerida para productos de categoría ${category}`
+        },
+        { status: 400 }
+      )
+    }
+
+    // Validar piedra solo si es collar en accesorios
+    if (requierePiedra(category, tipo || '')) {
+      if (!piedra) {
         return NextResponse.json(
           {
             success: false,
-            error: `El aroma es requerido para productos de categoría ${category}`
+            error: 'El tipo de piedra es requerido para collares'
           },
           { status: 400 }
         )
@@ -90,33 +196,40 @@ export async function POST(request: NextRequest) {
     // Buscar producto existente
     let productoExistente = null
     
-    if (categoriaRequiereAroma && aroma) {
-      console.log('🔍 Buscando producto existente con categoría:', category, 'marca:', marca, 'aroma:', aroma, 'línea:', linea)
-      
-      const whereClause: any = {
-        category: category.trim(),
-        marca: marca.trim(),
-        aroma: aroma.trim()
-      }
-
-      if (linea && linea.trim() !== '') {
-        whereClause.Linea = linea.trim();
-      }
-
-      productoExistente = await prisma.products.findFirst({
-        where: whereClause
-      })
-    } else {
-      console.log('🔍 Buscando producto existente con categoría:', category, 'marca:', marca, 'nombre:', nombre)
-      
-      productoExistente = await prisma.products.findFirst({
-        where: {
-          category: category.trim(),
-          marca: marca.trim(),
-          nombre: nombre.trim()
-        }
-      })
+    console.log('🔍 Buscando producto existente con:', {
+      category,
+      marca,
+      aroma,
+      linea,
+      tamaño,
+      color,
+      tipo,
+      piedra,
+      nombre,
+      cantidad: camposRequeridos.cantidad ? cantidad : undefined
+    })
+    
+    const whereClause: any = {
+      category: category.trim(),
+      nombre: nombre.trim()
     }
+
+    // Agregar campos condicionales según lo que esté presente
+    if (marca) whereClause.marca = marca.trim()
+    if (aroma) whereClause.aroma = aroma.trim()
+    if (linea) whereClause.Linea = linea.trim()
+    if (tamaño) whereClause.tamaño = tamaño.trim()
+    if (color) whereClause.color = color.trim()
+    if (tipo) whereClause.tipo = tipo.trim()
+    if (piedra) whereClause.tipoPiedra = piedra.trim()
+    // Para velas, también buscar por cantidad
+    if (camposRequeridos.cantidad) {
+      whereClause.cantidad = cantidad
+    }
+
+    productoExistente = await prisma.products.findFirst({
+      where: whereClause
+    })
 
     // Si existe un producto, incrementar su stock
     if (productoExistente) {
@@ -132,7 +245,12 @@ export async function POST(request: NextRequest) {
           descripcion: descripcion.trim(),
           imgUrl: imgUrl,
           imgPublicId: imgPublicId || productoExistente.imgPublicId,
-          Linea: linea?.trim() || productoExistente.Linea
+          Linea: linea?.trim() || productoExistente.Linea,
+          tamaño: tamaño?.trim() || productoExistente.tamaño,
+          color: color?.trim() || productoExistente.color,
+          tipo: tipo?.trim() || productoExistente.tipo,
+          tipoPiedra: piedra?.trim() || productoExistente.tipoPiedra,
+          cantidad: camposRequeridos.cantidad ? cantidad : productoExistente.cantidad
         },
         include: {
           envios: {
@@ -159,28 +277,30 @@ export async function POST(request: NextRequest) {
 
     // Si no existe un producto similar, crear nuevo producto
     
-    // Guardar la relación categoría-marca-aroma-línea
-    try {
-      await prisma.categoryMarca.upsert({
-        where: {
-          category_marca_aroma_Linea: {
+    // Guardar la relación categoría-marca-aroma-línea (solo si aplica)
+    if (marca) {
+      try {
+        await prisma.categoryMarca.upsert({
+          where: {
+            category_marca_aroma_Linea: {
+              category: category.trim(),
+              marca: marca.trim(),
+              aroma: aroma?.trim() || '',
+              Linea: linea?.trim() || ''
+            }
+          },
+          update: {},
+          create: {
             category: category.trim(),
             marca: marca.trim(),
             aroma: aroma?.trim() || '',
             Linea: linea?.trim() || ''
           }
-        },
-        update: {},
-        create: {
-          category: category.trim(),
-          marca: marca.trim(),
-          aroma: aroma?.trim() || '',
-          Linea: linea?.trim() || ''
-        }
-      })
-      console.log('✅ Relación categoría-marca-aroma-línea guardada')
-    } catch (error) {
-      console.log('⚠️ Error al guardar relación (puede ser duplicado):', error)
+        })
+        console.log('✅ Relación categoría-marca-aroma-línea guardada')
+      } catch (error) {
+        console.log('⚠️ Error al guardar relación (puede ser duplicado):', error)
+      }
     }
 
     // Buscar o crear empresa de envíos
@@ -233,9 +353,14 @@ export async function POST(request: NextRequest) {
         imgUrl: imgUrl,
         imgPublicId: imgPublicId || '',
         category: category.trim(),
-        marca: marca.trim(),
+        marca: marca?.trim() || null,
         aroma: aroma?.trim() || null,
         Linea: linea?.trim() || null,
+        tamaño: tamaño?.trim() || null,
+        color: color?.trim() || null,
+        tipo: tipo?.trim() || null,
+        tipoPiedra: piedra?.trim() || null,
+        cantidad: camposRequeridos.cantidad ? cantidad : null,
         stock: cantidadNumerica,
         empresaEnvios: empresaEnviosId
       },
@@ -279,6 +404,10 @@ export async function GET(request: NextRequest) {
     const marca = searchParams.get('marca')
     const aroma = searchParams.get('aroma')
     const linea = searchParams.get('linea')
+    const tamaño = searchParams.get('tamaño')
+    const color = searchParams.get('color')
+    const tipo = searchParams.get('tipo')
+    const piedra = searchParams.get('piedra')
     const search = searchParams.get('search')
     const sort = searchParams.get('sort')
     const limit = searchParams.get('limit')
@@ -716,6 +845,11 @@ export async function GET(request: NextRequest) {
         marca: producto.marca || '',
         aroma: producto.aroma || '',
         linea: producto.Linea || '',
+        tamaño: producto.tamaño || '',
+        color: producto.color || '',
+        tipo: producto.tipo || '',
+        piedra: producto.tipoPiedra || '',
+        cantidad: producto.cantidad || '',
         stock: producto.stock,
         status: calculateStatus(producto.stock),
         shipping: producto.envios?.empresa?.nombre || 'Envío Gratis',
@@ -732,7 +866,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener lista de productos con filtros - SIN LIMIT POR DEFECTO
-    console.log('📦 Obteniendo productos con filtros:', { category, marca, aroma, linea, search, sort, limit })
+    console.log('📦 Obteniendo productos con filtros:', { 
+      category, 
+      marca, 
+      aroma, 
+      linea, 
+      tamaño, 
+      color, 
+      tipo, 
+      piedra, 
+      search, 
+      sort, 
+      limit 
+    })
 
     const where: any = {}
 
@@ -752,13 +898,34 @@ export async function GET(request: NextRequest) {
       where.Linea = linea
     }
 
+    if (tamaño && tamaño !== 'all' && tamaño !== 'null') {
+      where.tamaño = tamaño
+    }
+
+    if (color && color !== 'all' && color !== 'null') {
+      where.color = color
+    }
+
+    if (tipo && tipo !== 'all' && tipo !== 'null') {
+      where.tipo = tipo
+    }
+
+    if (piedra && piedra !== 'all' && piedra !== 'null') {
+      where.tipoPiedra = piedra
+    }
+
     if (search) {
       where.OR = [
         { nombre: { contains: search, mode: 'insensitive' } },
         { descripcion: { contains: search, mode: 'insensitive' } },
         { marca: { contains: search, mode: 'insensitive' } },
         { aroma: { contains: search, mode: 'insensitive' } },
-        { Linea: { contains: search, mode: 'insensitive' } }
+        { Linea: { contains: search, mode: 'insensitive' } },
+        { tamaño: { contains: search, mode: 'insensitive' } },
+        { color: { contains: search, mode: 'insensitive' } },
+        { tipo: { contains: search, mode: 'insensitive' } },
+        { tipoPiedra: { contains: search, mode: 'insensitive' } },
+        { cantidad: { contains: search, mode: 'insensitive' } }
       ]
     }
 
@@ -813,6 +980,11 @@ export async function GET(request: NextRequest) {
       marca: producto.marca || '',
       aroma: producto.aroma || '',
       linea: producto.Linea || '',
+      tamaño: producto.tamaño || '',
+      color: producto.color || '',
+      tipo: producto.tipo || '',
+      piedra: producto.tipoPiedra || '',
+      cantidad: producto.cantidad || '',
       stock: producto.stock,
       status: calculateStatus(producto.stock),
       shipping: producto.envios?.empresa?.nombre || 'Envío Gratis',
@@ -852,6 +1024,11 @@ export async function PUT(request: NextRequest) {
       marca,
       aroma,
       linea,
+      tamaño,
+      color,
+      tipo,
+      piedra,
+      cantidad,
       stock,
       shipping
     } = body
@@ -940,6 +1117,15 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Determinar si se requiere cantidad según la categoría
+    const getCamposRequeridos = (category: string) => {
+      if (!category) return { cantidad: false }
+      const cat = category.toLowerCase();
+      return { cantidad: cat.includes('vela') }
+    }
+
+    const camposRequeridos = getCamposRequeridos(category || productoExistente.category)
+
     const productoActualizado = await prisma.products.update({
       where: { id: parseInt(id) },
       data: {
@@ -952,6 +1138,11 @@ export async function PUT(request: NextRequest) {
         marca: marca?.trim() || productoExistente.marca,
         aroma: aroma?.trim() || productoExistente.aroma,
         Linea: linea?.trim() || productoExistente.Linea,
+        tamaño: tamaño?.trim() || productoExistente.tamaño,
+        color: color?.trim() || productoExistente.color,
+        tipo: tipo?.trim() || productoExistente.tipo,
+        tipoPiedra: piedra?.trim() || productoExistente.tipoPiedra,
+        cantidad: camposRequeridos.cantidad ? cantidad : productoExistente.cantidad,
         stock: stockFinal,
         empresaEnvios: empresaEnviosId
       },
@@ -1068,6 +1259,11 @@ export async function PATCH(request: NextRequest) {
       marca: productoActualizado.marca || '',
       aroma: productoActualizado.aroma || '',
       linea: productoActualizado.Linea || '',
+      tamaño: productoActualizado.tamaño || '',
+      color: productoActualizado.color || '',
+      tipo: productoActualizado.tipo || '',
+      piedra: productoActualizado.tipoPiedra || '',
+      cantidad: productoActualizado.cantidad || '',
       stock: productoActualizado.stock,
       status: calculateStatus(productoActualizado.stock),
       shipping: productoActualizado.envios?.empresa?.nombre || 'Envío Gratis',

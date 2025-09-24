@@ -11,9 +11,33 @@ interface ProductsGridPageProps {
   sortBy: string
 }
 
+// Interface para el metadata del producto agrupado
+interface ProductMetadata {
+  isGrouped?: boolean;
+  isLineaGroup?: boolean;
+  totalVariantes?: number;
+  totalAromas?: number;
+  aromas?: string[];
+  marca?: string;
+  linea?: string;
+  category?: string;
+  grupoCompleto?: Product[];
+  caracteristicas?: {
+    tieneMarca: boolean;
+    tieneLinea: boolean;
+    tieneAromas: boolean;
+    tieneCategoria: boolean;
+  };
+}
+
+// Tipo para producto con metadata extendido
+type ProductWithMetadata = Product & {
+  metadata?: ProductMetadata;
+};
+
 export function ProductsGridPage({ selectedCategory, searchQuery, sortBy }: ProductsGridPageProps) {
   const [currentPage, setCurrentPage] = useState(1)
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<ProductWithMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const productsPerPage = 6
@@ -30,27 +54,59 @@ export function ProductsGridPage({ selectedCategory, searchQuery, sortBy }: Prod
 
   // Función para verificar si tiene línea específica (no vacía y no "sin-linea")
   const tieneLineaEspecifica = (linea: string | boolean | undefined | null): boolean => {
-    return !!linea && 
-           typeof linea === 'string' && 
-           linea.trim() !== '' && 
-           linea.trim().toLowerCase() !== 'sin-linea' &&
-           linea.trim().toLowerCase() !== 'sin línea' &&
-           linea.trim().toLowerCase() !== 'sin_linea';
+    if (!linea || typeof linea !== 'string') return false;
+    const lineaStr = linea.trim().toLowerCase();
+    return lineaStr !== '' && 
+           lineaStr !== 'sin-linea' &&
+           lineaStr !== 'sin línea' &&
+           lineaStr !== 'sin_linea';
+  }
+
+  // Función para verificar si tiene marca específica (no vacía y no "sin-marca")
+  const tieneMarcaEspecifica = (marca: string | boolean | undefined | null): boolean => {
+    if (!marca || typeof marca !== 'string') return false;
+    const marcaStr = marca.trim().toLowerCase();
+    return marcaStr !== '' && 
+           marcaStr !== 'sin-marca' &&
+           marcaStr !== 'sin marca' &&
+           marcaStr !== 'sin_marca';
+  }
+
+  // Función para verificar si tiene aroma específico (no vacío)
+  const tieneAromaEspecifico = (aroma: string | boolean | undefined | null): boolean => {
+    if (!aroma || typeof aroma !== 'string') return false;
+    const aromaStr = aroma.trim().toLowerCase();
+    return aromaStr !== '' && 
+           aromaStr !== 'sin-aroma' &&
+           aromaStr !== 'sin aroma' &&
+           aromaStr !== 'sin_aroma';
+  }
+
+  // Función para verificar si tiene categoría específica (no vacía)
+  const tieneCategoriaEspecifica = (categoria: string | boolean | undefined | null): boolean => {
+    if (!categoria || typeof categoria !== 'string') return false;
+    return categoria.trim() !== '';
   }
 
   // Función para formatear la línea (solo si tiene línea específica)
   const formatearLinea = (linea: string | boolean | undefined | null): string => {
     if (!tieneLineaEspecifica(linea)) return '';
-    return capitalizarPalabras(linea);
+    return capitalizarPalabras(linea as string);
+  }
+
+  // Función para formatear el aroma (solo si tiene aroma específico)
+  const formatearAroma = (aroma: string | boolean | undefined | null): string => {
+    if (!tieneAromaEspecifico(aroma)) return '';
+    return capitalizarPalabras(aroma as string);
   }
 
   // Función para verificar si un producto puede ser agrupado (tiene al menos 2 características)
   const puedeSerAgrupado = (product: Product): boolean => {
     const caracteristicas = [
-      product.marca && typeof product.marca === 'string' && product.marca.trim() !== '',
-      product.category && typeof product.category === 'string' && product.category.trim() !== '',
-      tieneLineaEspecifica(product.linea), // Usar la función mejorada
-      product.aroma && typeof product.aroma === 'string' && product.aroma.trim() !== ''
+      tieneMarcaEspecifica(product.marca),
+      tieneCategoriaEspecifica(product.category),
+      tieneLineaEspecifica(product.linea),
+      tieneAromaEspecifico(product.aroma)
     ];
     
     const cantidadCaracteristicas = caracteristicas.filter(Boolean).length;
@@ -61,36 +117,36 @@ export function ProductsGridPage({ selectedCategory, searchQuery, sortBy }: Prod
   const obtenerClaveAgrupacion = (product: Product): string => {
     const partes: string[] = [];
     
-    // Siempre incluir categoría si está disponible (con validación de tipo)
-    if (product.category && typeof product.category === 'string' && product.category.trim() !== '') {
-      partes.push(product.category.toLowerCase());
+    // Incluir categoría si está disponible
+    if (tieneCategoriaEspecifica(product.category)) {
+      partes.push((product.category as string).toLowerCase().trim());
     } else {
       partes.push('sin-categoria');
     }
     
-    // Incluir marca si está disponible (con validación de tipo)
-    if (product.marca && typeof product.marca === 'string' && product.marca.trim() !== '') {
-      partes.push(product.marca.toLowerCase());
+    // Incluir marca solo si tiene marca específica
+    if (tieneMarcaEspecifica(product.marca)) {
+      partes.push((product.marca as string).toLowerCase().trim());
     } else {
       partes.push('sin-marca');
     }
     
-    // Incluir línea solo si tiene línea específica (usando función mejorada)
+    // Incluir línea solo si tiene línea específica
     if (tieneLineaEspecifica(product.linea)) {
-      partes.push((product.linea as string).toLowerCase());
+      partes.push((product.linea as string).toLowerCase().trim());
     } else {
-      partes.push('sin-linea-especifica');
+      partes.push('sin-linea');
     }
     
     return partes.join('-');
   }
 
   // Función para agrupar productos por características comunes
-  const groupProductsByCharacteristics = (products: Product[]) => {
+  const groupProductsByCharacteristics = (products: Product[]): ProductWithMetadata[] => {
     const grouped: { [key: string]: Product[] } = {}
     const nonGrouped: Product[] = []
 
-    products.forEach(product => {
+    products.forEach((product: Product) => {
       if (puedeSerAgrupado(product)) {
         const key = obtenerClaveAgrupacion(product)
         
@@ -104,7 +160,7 @@ export function ProductsGridPage({ selectedCategory, searchQuery, sortBy }: Prod
     })
 
     // Para cada grupo, seleccionar un producto representativo
-    const representativeProducts: Product[] = []
+    const representativeProducts: ProductWithMetadata[] = []
     
     Object.entries(grouped).forEach(([key, groupedProducts]) => {
       if (groupedProducts.length > 0) {
@@ -115,97 +171,114 @@ export function ProductsGridPage({ selectedCategory, searchQuery, sortBy }: Prod
         const sortedByStock = groupedProducts.sort((a, b) => b.stock - a.stock)
         const representative = sortedByStock[0]
         
-        // Capitalizar marca y categoría
-        const marcaCapitalizada = capitalizarPalabras(marca === 'sin-marca' ? '' : marca);
-        const categoriaCapitalizada = capitalizarPalabras(category === 'sin-categoria' ? '' : category);
+        // Capitalizar solo si existen realmente
+        const categoriaCapitalizada = (category !== 'sin-categoria') ? capitalizarPalabras(category) : '';
+        const marcaCapitalizada = (marca !== 'sin-marca') ? capitalizarPalabras(marca) : '';
+        const lineaCapitalizada = (linea !== 'sin-linea') ? capitalizarPalabras(linea) : '';
         
-        // Formatear línea solo si tiene línea específica
-        const tieneLinea = linea !== 'sin-linea-especifica';
-        const lineaFormateada = tieneLinea ? formatearLinea(linea) : '';
-        
-        // Contar aromas únicos si el grupo tiene productos con aromas
+        // Contar aromas únicos en el grupo
         const aromasUnicos = new Set<string>();
         groupedProducts.forEach(p => {
-          if (p.aroma && typeof p.aroma === 'string' && p.aroma.trim() !== '') {
-            aromasUnicos.add(p.aroma.trim());
+          if (tieneAromaEspecifico(p.aroma)) {
+            aromasUnicos.add(formatearAroma(p.aroma));
           }
         });
         
         const cantidadAromas = aromasUnicos.size;
+        const listaAromas = Array.from(aromasUnicos).sort();
         
+        // Determinar qué características tiene el grupo
+        const tieneCategoria = category !== 'sin-categoria';
+        const tieneMarca = marca !== 'sin-marca';
+        const tieneLinea = linea !== 'sin-linea';
+        const tieneAromas = cantidadAromas > 0;
+
         // Crear nombre y descripción según las características disponibles
         let nombreGrupo = '';
         let descripcionGrupo = '';
-        
-        // LÓGICA MEJORADA: Solo mostrar categoría y marca si no hay línea
-        if (categoriaCapitalizada && marcaCapitalizada) {
-          if (tieneLinea && lineaFormateada) {
-            // Con categoría, marca y línea
-            if (cantidadAromas > 0) {
-              nombreGrupo = `${categoriaCapitalizada} ${marcaCapitalizada} - ${lineaFormateada} (${cantidadAromas} aromas)`;
-              descripcionGrupo = `${categoriaCapitalizada} • ${marcaCapitalizada} • ${lineaFormateada} • ${cantidadAromas} aroma${cantidadAromas > 1 ? 's' : ''} disponible${cantidadAromas > 1 ? 's' : ''}`;
+
+        // LÓGICA DE NOMBRES MEJORADA - Similar a sahumerios/rocío áuricos/aromatizantes
+        if (tieneCategoria && tieneMarca) {
+          if (tieneLinea) {
+            // Caso: Categoría + Marca + Línea (ej: "Sahumerios Hem - Clásicos")
+            if (tieneAromas) {
+              nombreGrupo = `${categoriaCapitalizada} ${marcaCapitalizada} - ${lineaCapitalizada}`;
+              descripcionGrupo = `${cantidadAromas} aroma${cantidadAromas > 1 ? 's' : ''} disponible${cantidadAromas > 1 ? 's' : ''}`;
             } else {
-              nombreGrupo = `${categoriaCapitalizada} ${marcaCapitalizada} - ${lineaFormateada} (${groupedProducts.length} variantes)`;
-              descripcionGrupo = `${categoriaCapitalizada} • ${marcaCapitalizada} • ${lineaFormateada} • ${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''} disponible${groupedProducts.length > 1 ? 's' : ''}`;
+              nombreGrupo = `${categoriaCapitalizada} ${marcaCapitalizada} - ${lineaCapitalizada}`;
+              descripcionGrupo = `${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''} disponible${groupedProducts.length > 1 ? 's' : ''}`;
             }
           } else {
-            // SOLO categoría y marca (SIN LÍNEA) - ESTO ES LO QUE QUERÍAS
-            if (cantidadAromas > 0) {
-              nombreGrupo = `${categoriaCapitalizada} ${marcaCapitalizada} (${cantidadAromas} aromas)`;
-              descripcionGrupo = `${categoriaCapitalizada} • ${marcaCapitalizada} • ${cantidadAromas} aroma${cantidadAromas > 1 ? 's' : ''} disponible${cantidadAromas > 1 ? 's' : ''}`;
+            // Caso: Categoría + Marca (ej: "Rocío Áurico Babalú")
+            if (tieneAromas) {
+              nombreGrupo = `${categoriaCapitalizada} ${marcaCapitalizada}`;
+              descripcionGrupo = `${cantidadAromas} aroma${cantidadAromas > 1 ? 's' : ''} disponible${cantidadAromas > 1 ? 's' : ''}`;
             } else {
-              nombreGrupo = `${categoriaCapitalizada} ${marcaCapitalizada} (${groupedProducts.length} variantes)`;
-              descripcionGrupo = `${categoriaCapitalizada} • ${marcaCapitalizada} • ${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''} disponible${groupedProducts.length > 1 ? 's' : ''}`;
+              nombreGrupo = `${categoriaCapitalizada} ${marcaCapitalizada}`;
+              descripcionGrupo = `${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''} disponible${groupedProducts.length > 1 ? 's' : ''}`;
             }
           }
-        } else if (categoriaCapitalizada) {
-          // Si solo tenemos categoría
-          if (tieneLinea && lineaFormateada) {
-            nombreGrupo = `${categoriaCapitalizada} - ${lineaFormateada} (${groupedProducts.length} variantes)`;
-            descripcionGrupo = `${categoriaCapitalizada} • ${lineaFormateada} • ${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''} disponible${groupedProducts.length > 1 ? 's' : ''}`;
+        } else if (tieneCategoria && !tieneMarca) {
+          // Caso: Solo categoría (ej: "Velas")
+          if (tieneLinea) {
+            nombreGrupo = `${categoriaCapitalizada} - ${lineaCapitalizada}`;
+            descripcionGrupo = `${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''} disponible${groupedProducts.length > 1 ? 's' : ''}`;
           } else {
-            // Solo categoría, sin línea
-            nombreGrupo = `${categoriaCapitalizada} (${groupedProducts.length} variantes)`;
-            descripcionGrupo = `${categoriaCapitalizada} • ${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''} disponible${groupedProducts.length > 1 ? 's' : ''}`;
+            nombreGrupo = categoriaCapitalizada;
+            descripcionGrupo = `${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''} disponible${groupedProducts.length > 1 ? 's' : ''}`;
           }
-        } else if (marcaCapitalizada) {
-          // Si solo tenemos marca
-          if (tieneLinea && lineaFormateada) {
-            nombreGrupo = `${marcaCapitalizada} - ${lineaFormateada} (${groupedProducts.length} variantes)`;
-            descripcionGrupo = `${marcaCapitalizada} • ${lineaFormateada} • ${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''} disponible${groupedProducts.length > 1 ? 's' : ''}`;
+        } else if (!tieneCategoria && tieneMarca) {
+          // Caso: Solo marca (raro, pero posible)
+          if (tieneLinea) {
+            nombreGrupo = `${marcaCapitalizada} - ${lineaCapitalizada}`;
+            descripcionGrupo = `${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''} disponible${groupedProducts.length > 1 ? 's' : ''}`;
           } else {
-            // Solo marca, sin línea
-            nombreGrupo = `${marcaCapitalizada} (${groupedProducts.length} variantes)`;
-            descripcionGrupo = `${marcaCapitalizada} • ${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''} disponible${groupedProducts.length > 1 ? 's' : ''}`;
+            nombreGrupo = marcaCapitalizada;
+            descripcionGrupo = `${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''} disponible${groupedProducts.length > 1 ? 's' : ''}`;
           }
+        } else {
+          // Caso: Sin categoría ni marca (muy raro)
+          if (tieneLinea) {
+            nombreGrupo = lineaCapitalizada;
+          } else {
+            nombreGrupo = `Productos Variados`;
+          }
+          descripcionGrupo = `${groupedProducts.length} variante${groupedProducts.length > 1 ? 's' : ''}`;
         }
-        
-        // Crear un producto "representativo" con información adicional
-        const enhancedProduct: Product = {
+
+        // Usar la imagen del producto representativo
+        const imagenRepresentativa = representative.image || representative.src;
+
+        // Crear un producto "representativo" con información del grupo
+        const enhancedProduct: ProductWithMetadata = {
           ...representative,
+          id: representative.id, // Mantener el ID numérico original
           name: nombreGrupo,
           description: descripcionGrupo,
-          // QUITAR EL PRECIO para productos agrupados
-          price: '', // Precio vacío para que no se muestre en la card
-          // Limpiar línea si no es específica
-          linea: tieneLinea ? lineaFormateada : '', // Vacío si no tiene línea específica
-          // Mantener información de agrupación para uso posterior
+          price: '', // Precio vacío para productos agrupados
+          image: imagenRepresentativa,
+          src: imagenRepresentativa,
+          marca: marcaCapitalizada,
+          linea: lineaCapitalizada,
+          category: categoriaCapitalizada,
+          aroma: tieneAromas ? listaAromas.join(', ') : '',
+          
+          // Metadata para identificar el grupo
           metadata: {
             isGrouped: true,
+            isLineaGroup: true,
             totalVariantes: groupedProducts.length,
             totalAromas: cantidadAromas,
-            marca: marcaCapitalizada,
-            linea: tieneLinea ? lineaFormateada : undefined, // undefined si no tiene línea
-            category: categoriaCapitalizada,
-            // Indicar que es un producto agrupado (sin botón de agregar)
-            isLineaGroup: true,
-            // Información adicional para el product-detail
+            aromas: listaAromas,
+            marca: marcaCapitalizada || undefined,
+            linea: lineaCapitalizada || undefined,
+            category: categoriaCapitalizada || undefined,
             grupoCompleto: groupedProducts,
             caracteristicas: {
-              tieneMarca: !!marcaCapitalizada,
-              tieneLinea: tieneLinea && !!lineaFormateada,
-              tieneAromas: cantidadAromas > 0,
-              tieneCategoria: !!categoriaCapitalizada
+              tieneMarca,
+              tieneLinea,
+              tieneAromas,
+              tieneCategoria
             }
           }
         }
@@ -214,15 +287,16 @@ export function ProductsGridPage({ selectedCategory, searchQuery, sortBy }: Prod
       }
     })
 
-    // Combinar productos representativos con no agrupados (capitalizando nombres)
-    const nonGroupedCapitalizados = nonGrouped.map(product => ({
+    // Productos no agrupados - capitalizar nombres y limpiar campos vacíos
+    const nonGroupedCapitalizados: ProductWithMetadata[] = nonGrouped.map(product => ({
       ...product,
       name: capitalizarPalabras(product.name),
-      marca: product.marca ? capitalizarPalabras(product.marca) : product.marca,
-      // Para productos no agrupados, limpiar línea si no es específica
-      linea: tieneLineaEspecifica(product.linea) ? formatearLinea(product.linea) : '', // Vacío si no tiene línea específica
+      marca: tieneMarcaEspecifica(product.marca) ? capitalizarPalabras(product.marca as string) : '',
+      linea: tieneLineaEspecifica(product.linea) ? formatearLinea(product.linea) : '',
+      aroma: tieneAromaEspecifico(product.aroma) ? formatearAroma(product.aroma) : '',
       category: product.category ? capitalizarPalabras(product.category) : product.category,
-      description: product.description ? capitalizarPalabras(product.description) : product.description
+      description: product.description ? capitalizarPalabras(product.description) : product.description,
+      metadata: undefined // No metadata para productos no agrupados
     }))
 
     return [...representativeProducts, ...nonGroupedCapitalizados]
@@ -264,20 +338,24 @@ export function ProductsGridPage({ selectedCategory, searchQuery, sortBy }: Prod
           throw new Error(data.error || 'Error al cargar productos')
         }
 
-        // Capitalizar los datos recibidos de la API antes de agrupar
-        const productosCapitalizados = data.data.map((product: Product) => ({
+        // Filtrar y preparar productos
+        const productosPreparados: Product[] = data.data.map((product: any) => ({
           ...product,
-          name: capitalizarPalabras(product.name),
-          marca: product.marca ? capitalizarPalabras(product.marca) : product.marca,
-          // Para productos individuales, mantener la línea original (se formateará después)
-          linea: product.linea,
-          category: product.category ? capitalizarPalabras(product.category) : product.category,
-          description: product.description ? capitalizarPalabras(product.description) : product.description
+          name: product.name || '',
+          marca: product.marca || '',
+          linea: product.linea || '',
+          aroma: product.aroma || '',
+          category: product.category || '',
+          description: product.description || '',
+          // Asegurar que los tipos numéricos sean correctos
+          id: typeof product.id === 'string' ? parseInt(product.id) : product.id,
+          stock: typeof product.stock === 'string' ? parseInt(product.stock) : product.stock
         }))
 
-        // Agrupar productos por características antes de establecer los productos
-        const groupedProducts = groupProductsByCharacteristics(productosCapitalizados)
-        setProducts(groupedProducts)
+        // Agrupar productos por características
+        const productosAgrupados = groupProductsByCharacteristics(productosPreparados);
+        
+        setProducts(productosAgrupados)
         
       } catch (err) {
         console.error('Error fetching products:', err)
@@ -305,14 +383,8 @@ export function ProductsGridPage({ selectedCategory, searchQuery, sortBy }: Prod
     product.metadata?.isGrouped
   ).length
 
-  // Contar productos agrupados por categoría para el mensaje
-  const gruposPorCategoria: { [categoria: string]: number } = {};
-  products.forEach(product => {
-    if (product.metadata?.isGrouped && product.category && typeof product.category === 'string') {
-      const categoria = product.category.toLowerCase();
-      gruposPorCategoria[categoria] = (gruposPorCategoria[categoria] || 0) + 1;
-    }
-  });
+  // Contar productos individuales
+  const individualProductsCount = products.length - groupedProductsCount;
 
   if (isLoading) {
     return (
@@ -345,40 +417,23 @@ export function ProductsGridPage({ selectedCategory, searchQuery, sortBy }: Prod
         {products.length} producto{products.length !== 1 ? 's' : ''} encontrado{products.length !== 1 ? 's' : ''}
         {groupedProductsCount > 0 && (
           <span className="ml-2 text-blue-600 font-medium">
-            ({groupedProductsCount} {groupedProductsCount === 1 ? 'grupo' : 'grupos'} agrupados por características)
+            ({groupedProductsCount} {groupedProductsCount === 1 ? 'grupo' : 'grupos'} agrupados, {individualProductsCount} individuales)
           </span>
         )}
       </div>
 
-      {/* Información adicional sobre grupos por categoría */}
-      {Object.keys(gruposPorCategoria).length > 0 && (
-        <div className="mb-4 text-xs text-gray-500">
-          Grupos por categoría: {Object.entries(gruposPorCategoria).map(([categoria, count]) => (
-            <span key={categoria} className="ml-2">
-              {capitalizarPalabras(categoria)}: {count}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Grid de productos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {paginatedProducts.map((product) => (
-          <ProductCard 
-            key={`${product.id}-${product.marca || 'no-marca'}-${product.linea || 'no-linea'}`} 
-            product={product}
-            // Pasar la información de marca y línea para que ProductDetail la use
-            // Solo pasar línea si realmente tiene línea específica
-            marcaSeleccionada={product.metadata?.marca || product.marca}
-            lineaSeleccionada={
-              (product.metadata?.caracteristicas?.tieneLinea && product.metadata?.linea) || 
-              (tieneLineaEspecifica(product.linea) ? product.linea : undefined)
-            }
-            // Indicar si es un producto agrupado (sin botón de agregar)
-            esProductoAgrupado={!!product.metadata?.isLineaGroup}
-          />
-        ))}
-      </div>
+{/* Grid de productos */}
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+  {paginatedProducts.map((product) => (
+    <ProductCard 
+      key={product.metadata?.isGrouped ? `group-${product.id}` : `product-${product.id}`}
+      product={product}
+      marcaSeleccionada={typeof product.marca === 'string' ? product.marca : undefined}
+      lineaSeleccionada={typeof product.linea === 'string' ? product.linea : undefined}
+      esProductoAgrupado={!!product.metadata?.isLineaGroup}
+    />
+  ))}
+</div>
 
       {/* Paginación */}
       {totalPages > 1 && (

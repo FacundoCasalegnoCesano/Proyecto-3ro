@@ -1,40 +1,39 @@
 // app/api/user/address/route.ts
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "auth.config"
 import { prisma } from "lib/prisma"
+import { requireAuth, verifyAdminRole } from "lib/auth-utils"
 
 export async function PUT(request: NextRequest) {
   try {
     console.log("PUT /api/user/address called")
     
-    
-    const session = await getServerSession(authOptions)
-    console.log("Session in PUT:", {
-      exists: !!session,
-      userId: session?.user?.id,
-      userEmail: session?.user?.email
-    })
-    
-    if (!session) {
-      console.log("No hay sesión disponible")
-      return NextResponse.json({ error: "No hay sesión activa" }, { status: 401 })
-    }
-    
-    if (!session.user?.id) {
-      console.log("No hay ID de usuario en la sesión")
-      return NextResponse.json({ error: "ID de usuario no encontrado en sesión" }, { status: 401 })
+    const auth = await requireAuth(request)
+    if (!auth.isAuthenticated) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     // Parsear el cuerpo de la solicitud
     const body = await request.json()
     console.log("Request body:", body)
 
-    const { calle, ciudad, provincia, codigoPostal, pais } = body
+    const { calle, ciudad, provincia, codigoPostal, pais, targetUserId } = body
 
-    
+    let userId = auth.userId
+
+    // Si se especifica targetUserId, verificar que el usuario actual sea admin
+    if (targetUserId && targetUserId !== userId) {
+      const adminCheck = await verifyAdminRole(request)
+      if (!adminCheck.isAdmin) {
+        return NextResponse.json({ error: adminCheck.error }, { status: adminCheck.status })
+      }
+      userId = parseInt(targetUserId)
+      if (isNaN(userId)) {
+        return NextResponse.json({ error: "ID de usuario objetivo inválido" }, { status: 400 })
+      }
+    }
+
+    // Validación de código postal
     if (codigoPostal) {
-      
       let isValidPostalCode = false
       switch (pais) {
         case "Argentina":
@@ -61,17 +60,10 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    
-    const userId = parseInt(session.user.id)
-    if (isNaN(userId)) {
-      console.log("ID de usuario no es un número válido:", session.user.id)
-      return NextResponse.json({ error: "ID de usuario inválido" }, { status: 400 })
-    }
-
-    console.log("User ID parsed:", userId)
+    console.log("User ID to update:", userId)
 
     try {
-      
+      // Verificar que el usuario existe
       const existingUser = await prisma.user.findUnique({
         where: { id: userId },
         select: { id: true }
@@ -82,8 +74,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
       }
 
-      
-      // @ts-ignore - Temporal hasta que Prisma reconozca los nuevos campos
+      // Actualizar la dirección
       const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: {
@@ -136,39 +127,36 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-
 export async function GET(request: NextRequest) {
   try {
     console.log("GET /api/user/address called")
     
-    
-    const session = await getServerSession(authOptions)
-    console.log("Session in GET:", {
-      exists: !!session,
-      userId: session?.user?.id,
-      userEmail: session?.user?.email
-    })
-    
-    if (!session) {
-      console.log("No hay sesión disponible")
-      return NextResponse.json({ error: "No hay sesión activa" }, { status: 401 })
-    }
-    
-    if (!session.user?.id) {
-      console.log("No hay ID de usuario en la sesión")
-      return NextResponse.json({ error: "ID de usuario no encontrado en sesión" }, { status: 401 })
+    const auth = await requireAuth(request)
+    if (!auth.isAuthenticated) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const userId = parseInt(session.user.id)
-    if (isNaN(userId)) {
-      console.log("ID de usuario no es un número válido:", session.user.id)
-      return NextResponse.json({ error: "ID de usuario inválido" }, { status: 400 })
+    // Obtener parámetros de query
+    const { searchParams } = new URL(request.url)
+    const targetUserId = searchParams.get('userId')
+
+    let userId = auth.userId
+
+    // Si se especifica userId en query params, verificar que el usuario actual sea admin
+    if (targetUserId && parseInt(targetUserId) !== userId) {
+      const adminCheck = await verifyAdminRole(request)
+      if (!adminCheck.isAdmin) {
+        return NextResponse.json({ error: adminCheck.error }, { status: adminCheck.status })
+      }
+      userId = parseInt(targetUserId)
+      if (isNaN(userId)) {
+        return NextResponse.json({ error: "ID de usuario objetivo inválido" }, { status: 400 })
+      }
     }
 
-    console.log("User ID parsed:", userId)
+    console.log("User ID to fetch:", userId)
 
     try {
-      // @ts-ignore - Temporal hasta que Prisma reconozca los nuevos campos
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -208,7 +196,6 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 
 export async function POST() {
   return NextResponse.json(

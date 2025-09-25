@@ -3,7 +3,7 @@
 import { StockProductos } from "components/stock-productos"
 import { Button } from "../../components/ui/button"
 import { ArrowLeft } from "lucide-react"
-import { AgregarProducto } from "components/agregar-producto"
+import { AdminAgregarProducto } from "components/admin-agregar-producto"
 
 export function StockPageContent() {
   const handleGoBack = () => {
@@ -30,9 +30,9 @@ export function StockPageContent() {
           </Button>
         </div>
 
-        {/* Componente AgregarProducto entre el título y la lista */}
+        {/* Componente AdminAgregarProducto - Solo visible para admins */}
         <div className="container mx-auto px-4 py-4 mb-6">
-          <AgregarProducto />
+          <AdminAgregarProducto />
         </div>
 
         {/* Componente Stock de Productos */}

@@ -4,13 +4,14 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./lib/prisma";
 import bcrypt from "bcryptjs";
 
-// Extender la interfaz de usuario de NextAuth para incluir tus campos personalizados
+// Extender la interfaz de usuario de NextAuth para incluir tus campos personalizados + rol
 declare module "next-auth" {
   interface User {
     id: string;
     nombre: string;
     apellido: string;
     fechaNac: Date;
+    rol: string; // Nuevo campo
   }
   
   interface Session {
@@ -20,6 +21,7 @@ declare module "next-auth" {
       apellido: string;
       email: string;
       fechaNac: Date;
+      rol: string; // Nuevo campo
     } & DefaultSession["user"];
   }
 }
@@ -30,6 +32,7 @@ declare module "next-auth/jwt" {
     nombre: string;
     apellido: string;
     fechaNac: Date;
+    rol: string; // Nuevo campo
   }
 }
 
@@ -47,9 +50,18 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Email y contraseña son requeridos");
           }
 
-          // Buscar usuario en la base de datos
+          // Buscar usuario en la base de datos incluyendo el rol
           const user = await prisma.user.findUnique({
-            where: { email: credentials.email }
+            where: { email: credentials.email },
+            select: {
+              id: true,
+              email: true,
+              password: true,
+              nombre: true,
+              apellido: true,
+              fechaNac: true,
+              rol: true, // Incluir el rol
+            }
           });
 
           if (!user) {
@@ -70,13 +82,14 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Credenciales inválidas");
           }
 
-          // Retornar usuario con todos los campos necesarios
+          // Retornar usuario con todos los campos necesarios incluyendo rol
           return {
             id: user.id.toString(),
             email: user.email,
             nombre: user.nombre,
             apellido: user.apellido,
             fechaNac: user.fechaNac,
+            rol: user.rol, // Incluir el rol
           };
         } catch (error) {
           console.error("Error en authorize:", error);
@@ -93,23 +106,29 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       // Solo agregar datos del usuario en el primer login
       if (user) {
-        console.log("JWT Callback - Usuario logueado:", { id: user.id, email: user.email });
+        console.log("JWT Callback - Usuario logueado:", { 
+          id: user.id, 
+          email: user.email, 
+          rol: user.rol 
+        });
         token.id = user.id;
         token.nombre = user.nombre;
         token.apellido = user.apellido;
         token.fechaNac = user.fechaNac;
+        token.rol = user.rol; // Incluir el rol en el token
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
-        console.log("Session Callback - Token ID:", token.id);
+        console.log("Session Callback - Token ID:", token.id, "Rol:", token.rol);
         // Campos personalizados
         session.user.id = token.id;
         session.user.nombre = token.nombre as string;
         session.user.apellido = token.apellido as string;
         session.user.fechaNac = token.fechaNac as Date;
         session.user.email = token.email as string;
+        session.user.rol = token.rol as string; // Incluir el rol en la sesión
         
         // Campos estándar de NextAuth (opcional)
         session.user.name = `${token.nombre} ${token.apellido}`.trim();
@@ -140,10 +159,10 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async signIn({ user }) {
-      console.log("Usuario firmando:", user.email);
+      console.log("Usuario firmando:", user.email, "Rol:", user.rol);
     },
     async session({ session }) {
-      console.log("Sesión activa para:", session.user.email);
+      console.log("Sesión activa para:", session.user.email, "Rol:", session.user.rol);
     },
     async signOut({ session }) {
       console.log("Usuario cerrando sesión");

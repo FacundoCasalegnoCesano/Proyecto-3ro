@@ -3,7 +3,6 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 
 interface UseAuthProps {
   onSuccess?: () => void;
@@ -13,27 +12,30 @@ interface UseAuthProps {
 export const useAuth = ({ onSuccess, onError }: UseAuthProps = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const [success, setSuccess] = useState(false);
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
+    setSuccess(false);
 
     try {
       const result = await signIn('credentials', {
         email,
         password,
-        redirect: false,
+        redirect: false, // No redirigir automáticamente
       });
 
       if (result?.error) {
         const errorMessage = getErrorMessage(result.error);
         setError(errorMessage);
         onError?.(errorMessage);
-      } else {
+      } else if (result?.ok) {
+        // Login exitoso
+        setSuccess(true);
         onSuccess?.();
-        router.push('/dashboard'); 
-        router.refresh();
+        // El modal se encargará de la redirección
+        console.log('Login exitoso, el modal manejará la redirección');
       }
     } catch (err) {
       const errorMessage = 'Ocurrió un error durante el inicio de sesión';
@@ -47,7 +49,7 @@ export const useAuth = ({ onSuccess, onError }: UseAuthProps = {}) => {
   const getErrorMessage = (error: string): string => {
     switch (error) {
       case 'CredentialsSignin':
-        return 'Credenciales inválidas';
+        return 'Credenciales inválidas. Verifica tu email y contraseña.';
       case 'Configuration':
         return 'Error de configuración del servidor';
       case 'AccessDenied':
@@ -59,5 +61,10 @@ export const useAuth = ({ onSuccess, onError }: UseAuthProps = {}) => {
     }
   };
 
-  return { handleLogin, isLoading, error };
+  return { 
+    handleLogin, 
+    isLoading, 
+    error, 
+    success
+  };
 };

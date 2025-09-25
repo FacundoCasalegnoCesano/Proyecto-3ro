@@ -72,6 +72,6 @@ model user {
   provincia    String?
   codigoPostal String?
   pais         String?  @default("Argentina")
-
+  rol          String @default("user")
   @@map("user")
 }

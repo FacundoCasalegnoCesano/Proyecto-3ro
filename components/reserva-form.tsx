@@ -209,7 +209,7 @@ export function ReservaForm() {
         mensaje: formData.mensaje.trim()
       }
 
-      const response = await fetch('/api/reservas', {
+      const response = await fetch('/api/crearReserva', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

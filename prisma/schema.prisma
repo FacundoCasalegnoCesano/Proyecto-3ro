@@ -75,3 +75,39 @@ model user {
   rol          String @default("user")
   @@map("user")
 }
+
+model Reserva {
+  id                Int      @id @default(autoincrement())
+  reservaId         String   @unique @map("reserva_id") // ID único para mostrar al cliente
+  servicioId        String   @map("servicio_id")
+  servicioNombre    String   @map("servicio_nombre")
+  servicioPrecio    String   @map("servicio_precio")
+  servicioDuracion  String   @map("servicio_duracion")
+  fecha             DateTime
+  hora              String
+  clienteNombre     String   @map("cliente_nombre")
+  clienteApellido   String   @map("cliente_apellido")
+  clienteEmail      String   @map("cliente_email")
+  clienteTelefono   String   @map("cliente_telefono")
+  mensaje           String?
+  estado            ReservaEstado @default(PENDIENTE)
+  googleEventId     String?  @map("google_event_id")
+  googleCalendarLink String? @map("google_calendar_link")
+  emailEnviado      Boolean  @default(false)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("reservas")
+  @@index([reservaId])
+  @@index([fecha, hora])
+  @@index([clienteEmail])
+  @@index([estado])
+  @@index([createdAt])
+}
+
+enum ReservaEstado {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+  COMPLETADA
+}

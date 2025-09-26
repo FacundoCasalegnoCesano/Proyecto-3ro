@@ -1,6 +1,10 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { getGoogleCalendarClient } from "lib/googleCalendar";
+// app/api/crearReserva/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { getGoogleCalendarClient, testCalendarConnection } from '../../../lib/googleCalendar';
+import { PrismaClient, ReservaEstado } from '@prisma/client';
 import nodemailer from 'nodemailer';
+
+const prisma = new PrismaClient();
 
 interface ServicioData {
   id: string;
@@ -55,7 +59,7 @@ const CONSULTORIO_INFO = {
   ]
 };
 
-// Datos de servicios disponibles - Actualizados para coincidir con ServicesGrid
+// Datos de servicios disponibles
 const SERVICIOS_DISPONIBLES: ServicioData[] = [
   {
     id: "tarot",
@@ -108,13 +112,12 @@ const SERVICIOS_DISPONIBLES: ServicioData[] = [
 ];
 
 function getDurationInMinutes(duration: string): number {
-  // Convertir duración a minutos
   if (duration.includes("60 minutos")) return 60;
   if (duration.includes("90 minutos")) return 90;
   if (duration.includes("45 minutos")) return 45;
-  if (duration.includes("2-3 horas")) return 150; // 2.5 horas promedio
-  if (duration.includes("1-2 horas")) return 90; // 1.5 horas promedio
-  return 60; // default
+  if (duration.includes("2-3 horas")) return 150;
+  if (duration.includes("1-2 horas")) return 90;
+  return 60;
 }
 
 function generateReservaId(): string {
@@ -133,16 +136,29 @@ function formatearFecha(fecha: string): string {
   });
 }
 
-// Configurar transportador de email
+// Configurar transportador de email con mejor logging
 function createEmailTransporter() {
+  console.log('🔧 Configurando transporter SMTP...');
+  console.log('📧 SMTP_USER:', process.env.SMTP_USER);
+  console.log('🔑 SMTP_PASS:', process.env.SMTP_PASS ? '***' + process.env.SMTP_PASS.slice(-4) : 'No configurado');
+  console.log('🏠 SMTP_HOST:', process.env.SMTP_HOST);
+  console.log('🚪 SMTP_PORT:', process.env.SMTP_PORT);
+
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    throw new Error('SMTP credentials missing: SMTP_USER or SMTP_PASS');
+  }
+
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST, // ej: smtp.gmail.com
+    host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
+    secure: false, // true para 465, false para otros puertos
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    tls: {
+      rejectUnauthorized: false // Para evitar errores de certificado en desarrollo
+    }
   });
 }
 
@@ -189,13 +205,13 @@ function generateEmailHTML(reservaData: ReservaData, reservaId: string): string 
 <body>
     <div class="container">
         <div class="header">
-            <h1>✨ Tu Reserva Está Confirmada</h1>
+            <h1>Tu Reserva Está Confirmada</h1>
             <p>Información completa de tu sesión espiritual</p>
         </div>
         
         <div class="content">
             <div class="reservation-info">
-                <h2 style="margin-top: 0; color: #8B5DBA;">📋 Detalles de tu Reserva</h2>
+                <h2 style="margin-top: 0; color: #8B5DBA;">Detalles de tu Reserva</h2>
                 <div class="info-grid">
                     <div class="info-item">
                         <span class="info-label">ID:</span>
@@ -217,23 +233,23 @@ function generateEmailHTML(reservaData: ReservaData, reservaId: string): string 
             </div>
 
             <div class="service-card">
-                <h3 style="margin-top: 0; color: #8B5DBA;">🔮 ${reservaData.servicio.title}</h3>
+                <h3 style="margin-top: 0; color: #8B5DBA;">${reservaData.servicio.title}</h3>
                 <p style="color: #8B5DBA; font-weight: 500; margin: 5px 0;">${reservaData.servicio.subtitle}</p>
                 <p style="margin: 10px 0; color: #4B5563;">${reservaData.servicio.description}</p>
                 <div class="info-grid" style="margin-top: 15px;">
                     <div class="info-item">
-                        <span class="info-label">💰 Precio:</span>
+                        <span class="info-label">Precio:</span>
                         <span class="info-value highlight" style="font-size: 18px; font-weight: bold;">${reservaData.servicio.price}</span>
                     </div>
                     <div class="info-item">
-                        <span class="info-label">⏰ Duración:</span>
+                        <span class="info-label">Duración:</span>
                         <span class="info-value">${reservaData.servicio.duration}</span>
                     </div>
                 </div>
             </div>
 
             <div class="location-card">
-                <h3 style="margin-top: 0; color: #0369a1;">📍 Ubicación del Consultorio</h3>
+                <h3 style="margin-top: 0; color: #0369a1;">Ubicación del Consultorio</h3>
                 <div style="margin: 15px 0;">
                     <p style="font-weight: 600; color: #1e40af; margin: 5px 0;">${CONSULTORIO_INFO.nombre}</p>
                     <p style="margin: 5px 0; color: #4B5563;">${CONSULTORIO_INFO.direccion}</p>
@@ -241,25 +257,25 @@ function generateEmailHTML(reservaData: ReservaData, reservaId: string): string 
                     <p style="margin: 5px 0; color: #4B5563;">${CONSULTORIO_INFO.pais}</p>
                 </div>
                 <div style="margin: 15px 0; padding: 15px; background: rgba(59, 130, 246, 0.1); border-radius: 6px;">
-                    <p style="margin: 0; font-weight: 600; color: #1e40af;">📞 Teléfono: ${CONSULTORIO_INFO.telefono}</p>
-                    <p style="margin: 5px 0 0 0; color: #4B5563;">💼 Horarios: ${CONSULTORIO_INFO.horarios}</p>
+                    <p style="margin: 0; font-weight: 600; color: #1e40af;">Teléfono: ${CONSULTORIO_INFO.telefono}</p>
+                    <p style="margin: 5px 0 0 0; color: #4B5563;">Horarios: ${CONSULTORIO_INFO.horarios}</p>
                 </div>
             </div>
 
             ${reservaData.mensaje ? `
             <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="margin-top: 0; color: #374151;">💬 Tu Mensaje</h3>
+                <h3 style="margin-top: 0; color: #374151;">Tu Mensaje</h3>
                 <p style="margin: 0; color: #4B5563; font-style: italic;">"${reservaData.mensaje}"</p>
             </div>
             ` : ''}
 
             <div class="instructions">
-                <h3>📝 Indicaciones Importantes</h3>
+                <h3>Indicaciones Importantes</h3>
                 <ul>
                     ${CONSULTORIO_INFO.indicaciones.map(indicacion => `<li>${indicacion}</li>`).join('')}
                 </ul>
                 <p style="margin-top: 15px; color: #92400e; font-weight: 500;">
-                    💡 Si necesitas cancelar o reprogramar tu cita, por favor contáctanos con al menos 24 horas de anticipación.
+                    Si necesitas cancelar o reprogramar tu cita, por favor contáctanos con al menos 24 horas de anticipación.
                 </p>
             </div>
 
@@ -272,10 +288,10 @@ function generateEmailHTML(reservaData: ReservaData, reservaId: string): string 
                 </p>
                 <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                     <a href="https://wa.me/5491123456789" style="background: #25d366; color: white; padding: 12px 24px; text-decoration: none; border-radius: 25px; font-weight: 500;">
-                        💬 WhatsApp
+                        WhatsApp
                     </a>
                     <a href="tel:${CONSULTORIO_INFO.telefono}" style="background: #8B5DBA; color: white; padding: 12px 24px; text-decoration: none; border-radius: 25px; font-weight: 500;">
-                        📞 Llamar
+                        Llamar
                     </a>
                 </div>
             </div>
@@ -284,15 +300,12 @@ function generateEmailHTML(reservaData: ReservaData, reservaId: string): string 
         <div class="footer">
             <div class="contact-info">
                 <div class="contact-item">
-                    <span>📧</span>
                     <span>${CONSULTORIO_INFO.email}</span>
                 </div>
                 <div class="contact-item">
-                    <span>📞</span>
                     <span>${CONSULTORIO_INFO.telefono}</span>
                 </div>
                 <div class="contact-item">
-                    <span>📍</span>
                     <span>${CONSULTORIO_INFO.ciudad}, ${CONSULTORIO_INFO.pais}</span>
                 </div>
             </div>
@@ -301,7 +314,7 @@ function generateEmailHTML(reservaData: ReservaData, reservaId: string): string 
             
             <p style="color: #9ca3af; font-size: 14px; margin: 15px 0;">
                 Gracias por confiar en nosotros para tu crecimiento espiritual.<br>
-                Te esperamos con mucho amor y luz. ✨
+                Te esperamos con mucho amor y luz.
             </p>
             
             <p style="color: #d1d5db; font-size: 12px; margin: 10px 0;">
@@ -315,18 +328,25 @@ function generateEmailHTML(reservaData: ReservaData, reservaId: string): string 
   `;
 }
 
-// Enviar email informativo
+// Enviar email informativo con mejor manejo de errores
 async function sendReservationEmail(reservaData: ReservaData, reservaId: string): Promise<boolean> {
   try {
+    console.log(`📧 Intentando enviar email a: ${reservaData.email}`);
+    
     const transporter = createEmailTransporter();
     
+    // Verificar conexión SMTP primero
+    console.log('🔍 Verificando conexión SMTP...');
+    await transporter.verify();
+    console.log('✅ Conexión SMTP verificada');
+
     const mailOptions = {
       from: {
         name: CONSULTORIO_INFO.nombre,
         address: process.env.SMTP_USER!
       },
       to: reservaData.email,
-      subject: `✨ Información de tu Reserva ${reservaId} - ${reservaData.servicio.title}`,
+      subject: `Confirmación de Reserva ${reservaId} - ${reservaData.servicio.title}`,
       html: generateEmailHTML(reservaData, reservaId),
       text: `
 Hola ${reservaData.nombre},
@@ -360,11 +380,26 @@ Equipo Babalu
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    console.log('🔄 Enviando email...');
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ Email enviado exitosamente:', result.messageId);
+    
     return true;
     
   } catch (error) {
-    console.error('Error enviando email:', error);
+    console.error('❌ Error enviando email:', error);
+    
+    // Log detallado del error SMTP
+    if (error instanceof Error) {
+      console.error('📝 Error message:', error.message);
+      if ('responseCode' in error) {
+        console.error('📞 Response code:', (error as any).responseCode);
+      }
+      if ('command' in error) {
+        console.error('⚡ Command:', (error as any).command);
+      }
+    }
+    
     return false;
   }
 }
@@ -378,185 +413,262 @@ function validateReservaData(reservaData: ReservaData): string | null {
   if (!reservaData.email?.trim()) return "Email requerido";
   if (!reservaData.telefono?.trim()) return "Teléfono requerido";
 
-  // Validar que el servicio existe
   const servicioExiste = SERVICIOS_DISPONIBLES.find(s => s.id === reservaData.servicio.id);
   if (!servicioExiste) return "Servicio no válido";
 
-  // Validar formato de email
   const emailRegex = /\S+@\S+\.\S+/;
   if (!emailRegex.test(reservaData.email)) return "Email no válido";
 
-  // Validar fecha futura
   const fechaReserva = new Date(`${reservaData.fecha}T${reservaData.hora}`);
   if (fechaReserva <= new Date()) return "La fecha debe ser futura";
 
   return null;
 }
 
-export default async function handler(
-  req: NextApiRequest, 
-  res: NextApiResponse<CreateReservaResponse>
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed", success: false });
-  }
+// GET endpoint
+export async function GET() {
+  return NextResponse.json({
+    message: "API de Reservas - Babalu",
+    version: "1.0.0",
+    endpoints: {
+      POST: "/api/crearReserva - Crear nueva reserva"
+    }
+  });
+}
 
-  const { reservaData }: CreateReservaRequest = req.body;
-
-  if (!reservaData) {
-    return res.status(400).json({ 
-      error: "Datos de reserva no proporcionados",
-      success: false 
-    });
-  }
-
-  // Validar datos de reserva
-  const validationError = validateReservaData(reservaData);
-  if (validationError) {
-    return res.status(400).json({ 
-      error: validationError,
-      success: false 
-    });
-  }
-
-  // Crear fechas de inicio y fin del evento
-  const startDateTime = new Date(`${reservaData.fecha}T${reservaData.hora}:00`);
-  const durationMinutes = getDurationInMinutes(reservaData.servicio.duration);
-  const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000);
-
-  const reservaId = generateReservaId();
-
+// POST endpoint principal
+export async function POST(request: NextRequest) {
   try {
-    // 1. Crear evento en Google Calendar
-    const calendar = getGoogleCalendarClient();
+    console.log('🔄 API /api/crearReserva llamada');
+    
+    // Verificar configuración primero
+    if (!process.env.GOOGLE_CALENDAR_ID) {
+      return NextResponse.json({ 
+        success: false,
+        error: "Configuración incompleta: GOOGLE_CALENDAR_ID no definido"
+      }, { status: 503 });
+    }
 
-    const eventDescription = `
-📅 NUEVA RESERVA - ${reservaId}
+    console.log('📅 Calendar ID:', process.env.GOOGLE_CALENDAR_ID);
+    
+    // COMENTA TEMPORALMENTE la verificación de conexión para ver el error real
+    // const calendarConnected = await testCalendarConnection();
+    // if (!calendarConnected) {
+    //   return NextResponse.json({ 
+    //     success: false,
+    //     error: "No se pudo conectar con el calendario. Verifica los permisos y configuración.",
+    //     details: "Calendar connection failed"
+    //   }, { status: 503 });
+    // }
+    
+    console.log('🔍 Saltando verificación inicial para ver error real...');
 
-👤 CLIENTE:
+    const body: CreateReservaRequest = await request.json();
+    console.log('📦 Body recibido:', JSON.stringify(body, null, 2));
+    
+    const { reservaData } = body;
+
+    if (!reservaData) {
+      return NextResponse.json({ 
+        error: "Datos de reserva no proporcionados",
+        success: false 
+      }, { status: 400 });
+    }
+
+    // Validar datos de reserva
+    const validationError = validateReservaData(reservaData);
+    if (validationError) {
+      return NextResponse.json({ 
+        error: validationError,
+        success: false 
+      }, { status: 400 });
+    }
+
+    // Crear fechas de inicio y fin del evento
+    const startDateTime = new Date(`${reservaData.fecha}T${reservaData.hora}:00`);
+    const durationMinutes = getDurationInMinutes(reservaData.servicio.duration);
+    const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000);
+
+    const reservaId = generateReservaId();
+
+    // 1. PRIMERO: Guardar en la base de datos con Prisma
+    console.log(`💾 Guardando reserva ${reservaId} en la base de datos...`);
+    
+    let reservaDB;
+    try {
+      reservaDB = await prisma.reserva.create({
+        data: {
+          reservaId: reservaId,
+          servicioId: reservaData.servicio.id,
+          servicioNombre: reservaData.servicio.title,
+          servicioPrecio: reservaData.servicio.price,
+          servicioDuracion: reservaData.servicio.duration,
+          fecha: startDateTime,
+          hora: reservaData.hora,
+          clienteNombre: reservaData.nombre.trim(),
+          clienteApellido: reservaData.apellido.trim(),
+          clienteEmail: reservaData.email.trim(),
+          clienteTelefono: reservaData.telefono.trim(),
+          mensaje: reservaData.mensaje?.trim() || null,
+          estado: ReservaEstado.PENDIENTE,
+          emailEnviado: false,
+        }
+      });
+      console.log('✅ Reserva guardada en la base de datos con ID:', reservaDB.id);
+    } catch (dbError: any) {
+      console.error('❌ Error guardando en la base de datos:', dbError);
+      throw new Error(`Error de base de datos: ${dbError.message}`);
+    }
+
+    // 2. Crear evento en Google Calendar (VERSIÓN CORREGIDA)
+    console.log(`🔄 Creando evento en Google Calendar para reserva ${reservaId}...`);
+    
+    let eventId: string | undefined;
+    let eventLink: string | undefined;
+    let hangoutLink: string | undefined;
+
+    try {
+      const calendar = getGoogleCalendarClient();
+      console.log('✅ Cliente de Google Calendar inicializado');
+      
+      const eventDescription = `
+NUEVA RESERVA - ${reservaId}
+
+CLIENTE:
 • Nombre: ${reservaData.nombre} ${reservaData.apellido}
 • Email: ${reservaData.email}
 • Teléfono: ${reservaData.telefono}
 
-🔮 SERVICIO:
+SERVICIO:
 • ${reservaData.servicio.title} (${reservaData.servicio.subtitle})
 • Precio: ${reservaData.servicio.price}
 • Duración: ${reservaData.servicio.duration}
-• Descripción: ${reservaData.servicio.description}
 
-📝 MENSAJE DEL CLIENTE:
-${reservaData.mensaje || 'Sin mensaje adicional'}
-
-📍 UBICACIÓN:
-${CONSULTORIO_INFO.nombre}
-${CONSULTORIO_INFO.direccion}
-${CONSULTORIO_INFO.ciudad}, ${CONSULTORIO_INFO.pais}
-
-🆔 ID de Reserva: ${reservaId}
+ID de Reserva: ${reservaId}
 `.trim();
 
-    const event = {
-      summary: `${reservaData.servicio.title} - ${reservaData.nombre} ${reservaData.apellido}`,
-      description: eventDescription,
-      location: `${CONSULTORIO_INFO.direccion}, ${CONSULTORIO_INFO.ciudad}, ${CONSULTORIO_INFO.pais}`,
-      start: {
-        dateTime: startDateTime.toISOString(),
-        timeZone: "America/Argentina/Buenos_Aires",
-      },
-      end: {
-        dateTime: endDateTime.toISOString(),
-        timeZone: "America/Argentina/Buenos_Aires",
-      },
-      attendees: [
-        {
-          email: reservaData.email,
-          displayName: `${reservaData.nombre} ${reservaData.apellido}`,
-          responseStatus: 'needsAction'
+      // ✅ EVENTO CORREGIDO - SIN ATTENDEES que causan error 403
+      const event = {
+        summary: `[Reserva] ${reservaData.servicio.title} - ${reservaData.nombre}`,
+        description: eventDescription,
+        location: `${CONSULTORIO_INFO.direccion}, ${CONSULTORIO_INFO.ciudad}, ${CONSULTORIO_INFO.pais}`,
+        start: {
+          dateTime: startDateTime.toISOString(),
+          timeZone: "America/Argentina/Buenos_Aires",
+        },
+        end: {
+          dateTime: endDateTime.toISOString(),
+          timeZone: "America/Argentina/Buenos_Aires",
+        },
+        // ❌ REMOVIDO: attendees - causa error "forbiddenForServiceAccounts"
+        // ✅ USAR: reminders por defecto en lugar de overrides complejos
+        reminders: {
+          useDefault: true // Simplificado - usa la configuración por defecto del calendario
         }
-      ],
-      reminders: {
-        useDefault: false,
-        overrides: [
-          { method: 'email', minutes: 24 * 60 }, // 24 horas antes
-          { method: 'popup', minutes: 60 },      // 1 hora antes
-          { method: 'popup', minutes: 15 }       // 15 minutos antes
-        ]
+      };
+
+      console.log('📅 Creando evento en calendario...');
+      const response = await calendar.events.insert({
+        calendarId: process.env.GOOGLE_CALENDAR_ID!,
+        requestBody: event,
+        sendUpdates: 'none'
+      });
+
+      eventId = response.data.id ? String(response.data.id) : undefined;
+      eventLink = response.data.htmlLink || undefined;
+      hangoutLink = response.data.hangoutLink || undefined;
+
+      // Actualizar la reserva con la información de Google Calendar
+      await prisma.reserva.update({
+        where: { id: reservaDB.id },
+        data: {
+          googleEventId: eventId,
+          googleCalendarLink: eventLink,
+          estado: ReservaEstado.CONFIRMADA
+        }
+      });
+
+      console.log(`✅ Evento creado en Google Calendar - ID: ${eventId}`);
+      console.log('🔗 Enlace del evento:', eventLink);
+      
+    } catch (calendarError: any) {
+      console.error('❌ ERROR DETALLADO DE GOOGLE CALENDAR:');
+      console.error('=== MENSAJE ===');
+      console.error(calendarError.message);
+      
+      console.error('=== CÓDIGO ===');
+      console.error('Code:', calendarError.code);
+      
+      console.error('=== RESPONSE ===');
+      if (calendarError.response) {
+        console.error('Status:', calendarError.response.status);
+        console.error('Status Text:', calendarError.response.statusText);
+        if (calendarError.response.data) {
+          console.error('Data:', JSON.stringify(calendarError.response.data, null, 2));
+        }
       }
-    };
+      
+      console.error('=== CONFIGURACIÓN ===');
+      console.error('Calendar ID:', process.env.GOOGLE_CALENDAR_ID);
+      
+      console.log('⚠️ Continuando sin evento de calendario...');
+    }
 
-    console.log(`🔄 Creando evento en Google Calendar para reserva ${reservaId}...`);
-    
-    const response = await calendar.events.insert({
-      calendarId: process.env.GOOGLE_CALENDAR_ID!,
-      requestBody: event,
-      sendUpdates: 'none' // No enviar invitaciones por Google, usaremos nuestro email personalizado
-    });
+    // 3. Enviar email informativo al cliente
+    console.log('📧 Procediendo a enviar email...');
+    let emailSent = false;
 
-    const eventId = response.data.id ? String(response.data.id) : undefined;
-    const eventLink = response.data.htmlLink || undefined;
-    const hangoutLink = response.data.hangoutLink || undefined;
-
-    console.log(`✅ Evento creado en Google Calendar - ID: ${eventId}`);
-
-    // 2. Enviar email informativo al cliente
-    console.log(`📧 Enviando email informativo a ${reservaData.email}...`);
-    const emailSent = await sendReservationEmail(reservaData, reservaId);
-
-    if (emailSent) {
-      console.log(`✅ Email enviado exitosamente a ${reservaData.email}`);
-    } else {
-      console.log(`⚠️ Advertencia: No se pudo enviar el email a ${reservaData.email}`);
+    try {
+      emailSent = await sendReservationEmail(reservaData, reservaId);
+      
+      // Actualizar estado del email en la base de datos
+      if (emailSent) {
+        await prisma.reserva.update({
+          where: { id: reservaDB.id },
+          data: { emailEnviado: true }
+        });
+        console.log('✅ Estado de email actualizado en la base de datos');
+      }
+      
+      if (emailSent) {
+        console.log(`✅ Email enviado exitosamente a ${reservaData.email}`);
+      } else {
+        console.log(`⚠️ Advertencia: No se pudo enviar el email a ${reservaData.email}`);
+      }
+    } catch (emailError) {
+      console.error('❌ Error enviando email (no crítico):', emailError);
+      // Email error is not critical, continue with the process
     }
 
     console.log(`🎉 Reserva ${reservaId} procesada exitosamente`);
 
-    // Aquí podrías guardar la reserva en tu base de datos
-    // await saveReservaToDatabase(reservaId, reservaData, eventId);
-
-    res.status(200).json({ 
+    return NextResponse.json({ 
       success: true, 
       reservaId,
       eventId,
       eventLink,
       hangoutLink,
-      emailSent
-    });
+      emailSent,
+      dbId: reservaDB.id,
+      message: eventId ? "Reserva y evento creados exitosamente" : "Reserva creada (sin evento de calendario)"
+    }, { status: 201 });
 
-  } catch (error: unknown) {
-    console.error(`❌ Error procesando reserva ${reservaId}:`, error);
+  } catch (error: any) {
+    console.error('❌ Error general procesando reserva:', error);
+    
+    let errorMessage = "Error interno del servidor";
+    let statusCode = 500;
     
     if (error instanceof Error) {
-      const googleError = error as any;
-      
-      if (googleError.code === 401) {
-        return res.status(500).json({ 
-          error: "Error de autenticación con Google Calendar",
-          success: false 
-        });
-      }
-      if (googleError.code === 404) {
-        return res.status(500).json({ 
-          error: "Calendario no encontrado",
-          success: false 
-        });
-      }
-      if (googleError.code === 403) {
-        return res.status(500).json({ 
-          error: "Permisos insuficientes para acceder al calendario",
-          success: false 
-        });
-      }
-      
-      return res.status(500).json({ 
-        error: "Error al crear la reserva",
-        details: error.message,
-        success: false 
-      });
+      errorMessage = `Error al crear la reserva: ${error.message}`;
     }
     
-    res.status(500).json({ 
-      error: "Error desconocido al procesar la reserva",
-      success: false 
-    });
+    return NextResponse.json({ 
+      error: errorMessage,
+      success: false,
+      details: process.env.NODE_ENV === 'development' ? error?.toString() : undefined
+    }, { status: statusCode });
+  } finally {
+    await prisma.$disconnect();
   }
 }

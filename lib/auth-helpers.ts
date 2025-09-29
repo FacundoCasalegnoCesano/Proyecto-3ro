@@ -15,7 +15,7 @@ export async function createUser(userData: CreateUserData) {
 
   // Verificar si el usuario ya existe
   const existingUser = await prisma.user.findUnique({
-    where: { email }
+    where: { email },
   });
 
   if (existingUser) {
@@ -28,6 +28,7 @@ export async function createUser(userData: CreateUserData) {
   const hashedPassword = await bcrypt.hash(password, 12);
 
   // Crear usuario
+  // Crear usuario y retornar sin password en la misma consulta
   const user = await prisma.user.create({
     data: {
       nombre,
@@ -36,11 +37,17 @@ export async function createUser(userData: CreateUserData) {
       password: hashedPassword,
       fechaNac: fechaNacDate,
     },
+    select: {
+      id: true,
+      nombre: true,
+      apellido: true,
+      email: true,
+      fechaNac: true,
+      // Excluir password explícitamente
+    },
   });
 
-  // Retornar sin la contraseña
-  const { password: _, ...userWithoutPassword } = user;
-  return userWithoutPassword;
+  return user;
 }
 
 export async function getUserById(id: number) {

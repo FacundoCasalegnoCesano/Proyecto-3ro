@@ -1,79 +1,101 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button } from "./ui/button"
+import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "./ui/button";
 
 interface GoogleCalendarIntegrationProps {
-  selectedDate: string
-  onDateSelect: (date: string) => void
+  selectedDate: string;
+  onDateSelect: (date: string) => void;
 }
 
-export function GoogleCalendarIntegration({ selectedDate, onDateSelect }: GoogleCalendarIntegrationProps) {
-  const [currentDate, setCurrentDate] = useState(new Date())
+export function GoogleCalendarIntegration({
+  selectedDate,
+  onDateSelect,
+}: GoogleCalendarIntegrationProps) {
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  const today = new Date()
-  const currentYear = currentDate.getFullYear()
-  const currentMonth = currentDate.getMonth()
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // ← Normalizar hoy a inicio del día
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
 
   // Obtener el primer día del mes y cuántos días tiene
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1)
-  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0)
-  const daysInMonth = lastDayOfMonth.getDate()
-  const startingDayOfWeek = firstDayOfMonth.getDay()
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+  const daysInMonth = lastDayOfMonth.getDate();
+  const startingDayOfWeek = firstDayOfMonth.getDay();
 
   const monthNames = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-  ]
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
+  ];
 
-  const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
+  const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
   const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth - 1, 1))
-  }
+    setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
+  };
 
   const goToNextMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth + 1, 1))
-  }
+    setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+  };
 
   const handleDateClick = (day: number) => {
-    const clickedDate = new Date(currentYear, currentMonth, day)
-    const isPast = clickedDate < today.setHours(0, 0, 0, 0)
-    
+    const clickedDate = new Date(currentYear, currentMonth, day);
+    clickedDate.setHours(0, 0, 0, 0); // ← Normalizar clickedDate a inicio del día
+    const isPast = clickedDate < today; // ← Ahora comparamos Date con Date
+
     if (!isPast) {
-      const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-      onDateSelect(dateString)
+      const dateString = `${currentYear}-${String(currentMonth + 1).padStart(
+        2,
+        "0"
+      )}-${String(day).padStart(2, "0")}`;
+      onDateSelect(dateString);
     }
-  }
+  };
 
   const isDateSelected = (day: number) => {
-    const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-    return selectedDate === dateString
-  }
+    const dateString = `${currentYear}-${String(currentMonth + 1).padStart(
+      2,
+      "0"
+    )}-${String(day).padStart(2, "0")}`;
+    return selectedDate === dateString;
+  };
 
   const isDatePast = (day: number) => {
-    const clickedDate = new Date(currentYear, currentMonth, day)
-    return clickedDate < today.setHours(0, 0, 0, 0)
-  }
+    const clickedDate = new Date(currentYear, currentMonth, day);
+    clickedDate.setHours(0, 0, 0, 0); // ← Normalizar clickedDate a inicio del día
+    return clickedDate < today; // ← Ahora comparamos Date con Date
+  };
 
   const isToday = (day: number) => {
-    const clickedDate = new Date(currentYear, currentMonth, day)
-    const todayDate = new Date()
-    return clickedDate.toDateString() === todayDate.toDateString()
-  }
+    const clickedDate = new Date(currentYear, currentMonth, day);
+    clickedDate.setHours(0, 0, 0, 0); // ← Normalizar clickedDate a inicio del día
+    return clickedDate.getTime() === today.getTime(); // ← Comparar timestamps
+  };
 
   // Crear array de días para mostrar
-  const calendarDays = []
-  
+  const calendarDays = [];
+
   // Espacios vacíos para los días antes del primer día del mes
   for (let i = 0; i < startingDayOfWeek; i++) {
-    calendarDays.push(null)
+    calendarDays.push(null);
   }
-  
+
   // Días del mes
   for (let day = 1; day <= daysInMonth; day++) {
-    calendarDays.push(day)
+    calendarDays.push(day);
   }
 
   return (
@@ -89,11 +111,11 @@ export function GoogleCalendarIntegration({ selectedDate, onDateSelect }: Google
         >
           <ChevronLeft className="w-4 h-4" />
         </Button>
-        
+
         <h3 className="text-lg font-semibold text-gray-800">
           {monthNames[currentMonth]} {currentYear}
         </h3>
-        
+
         <Button
           type="button"
           variant="outline"
@@ -108,7 +130,10 @@ export function GoogleCalendarIntegration({ selectedDate, onDateSelect }: Google
       {/* Días de la semana */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {dayNames.map((dayName) => (
-          <div key={dayName} className="text-center text-sm font-medium text-gray-500 py-2">
+          <div
+            key={dayName}
+            className="text-center text-sm font-medium text-gray-500 py-2"
+          >
             {dayName}
           </div>
         ))}
@@ -118,12 +143,12 @@ export function GoogleCalendarIntegration({ selectedDate, onDateSelect }: Google
       <div className="grid grid-cols-7 gap-1">
         {calendarDays.map((day, index) => {
           if (day === null) {
-            return <div key={index} className="h-10" />
+            return <div key={index} className="h-10" />;
           }
 
-          const isPast = isDatePast(day)
-          const isSelected = isDateSelected(day)
-          const isTodayDate = isToday(day)
+          const isPast = isDatePast(day);
+          const isSelected = isDateSelected(day);
+          const isTodayDate = isToday(day);
 
           return (
             <button
@@ -143,7 +168,7 @@ export function GoogleCalendarIntegration({ selectedDate, onDateSelect }: Google
             >
               {day}
             </button>
-          )
+          );
         })}
       </div>
 
@@ -164,5 +189,5 @@ export function GoogleCalendarIntegration({ selectedDate, onDateSelect }: Google
         </div>
       </div>
     </div>
-  )
+  );
 }

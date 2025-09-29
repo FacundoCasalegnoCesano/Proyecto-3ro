@@ -26,10 +26,13 @@ export function Header() {
               <div className="w-8 h-8 bg-babalu-medium/20 rounded-full animate-pulse"></div>
               <div className="w-32 h-6 bg-babalu-medium/20 rounded animate-pulse"></div>
             </div>
-            
+
             <nav className="hidden md:flex items-center space-x-6">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="w-16 h-6 bg-babalu-medium/20 rounded animate-pulse"></div>
+                <div
+                  key={i}
+                  className="w-16 h-6 bg-babalu-medium/20 rounded animate-pulse"
+                ></div>
               ))}
             </nav>
 
@@ -67,13 +70,22 @@ export function Header() {
             <a href="/#" className="hover:text-orange-200 transition-colors">
               Inicio
             </a>
-            <a href="/productos" className="hover:text-orange-200 transition-colors">
+            <a
+              href="/productos"
+              className="hover:text-orange-200 transition-colors"
+            >
               Productos
             </a>
-            <a href="/servicios" className="hover:text-orange-200 transition-colors">
+            <a
+              href="/servicios"
+              className="hover:text-orange-200 transition-colors"
+            >
               Servicios
             </a>
-            <a href="/mi-camino" className="hover:text-orange-200 transition-colors">
+            <a
+              href="/mi-camino"
+              className="hover:text-orange-200 transition-colors"
+            >
               Mi Camino
             </a>
           </nav>
@@ -103,13 +115,13 @@ export function Header() {
             </Button>
 
             {isLoggedIn ? (
-              <UserDropdown 
+              <UserDropdown
                 user={{
                   firstName: session.user.nombre || "Usuario",
                   lastName: session.user.apellido || "",
-                  email: session.user.email || ""
-                }} 
-                onLogout={() => signOut({ callbackUrl: "/" })} 
+                  email: session.user.email || "",
+                }}
+                onLogout={() => signOut({ callbackUrl: "/" })}
               />
             ) : (
               <Link href="/iniciar-sesion">

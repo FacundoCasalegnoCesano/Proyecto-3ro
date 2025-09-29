@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { NavigationLinks } from "../../components/navigation-links"
+import { NavigationLinks } from "../../components/navigation-links";
 
 export function NavigationSection() {
   const navigationLinks = [
@@ -8,9 +8,12 @@ export function NavigationSection() {
     { href: "/productos?category==Inciensos", label: "Inciensos" },
     { href: "/productos?category==Velas", label: "Velas" },
     { href: "/productos?category==Bombas de humo", label: "Bombas de humo" },
-    { href: "/productos?category==Porta Sahumerios", label: "Porta Sahumerios" },
+    {
+      href: "/productos?category==Porta Sahumerios",
+      label: "Porta Sahumerios",
+    },
     { href: "/productos?category==Estatuas", label: "Estatuas" },
-  ]
+  ];
 
-  return <NavigationLinks links={navigationLinks} showViewMore={true} />
+  return <NavigationLinks links={navigationLinks} showViewMore={true} />;
 }

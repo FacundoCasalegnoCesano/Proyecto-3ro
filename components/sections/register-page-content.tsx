@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { RegisterForm } from "../../components/register-form"
+import { RegisterForm } from "../../components/register-form";
 
 export function RegisterPageContent() {
   return (
@@ -8,9 +8,12 @@ export function RegisterPageContent() {
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Crear Cuenta</h2>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900">
+            Crear Cuenta
+          </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Únete a nuestra comunidad espiritual y accede a todos nuestros servicios
+            Únete a nuestra comunidad espiritual y accede a todos nuestros
+            servicios
           </p>
         </div>
 
@@ -36,7 +39,9 @@ export function RegisterPageContent() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-50 text-gray-500">O regístrate con</span>
+            <span className="px-2 bg-gray-50 text-gray-500">
+              O regístrate con
+            </span>
           </div>
         </div>
 
@@ -79,5 +84,5 @@ export function RegisterPageContent() {
         </div>
       </div>
     </div>
-  )
+  );
 }

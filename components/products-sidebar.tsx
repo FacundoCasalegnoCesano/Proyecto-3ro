@@ -1,56 +1,60 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import {
-  ChevronDown,
-  ChevronRight,
-  X // Importar el icono X para el botón de limpiar
-} from "lucide-react"
-import Image from "next/image"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface IconProps {
-  className?: string
-  size?: number
-  strokeWidth?: number
+  className?: string;
+  size?: number;
+  strokeWidth?: number;
 }
 
 interface Subcategory {
-  name: string
-  image?: string
-  emoji?: string
-  icon?: React.ComponentType<IconProps>
+  name: string;
+  image?: string;
+  emoji?: string;
+  icon?: React.ComponentType<IconProps>;
 }
 
 interface ProductCategoryGroup {
-  id: string
-  name: string
-  subcategories: Subcategory[]
+  id: string;
+  name: string;
+  subcategories: Subcategory[];
 }
 
 interface ProductsSidebarProps {
-  selectedCategory?: string | null
-  onCategoryChange?: (category: string | null) => void
+  selectedCategory?: string | null;
+  onCategoryChange?: (category: string | null) => void;
 }
 
 export function ProductsSidebar({
   selectedCategory: externalSelectedCategory,
-  onCategoryChange: externalOnCategoryChange
+  onCategoryChange: externalOnCategoryChange,
 }: ProductsSidebarProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(["Aromatizantes", "Decoracion Espiritual"])
-  const [internalSelectedCategory, setInternalSelectedCategory] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([
+    "Aromatizantes",
+    "Decoracion Espiritual",
+  ]);
+  const [internalSelectedCategory, setInternalSelectedCategory] = useState<
+    string | null
+  >(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const categoryFromUrl = searchParams.get('category')
-    setInternalSelectedCategory(categoryFromUrl)
+    const categoryFromUrl = searchParams.get("category");
+    setInternalSelectedCategory(categoryFromUrl);
 
-    if (externalOnCategoryChange && categoryFromUrl !== externalSelectedCategory) {
-      externalOnCategoryChange(categoryFromUrl)
+    if (
+      externalOnCategoryChange &&
+      categoryFromUrl !== externalSelectedCategory
+    ) {
+      externalOnCategoryChange(categoryFromUrl);
     }
-  }, [searchParams, externalSelectedCategory, externalOnCategoryChange])
+  }, [searchParams, externalSelectedCategory, externalOnCategoryChange]);
 
   const productCategoryGroups: ProductCategoryGroup[] = [
     {
@@ -75,58 +79,50 @@ export function ProductsSidebar({
         { name: "Estatua", image: "/img/buddha.png" },
         { name: "Lampara de Sal", image: "/img/salt-lamp.png" },
         { name: "Porta Sahumerio", image: "/img/incense.png" },
-        { name: "Accesorios", image:""},
-        { name: "Atrapaluz", image:""},
+        { name: "Accesorios", image: "" },
+        { name: "Atrapaluz", image: "" },
       ],
     },
-  ]
+  ];
 
   const toggleCategoryGroup = (groupId: string) => {
     setExpandedCategories((prev) =>
-      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId],
-    )
-  }
+      prev.includes(groupId)
+        ? prev.filter((id) => id !== groupId)
+        : [...prev, groupId]
+    );
+  };
 
   const handleSubcategoryClick = async (subcategoryName: string) => {
-    setIsLoading(true)
-    const newCategory = internalSelectedCategory === subcategoryName ? null : subcategoryName
+    setIsLoading(true);
+    const newCategory =
+      internalSelectedCategory === subcategoryName ? null : subcategoryName;
 
-    setInternalSelectedCategory(newCategory)
+    setInternalSelectedCategory(newCategory);
 
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams.toString());
 
     if (newCategory) {
-      params.set('category', newCategory)
+      params.set("category", newCategory);
     } else {
-      params.delete('category')
+      params.delete("category");
     }
 
-    params.delete('page')
+    params.delete("page");
 
-    router.push(`/productos?${params.toString()}`, { scroll: false })
+    router.push(`/productos?${params.toString()}`, { scroll: false });
 
     if (externalOnCategoryChange) {
-      externalOnCategoryChange(newCategory)
+      externalOnCategoryChange(newCategory);
     }
 
-    setIsLoading(false)
-  }
+    setIsLoading(false);
+  };
 
-  const clearFilters = () => {
-    setInternalSelectedCategory(null)
-
-    const params = new URLSearchParams(searchParams.toString())
-    params.delete('category')
-    params.delete('page')
-
-    router.push(`/productos?${params.toString()}`, { scroll: false })
-
-    if (externalOnCategoryChange) {
-      externalOnCategoryChange(null)
-    }
-  }
-
-  const currentSelectedCategory = externalSelectedCategory !== undefined ? externalSelectedCategory : internalSelectedCategory
+  const currentSelectedCategory =
+    externalSelectedCategory !== undefined
+      ? externalSelectedCategory
+      : internalSelectedCategory;
 
   const renderIcon = (item: Subcategory) => {
     if (item.image) {
@@ -140,7 +136,7 @@ export function ProductsSidebar({
             className="object-contain"
           />
         </div>
-      )
+      );
     }
 
     if (item.emoji) {
@@ -148,24 +144,24 @@ export function ProductsSidebar({
         <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
           <span className="text-xs">{item.emoji}</span>
         </div>
-      )
+      );
     }
 
     if (item.icon) {
-      const IconComponent = item.icon
+      const IconComponent = item.icon;
       return (
         <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
           <IconComponent className="w-4 h-4" />
         </div>
-      )
+      );
     }
 
     return (
       <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
         <span className="text-xs">📦</span>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="bg-babalu-primary rounded-lg p-4 text-black">
@@ -216,5 +212,5 @@ export function ProductsSidebar({
         </div>
       ))}
     </div>
-  )
+  );
 }

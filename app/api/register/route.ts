@@ -1,17 +1,16 @@
 // app/api/auth/register/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createUser } from "../../../lib/auth-helpers"; 
+import { createUser } from "../../../lib/auth-helpers";
 
 export async function POST(request: NextRequest) {
   console.log("API de registro llamada");
-  
+
   try {
     const body = await request.json();
     console.log("Datos recibidos:", body);
 
     const { nombre, apellido, email, password, fechaNac } = body;
 
-    
     if (!nombre || !apellido || !email || !password || !fechaNac) {
       console.log("Faltan campos requeridos");
       return NextResponse.json(
@@ -20,7 +19,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    
     if (!/\S+@\S+\.\S+/.test(email)) {
       return NextResponse.json(
         { error: "Formato de email inválido" },
@@ -29,8 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("Intentando crear usuario...");
-    
-    
+
     const user = await createUser({
       nombre,
       apellido,
@@ -42,39 +39,37 @@ export async function POST(request: NextRequest) {
     console.log("Usuario creado exitosamente:", user);
 
     return NextResponse.json(
-      { 
-        message: "Usuario creado exitosamente", 
-        user 
+      {
+        message: "Usuario creado exitosamente",
+        user,
       },
       { status: 201 }
     );
-    
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error en API register:", error);
-    
-    
-    if (error.message.includes("ya existe")) {
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Error interno del servidor";
+
+    // Verificar si el error indica que el usuario ya existe
+    if (errorMessage.includes("ya existe")) {
       return NextResponse.json(
         { error: "El usuario ya existe con este email" },
         { status: 409 }
       );
     }
-    
-    return NextResponse.json(
-      { error: error.message || "Error interno del servidor" },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
-
 
 export async function OPTIONS() {
   return new Response(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
     },
   });
 }

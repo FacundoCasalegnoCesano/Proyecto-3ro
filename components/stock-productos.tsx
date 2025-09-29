@@ -1,85 +1,99 @@
-"use client"
+"use client";
 
-import { Edit, Trash2, Package, AlertCircle, Plus, Minus, Tag } from "lucide-react"
-import { Button } from "./ui/button"
-import Image from "next/image"
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import {
+  Edit,
+  Trash2,
+  Package,
+  AlertCircle,
+  Plus,
+  Minus,
+  Tag,
+} from "lucide-react";
+import { Button } from "./ui/button";
+import Image from "next/image";
+import { useState, useEffect, useCallback } from "react"; // ← Agregado useCallback
+import { useRouter } from "next/navigation";
 
 interface Producto {
-  id: number
-  name: string
-  price: string
-  category: string
-  marca: string
-  aroma: string
-  linea?: string
-  image: string
-  description: string
-  shipping: string
-  stock: number
-  status: string
-  imgUrl?: string
-  imgPublicId?: string
+  id: number;
+  name: string;
+  price: string;
+  category: string;
+  marca: string;
+  aroma: string;
+  linea?: string;
+  image: string;
+  description: string;
+  shipping: string;
+  stock: number;
+  status: string;
+  imgUrl?: string;
+  imgPublicId?: string;
 }
 
 export function StockProductos() {
-  const [productos, setProductos] = useState<Producto[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [editingStock, setEditingStock] = useState<{ [key: number]: number }>({})
-  const [filtroMarca, setFiltroMarca] = useState<string>('all')
-  const [filtroCategoria, setFiltroCategoria] = useState<string>('all')
-  const [filtroAroma, setFiltroAroma] = useState<string>('all')
-  const router = useRouter()
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editingStock, setEditingStock] = useState<{ [key: number]: number }>(
+    {}
+  );
+  const [filtroMarca, setFiltroMarca] = useState<string>("all");
+  const [filtroCategoria, setFiltroCategoria] = useState<string>("all");
+  const [filtroAroma, setFiltroAroma] = useState<string>("all");
+  const router = useRouter();
 
   // Función para capitalizar palabras
   const capitalizarPalabras = (texto: string | undefined | null): string => {
-    if (!texto || typeof texto !== 'string') return '';
+    if (!texto || typeof texto !== "string") return "";
     return texto
       .toLowerCase()
-      .split(' ')
-      .map(palabra => palabra.charAt(0).toUpperCase() + palabra.slice(1))
-      .join(' ');
-  }
+      .split(" ")
+      .map((palabra) => palabra.charAt(0).toUpperCase() + palabra.slice(1))
+      .join(" ");
+  };
 
   // Función para verificar si tiene línea específica
   const tieneLineaEspecifica = (linea: string | undefined | null): boolean => {
-    return !!linea && 
-           typeof linea === 'string' && 
-           linea.trim() !== '' && 
-           linea.trim().toLowerCase() !== 'sin-linea' &&
-           linea.trim().toLowerCase() !== 'sin línea' &&
-           linea.trim().toLowerCase() !== 'sin_linea';
-  }
+    return (
+      !!linea &&
+      typeof linea === "string" &&
+      linea.trim() !== "" &&
+      linea.trim().toLowerCase() !== "sin-linea" &&
+      linea.trim().toLowerCase() !== "sin línea" &&
+      linea.trim().toLowerCase() !== "sin_linea"
+    );
+  };
 
   // Función para calcular el status basado en el stock
   const calculateStatus = (stock: number): string => {
-    if (stock === 0) return "agotado"
-    if (stock <= 5) return "bajo-stock"
-    return "disponible"
-  }
+    if (stock === 0) return "agotado";
+    if (stock <= 5) return "bajo-stock";
+    return "disponible";
+  };
 
-  // Función para obtener productos de la API SIN AGRUPAR
-  const fetchProductos = async () => {
+  // CORREGIDO: usar useCallback para memoizar fetchProductos
+  const fetchProductos = useCallback(async () => {
     try {
-      setLoading(true)
-      
+      setLoading(true);
+
       // Construir URL con filtros
-      const params = new URLSearchParams()
-      if (filtroMarca && filtroMarca !== 'all') {
-        params.append('marca', filtroMarca)
+      const params = new URLSearchParams();
+      if (filtroMarca && filtroMarca !== "all") {
+        params.append("marca", filtroMarca);
       }
-      if (filtroCategoria && filtroCategoria !== 'all') {
-        params.append('category', filtroCategoria)
+      if (filtroCategoria && filtroCategoria !== "all") {
+        params.append("category", filtroCategoria);
       }
-      if (filtroAroma && filtroAroma !== 'all') {
-        params.append('aroma', filtroAroma)
+      if (filtroAroma && filtroAroma !== "all") {
+        params.append("aroma", filtroAroma);
       }
-      
-      const url = `/api/agregarProd${params.toString() ? '?' + params.toString() : ''}`
-      const response = await fetch(url)
-      const data = await response.json()
+
+      const url = `/api/agregarProd${
+        params.toString() ? "?" + params.toString() : ""
+      }`;
+      const response = await fetch(url);
+      const data = await response.json();
 
       if (data.success) {
         // NO AGRUPAR - Mostrar todos los productos individuales con su stock real
@@ -89,213 +103,250 @@ export function StockProductos() {
           marca: capitalizarPalabras(producto.marca),
           category: capitalizarPalabras(producto.category),
           aroma: capitalizarPalabras(producto.aroma),
-          linea: tieneLineaEspecifica(producto.linea) ? capitalizarPalabras(producto.linea) : '',
-          description: capitalizarPalabras(producto.description)
-        }))
-        
-        setProductos(productosCapitalizados)
+          linea: tieneLineaEspecifica(producto.linea)
+            ? capitalizarPalabras(producto.linea)
+            : "",
+          description: capitalizarPalabras(producto.description),
+        }));
+
+        setProductos(productosCapitalizados);
       } else {
-        setError('Error al cargar productos: ' + data.error)
+        setError("Error al cargar productos: " + data.error);
       }
     } catch (error) {
-      console.error('Error al obtener productos:', error)
-      setError('Error de conexión al cargar productos')
+      console.error("Error al obtener productos:", error);
+      setError("Error de conexión al cargar productos");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  }, [filtroMarca, filtroCategoria, filtroAroma]); // ← Dependencias de fetchProductos
 
   // Cargar productos al montar el componente y cuando cambien los filtros
   useEffect(() => {
-    fetchProductos()
-  }, [filtroMarca, filtroCategoria, filtroAroma])
+    fetchProductos();
+  }, [fetchProductos]); // ← Ahora fetchProductos es memoizado
 
   // Función para manejar la edición de producto
   const handleEditarProducto = (producto: Producto) => {
     router.push(`/productos/modificar?id=${producto.id}`);
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "disponible":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "bajo-stock":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800";
       case "agotado":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   const getStatusText = (status: string) => {
     switch (status) {
       case "disponible":
-        return "Disponible"
+        return "Disponible";
       case "bajo-stock":
-        return "Bajo Stock"
+        return "Bajo Stock";
       case "agotado":
-        return "Agotado"
+        return "Agotado";
       default:
-        return "Desconocido"
+        return "Desconocido";
     }
-  }
+  };
 
   // Calcular estadísticas reales
-  const stats = productos.reduce((acc, producto) => {
-    if (producto.status === "disponible") acc.disponibles++
-    else if (producto.status === "bajo-stock") acc.bajoStock++
-    else if (producto.status === "agotado") acc.agotados++
-    
-    return acc
-  }, { disponibles: 0, bajoStock: 0, agotados: 0 })
+  const stats = productos.reduce(
+    (acc, producto) => {
+      if (producto.status === "disponible") acc.disponibles++;
+      else if (producto.status === "bajo-stock") acc.bajoStock++;
+      else if (producto.status === "agotado") acc.agotados++;
+
+      return acc;
+    },
+    { disponibles: 0, bajoStock: 0, agotados: 0 }
+  );
 
   // Obtener valores únicos para los filtros
-  const marcasUnicas = Array.from(new Set(productos.map(p => p.marca).filter(marca => marca && marca.trim() !== '')))
-  const categoriasUnicas = Array.from(new Set(productos.map(p => p.category).filter(cat => cat && cat.trim() !== '')))
-  const aromasUnicos = Array.from(new Set(productos.map(p => p.aroma).filter(aroma => aroma && aroma.trim() !== '')))
+  const marcasUnicas = Array.from(
+    new Set(
+      productos
+        .map((p) => p.marca)
+        .filter((marca) => marca && marca.trim() !== "")
+    )
+  );
+  const categoriasUnicas = Array.from(
+    new Set(
+      productos.map((p) => p.category).filter((cat) => cat && cat.trim() !== "")
+    )
+  );
+  const aromasUnicos = Array.from(
+    new Set(
+      productos
+        .map((p) => p.aroma)
+        .filter((aroma) => aroma && aroma.trim() !== "")
+    )
+  );
 
   // Función para actualizar stock
   const updateStock = async (id: number, newStock: number) => {
     if (newStock < 0) {
-      alert('El stock no puede ser negativo')
-      return
+      alert("El stock no puede ser negativo");
+      return;
     }
 
     try {
-      const response = await fetch('/api/agregarProd', {
-        method: 'PATCH',
+      const response = await fetch("/api/agregarProd", {
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           id,
-          stock: newStock
-        })
-      })
+          stock: newStock,
+        }),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.success) {
-        setProductos(prev => prev.map(producto => {
-          if (producto.id === id) {
-            const newStatus = calculateStatus(newStock)
-            return {
-              ...producto,
-              stock: newStock,
-              status: newStatus
+        setProductos((prev) =>
+          prev.map((producto) => {
+            if (producto.id === id) {
+              const newStatus = calculateStatus(newStock);
+              return {
+                ...producto,
+                stock: newStock,
+                status: newStatus,
+              };
             }
-          }
-          return producto
-        }))
-        
-        setEditingStock(prev => {
-          const newState = { ...prev }
-          delete newState[id]
-          return newState
-        })
+            return producto;
+          })
+        );
 
-        console.log(`✅ Stock actualizado: ${newStock}, Status: ${calculateStatus(newStock)}`)
+        setEditingStock((prev) => {
+          const newState = { ...prev };
+          delete newState[id];
+          return newState;
+        });
+
+        console.log(
+          `✅ Stock actualizado: ${newStock}, Status: ${calculateStatus(
+            newStock
+          )}`
+        );
       } else {
-        alert('Error al actualizar stock: ' + data.error)
+        alert("Error al actualizar stock: " + data.error);
       }
     } catch (error) {
-      console.error('Error al actualizar stock:', error)
-      alert('Error de conexión al actualizar stock')
+      console.error("Error al actualizar stock:", error);
+      alert("Error de conexión al actualizar stock");
     }
-  }
+  };
 
   // Función para incrementar/decrementar stock
-  const adjustStock = async (id: number, operation: 'increment' | 'decrement', amount: number = 1) => {
-    const producto = productos.find(p => p.id === id)
-    if (!producto) return
+  const adjustStock = async (
+    id: number,
+    operation: "increment" | "decrement",
+    amount: number = 1
+  ) => {
+    const producto = productos.find((p) => p.id === id);
+    if (!producto) return;
 
-    let newStock: number
-    if (operation === 'increment') {
-      newStock = producto.stock + amount
+    let newStock: number;
+    if (operation === "increment") {
+      newStock = producto.stock + amount;
     } else {
-      newStock = Math.max(0, producto.stock - amount)
+      newStock = Math.max(0, producto.stock - amount);
     }
 
     try {
-      const response = await fetch('/api/agregarProd', {
-        method: 'PATCH',
+      const response = await fetch("/api/agregarProd", {
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           id,
           stock: amount,
-          operation
-        })
-      })
+          operation,
+        }),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.success) {
-        setProductos(prev => prev.map(producto => {
-          if (producto.id === id) {
-            const newStatus = calculateStatus(newStock)
-            return {
-              ...producto,
-              stock: newStock,
-              status: newStatus
+        setProductos((prev) =>
+          prev.map((producto) => {
+            if (producto.id === id) {
+              const newStatus = calculateStatus(newStock);
+              return {
+                ...producto,
+                stock: newStock,
+                status: newStatus,
+              };
             }
-          }
-          return producto
-        }))
-        
-        console.log(`✅ Stock ${operation}: ${newStock}, Status: ${calculateStatus(newStock)}`)
+            return producto;
+          })
+        );
+
+        console.log(
+          `✅ Stock ${operation}: ${newStock}, Status: ${calculateStatus(
+            newStock
+          )}`
+        );
       } else {
-        alert('Error al actualizar stock: ' + data.error)
+        alert("Error al actualizar stock: " + data.error);
       }
     } catch (error) {
-      console.error('Error al ajustar stock:', error)
-      alert('Error de conexión al ajustar stock')
+      console.error("Error al ajustar stock:", error);
+      alert("Error de conexión al ajustar stock");
     }
-  }
+  };
 
   // Función para manejar cambio en input de stock
   const handleStockChange = (productId: number, value: string) => {
-    const numValue = Math.max(0, parseInt(value) || 0)
-    setEditingStock(prev => ({
+    const numValue = Math.max(0, parseInt(value) || 0);
+    setEditingStock((prev) => ({
       ...prev,
-      [productId]: numValue
-    }))
-  }
+      [productId]: numValue,
+    }));
+  };
 
   // Función para cancelar edición
   const cancelEdit = (productId: number) => {
-    setEditingStock(prev => {
-      const newState = { ...prev }
-      delete newState[productId]
-      return newState
-    })
-  }
+    setEditingStock((prev) => {
+      const newState = { ...prev };
+      delete newState[productId];
+      return newState;
+    });
+  };
 
   // Función para eliminar producto
   const handleEliminar = async (id: number) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) {
-      return
+    if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+      return;
     }
 
     try {
       const response = await fetch(`/api/agregarProd?id=${id}`, {
-        method: 'DELETE'
-      })
+        method: "DELETE",
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.success) {
-        fetchProductos()
+        fetchProductos();
       } else {
-        alert('Error al eliminar producto: ' + data.error)
+        alert("Error al eliminar producto: " + data.error);
       }
     } catch (error) {
-      console.error('Error al eliminar producto:', error)
-      alert('Error de conexión al eliminar producto')
+      console.error("Error al eliminar producto:", error);
+      alert("Error de conexión al eliminar producto");
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -303,7 +354,7 @@ export function StockProductos() {
         <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-600">Cargando productos...</p>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -315,7 +366,7 @@ export function StockProductos() {
           Reintentar
         </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -328,23 +379,33 @@ export function StockProductos() {
               <Package className="w-6 h-6 text-babalu-primary" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Stock Individual de Productos</h2>
-              <p className="text-sm text-gray-600">Gestiona el inventario individual de cada producto por aroma</p>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Stock Individual de Productos
+              </h2>
+              <p className="text-sm text-gray-600">
+                Gestiona el inventario individual de cada producto por aroma
+              </p>
             </div>
           </div>
 
           {/* Estadísticas rápidas */}
           <div className="flex items-center space-x-6 text-sm">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.disponibles}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.disponibles}
+              </div>
               <div className="text-gray-500">Disponibles</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-600">{stats.bajoStock}</div>
+              <div className="text-2xl font-bold text-yellow-600">
+                {stats.bajoStock}
+              </div>
               <div className="text-gray-500">Bajo Stock</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{stats.agotados}</div>
+              <div className="text-2xl font-bold text-red-600">
+                {stats.agotados}
+              </div>
               <div className="text-gray-500">Agotados</div>
             </div>
           </div>
@@ -355,29 +416,35 @@ export function StockProductos() {
           <div className="flex items-center space-x-2">
             <Tag className="w-4 h-4 text-gray-500" />
             <label className="text-sm font-medium text-gray-700">Marca:</label>
-            <select 
-              value={filtroMarca} 
+            <select
+              value={filtroMarca}
               onChange={(e) => setFiltroMarca(e.target.value)}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary"
             >
               <option value="all">Todas las marcas</option>
-              {marcasUnicas.map(marca => (
-                <option key={marca} value={marca}>{marca}</option>
+              {marcasUnicas.map((marca) => (
+                <option key={marca} value={marca}>
+                  {marca}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="flex items-center space-x-2">
             <Package className="w-4 h-4 text-gray-500" />
-            <label className="text-sm font-medium text-gray-700">Categoría:</label>
-            <select 
-              value={filtroCategoria} 
+            <label className="text-sm font-medium text-gray-700">
+              Categoría:
+            </label>
+            <select
+              value={filtroCategoria}
               onChange={(e) => setFiltroCategoria(e.target.value)}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary"
             >
               <option value="all">Todas las categorías</option>
-              {categoriasUnicas.map(categoria => (
-                <option key={categoria} value={categoria}>{categoria}</option>
+              {categoriasUnicas.map((categoria) => (
+                <option key={categoria} value={categoria}>
+                  {categoria}
+                </option>
               ))}
             </select>
           </div>
@@ -386,14 +453,16 @@ export function StockProductos() {
           <div className="flex items-center space-x-2">
             <div className="w-4 h-4 rounded-full bg-pink-500"></div>
             <label className="text-sm font-medium text-gray-700">Aroma:</label>
-            <select 
-              value={filtroAroma} 
+            <select
+              value={filtroAroma}
               onChange={(e) => setFiltroAroma(e.target.value)}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary"
             >
               <option value="all">Todos los aromas</option>
-              {aromasUnicos.map(aroma => (
-                <option key={aroma} value={aroma}>{aroma}</option>
+              {aromasUnicos.map((aroma) => (
+                <option key={aroma} value={aroma}>
+                  {aroma}
+                </option>
               ))}
             </select>
           </div>
@@ -405,8 +474,12 @@ export function StockProductos() {
         {productos.length === 0 ? (
           <div className="p-8 text-center">
             <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay productos</h3>
-            <p className="text-gray-600">Agrega algunos productos para comenzar a gestionar tu inventario.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No hay productos
+            </h3>
+            <p className="text-gray-600">
+              Agrega algunos productos para comenzar a gestionar tu inventario.
+            </p>
           </div>
         ) : (
           <table className="w-full">
@@ -427,9 +500,15 @@ export function StockProductos() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Aroma
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Individual</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Precio
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Stock Individual
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Estado
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Acciones
                 </th>
@@ -437,7 +516,10 @@ export function StockProductos() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {productos.map((producto) => (
-                <tr key={producto.id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={producto.id}
+                  className="hover:bg-gray-50 transition-colors"
+                >
                   {/* Producto */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-4">
@@ -451,8 +533,12 @@ export function StockProductos() {
                         />
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{producto.name}</div>
-                        <div className="text-sm text-gray-500">ID: #{producto.id}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {producto.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          ID: #{producto.id}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -477,7 +563,7 @@ export function StockProductos() {
 
                   {/* Línea */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {producto.linea && producto.linea.trim() !== '' ? (
+                    {producto.linea && producto.linea.trim() !== "" ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {producto.linea}
                       </span>
@@ -489,13 +575,15 @@ export function StockProductos() {
                   {/* Aroma - DESTACADO */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800 border border-pink-200">
-                      {producto.aroma || 'Sin aroma'}
+                      {producto.aroma || "Sin aroma"}
                     </span>
                   </td>
 
                   {/* Precio */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-gray-900">{producto.price}</div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {producto.price}
+                    </div>
                   </td>
 
                   {/* Stock INDIVIDUAL con controles */}
@@ -508,13 +596,20 @@ export function StockProductos() {
                             type="number"
                             min="0"
                             value={editingStock[producto.id]}
-                            onChange={(e) => handleStockChange(producto.id, e.target.value)}
+                            onChange={(e) =>
+                              handleStockChange(producto.id, e.target.value)
+                            }
                             className="w-20 h-8 text-sm px-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => updateStock(producto.id, editingStock[producto.id])}
+                            onClick={() =>
+                              updateStock(
+                                producto.id,
+                                editingStock[producto.id]
+                              )
+                            }
                             className="h-8 px-2"
                           >
                             ✓
@@ -534,33 +629,39 @@ export function StockProductos() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => adjustStock(producto.id, 'decrement')}
+                            onClick={() =>
+                              adjustStock(producto.id, "decrement")
+                            }
                             className="h-6 w-6 p-0 text-red-600 hover:bg-red-50"
                             disabled={producto.stock === 0}
                           >
                             <Minus className="w-3 h-3" />
                           </Button>
-                          
-                          <span 
+
+                          <span
                             className="text-sm font-bold text-gray-900 cursor-pointer hover:text-blue-600 min-w-[2rem] text-center bg-gray-50 px-2 py-1 rounded border"
-                            onClick={() => setEditingStock(prev => ({
-                              ...prev,
-                              [producto.id]: producto.stock
-                            }))}
+                            onClick={() =>
+                              setEditingStock((prev) => ({
+                                ...prev,
+                                [producto.id]: producto.stock,
+                              }))
+                            }
                             title="Click para editar stock individual"
                           >
                             {producto.stock}
                           </span>
-                          
+
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => adjustStock(producto.id, 'increment')}
+                            onClick={() =>
+                              adjustStock(producto.id, "increment")
+                            }
                             className="h-6 w-6 p-0 text-green-600 hover:bg-green-50"
                           >
                             <Plus className="w-3 h-3" />
                           </Button>
-                          
+
                           {producto.stock <= 5 && producto.stock > 0 && (
                             <span title="Bajo stock individual">
                               <AlertCircle className="w-4 h-4 text-yellow-500" />
@@ -579,7 +680,9 @@ export function StockProductos() {
                   {/* Estado */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(producto.status)}`}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                        producto.status
+                      )}`}
                     >
                       {getStatusText(producto.status)}
                     </span>
@@ -620,14 +723,20 @@ export function StockProductos() {
         <div className="flex items-center justify-between text-sm text-gray-600">
           <div>
             Mostrando {productos.length} productos individuales
-            {filtroMarca !== 'all' && (
-              <span className="ml-2 text-purple-600 font-medium">• Marca: {filtroMarca}</span>
+            {filtroMarca !== "all" && (
+              <span className="ml-2 text-purple-600 font-medium">
+                • Marca: {filtroMarca}
+              </span>
             )}
-            {filtroCategoria !== 'all' && (
-              <span className="ml-2 text-babalu-primary font-medium">• Categoría: {filtroCategoria}</span>
+            {filtroCategoria !== "all" && (
+              <span className="ml-2 text-babalu-primary font-medium">
+                • Categoría: {filtroCategoria}
+              </span>
             )}
-            {filtroAroma !== 'all' && (
-              <span className="ml-2 text-pink-600 font-medium">• Aroma: {filtroAroma}</span>
+            {filtroAroma !== "all" && (
+              <span className="ml-2 text-pink-600 font-medium">
+                • Aroma: {filtroAroma}
+              </span>
             )}
           </div>
           <div className="flex items-center space-x-4">
@@ -647,5 +756,5 @@ export function StockProductos() {
         </div>
       </div>
     </div>
-  )
+  );
 }

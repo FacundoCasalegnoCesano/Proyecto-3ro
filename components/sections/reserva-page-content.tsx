@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { ReservaForm } from "components/reserva-form"
+import { ReservaForm } from "components/reserva-form";
 
 export function ReservaPageContent() {
   return (
@@ -10,7 +10,8 @@ export function ReservaPageContent() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Reservar Sesión</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Selecciona tu servicio preferido y agenda tu cita de sanación espiritual
+            Selecciona tu servicio preferido y agenda tu cita de sanación
+            espiritual
           </p>
         </div>
 
@@ -18,5 +19,5 @@ export function ReservaPageContent() {
         <ReservaForm />
       </div>
     </div>
-  )
+  );
 }

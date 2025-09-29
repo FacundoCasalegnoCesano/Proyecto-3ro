@@ -1,5 +1,5 @@
 // components/admin-stock-manager.tsx
-'use client';
+"use client";
 
 import { useSession } from "next-auth/react";
 import { Package } from "lucide-react";
@@ -24,7 +24,7 @@ export function AdminStockManager({ onStockRedirect }: AdminStockManagerProps) {
   }
 
   // Solo muestra si el usuario es admin
-  if (session?.user?.rol !== 'admin') {
+  if (session?.user?.rol !== "admin") {
     return null;
   }
 
@@ -36,8 +36,12 @@ export function AdminStockManager({ onStockRedirect }: AdminStockManagerProps) {
             <Package className="w-6 h-6 text-babalu-primary" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-800">Gestionar Stock</h3>
-            <p className="text-sm text-gray-600">Ver y administrar el inventario de productos</p>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Gestionar Stock
+            </h3>
+            <p className="text-sm text-gray-600">
+              Ver y administrar el inventario de productos
+            </p>
           </div>
         </div>
 

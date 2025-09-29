@@ -9,7 +9,7 @@ declare module "next-auth" {
       apellido: string;
       email: string;
       fechaNac: Date;
-    }
+    };
   }
 
   interface User {

@@ -1,106 +1,114 @@
-"use client"
+"use client";
 
-import { ProductGrid } from "../../components/product-grid"
+import { ProductGrid } from "../../components/product-grid";
+import { useState, useEffect } from "react";
+import { Product } from "app/types/product";
 
 interface ProductsSectionProps {
-  title?: string
-  showTitle?: boolean
-  className?: string
+  title?: string;
+  showTitle?: boolean;
+  className?: string;
+  productIds?: number[]; // Array de IDs de productos específicos
 }
 
-export function ProductsSection({ title = "MAS VENDIDO", showTitle = true, className }: ProductsSectionProps) {
-  const products = [
-    {
-      id: 1,
-      name: "Sahumerio Madre Santa",
-      price: "$25.99",
-      shipping: "Envío Gratis",
-      image: "/img/sahumerio1.jpg?height=200&width=200&text=Tarot+Cards&bg=8B4513",
-      src: "/img/sahumerio1.jpg?height=200&width=200&text=Tarot+Cards&bg=8B4513", // Agregar src
-      category: "Sahumerios", // Agregar category
-    },
-    {
-      id: 2,
-      name: "Cristal de Cuarzo Rosa",
-      price: "$18.50",
-      shipping: "Envío Gratis",
-      image: "/img/sahumerio2.jpg?height=200&width=200&text=Rose+Quartz&bg=FFC0CB",
-      src: "/img/sahumerio2.jpg?height=200&width=200&text=Rose+Quartz&bg=FFC0CB",
-      category: "Cristales",
-    },
-    {
-      id: 3,
-      name: "Vela Aromática Lavanda",
-      price: "$12.99",
-      shipping: "Envío Gratis",
-      image: "/img/sahumerio1.jpg?height=200&width=200&text=Lavender+Candle&bg=9370DB",
-      src: "/img/sahumerio1.jpg?height=200&width=200&text=Lavender+Candle&bg=9370DB",
-      category: "Velas",
-    },
-    {
-      id: 4,
-      name: "Incienso Palo Santo",
-      price: "$15.75",
-      shipping: "Envío Gratis",
-      image: "/img/sahumerio2.jpg?height=200&width=200&text=Palo+Santo&bg=D2691E",
-      src: "/img/sahumerio2.jpg?height=200&width=200&text=Palo+Santo&bg=D2691E",
-      category: "Inciensos",
-    },
-    {
-      id: 5,
-      name: "Péndulo de Amatista",
-      price: "$22.00",
-      shipping: "Envío Gratis",
-      image: "/img/sahumerio1.jpg?height=200&width=200&text=Amethyst+Pendulum&bg=9966CC",
-      src: "/img/sahumerio1.jpg?height=200&width=200&text=Amethyst+Pendulum&bg=9966CC",
-      category: "Péndulos",
-    },
-    {
-      id: 6,
-      name: "Aceite Esencial Eucalipto",
-      price: "$14.25",
-      shipping: "Envío Gratis",
-      image: "/img/sahumerio2.jpg?height=200&width=200&text=Essential+Oil&bg=228B22",
-      src: "/img/sahumerio2.jpg?height=200&width=200&text=Essential+Oil&bg=228B22",
-      category: "Aceites",
-    },
-    {
-      id: 7,
-      name: "Runas Vikingas",
-      price: "$28.99",
-      shipping: "Envío Gratis",
-      image: "/img/sahumerio1.jpg?height=200&width=200&text=Viking+Runes&bg=696969",
-      src: "/img/sahumerio1.jpg?height=200&width=200&text=Viking+Runes&bg=696969",
-      category: "Runas",
-    },
-    {
-      id: 8,
-      name: "Campana Tibetana",
-      price: "$45.50",
-      shipping: "Envío Gratis",
-      image: "/img/sahumerio2.jpg?height=200&width=200&text=Tibetan+Bowl&bg=DAA520",
-      src: "/img/sahumerio2.jpg?height=200&width=200&text=Tibetan+Bowl&bg=DAA520",
-      category: "Instrumentos",
-    },
-    {
-      id: 9,
-      name: "Sahumerio de Mirra",
-      price: "$11.99",
-      shipping: "Envío Gratis",
-      image: "/img/sahumerio1.jpg?height=200&width=200&text=Myrrh+Incense&bg=8B4513",
-      src: "/img/sahumerio1.jpg?height=200&width=200&text=Myrrh+Incense&bg=8B4513",
-      category: "Sahumerios",
-    },
-    {
-      id: 10,
-      name: "Collar Chakras",
-      price: "$32.75",
-      shipping: "Envío Gratis",
-      image: "/img/sahumerio2.jpg?height=200&width=200&text=Chakra+Necklace&bg=FF6347",
-      src: "/img/sahumerio2.jpg?height=200&width=200&text=Chakra+Necklace&bg=FF6347",
-      category: "Joyería",
-    },
-  ]
+export function ProductsSection({
+  title = "PRODUCTOS DESTACADOS",
+  showTitle = true,
+  className,
+  productIds = [], // Por defecto vacío
+}: ProductsSectionProps) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  return <ProductGrid title={showTitle ? title : undefined} products={products} className={className} />
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Si no hay IDs especificados, no hacer nada
+        if (productIds.length === 0) {
+          setProducts([]);
+          setLoading(false);
+          return;
+        }
+
+        // Construir query string con los IDs
+        const queryString = productIds.map((id) => `ids=${id}`).join("&");
+        const response = await fetch(`/api/products/specific?${queryString}`);
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.products) {
+          setProducts(data.products);
+        } else {
+          throw new Error(data.error || "Error al cargar productos");
+        }
+      } catch (err) {
+        console.error("Error fetching products:", err);
+        setError(err instanceof Error ? err.message : "Error de conexión");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, [productIds]); // Se ejecuta cuando cambian los productIds
+
+  if (loading && productIds.length > 0) {
+    return (
+      <div className={`flex justify-center items-center py-8 ${className}`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-babalu-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando productos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`text-center py-8 ${className}`}>
+        <p className="text-red-600 mb-4">Error: {error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-babalu-primary text-white rounded-md hover:bg-babalu-dark transition-colors"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    if (productIds.length === 0) {
+      return (
+        <div className={`text-center py-8 ${className}`}>
+          <p className="text-gray-600">
+            Especifica los IDs de productos para mostrar
+          </p>
+        </div>
+      );
+    }
+    return (
+      <div className={`text-center py-8 ${className}`}>
+        <p className="text-gray-600">
+          No se encontraron los productos solicitados
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <ProductGrid
+      title={showTitle ? title : undefined}
+      products={products}
+      className={className}
+    />
+  );
 }

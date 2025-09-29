@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "../components/ui/button";
 import { ShoppingCart, Minus, Plus, Loader2 } from "lucide-react";
@@ -22,137 +22,398 @@ interface ProductDetailProps {
   lineaSeleccionada?: string;
 }
 
-// Función para verificar si un producto tiene al menos 2 de los 4 campos principales
-const tieneAlMenosDosAtributos = (product: any): boolean => {
-  const atributos = [
-    product.category && product.category.trim() !== '',
-    product.marca && product.marca.trim() !== '',
-    product.linea && product.linea.trim() !== '',
-    product.aroma && product.aroma.trim() !== ''
-  ];
-  
-  return atributos.filter(Boolean).length >= 2;
-};
-
 // Función auxiliar para convertir cualquier valor a string seguro
 const safeString = (value: string | boolean | undefined | null): string => {
-  if (typeof value === 'boolean') return value ? 'true' : 'false';
-  if (!value || typeof value !== 'string') return '';
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (!value || typeof value !== "string") return "";
   return value.trim();
 };
 
 // Función para verificar si tiene línea específica
-const tieneLineaEspecifica = (linea: string | boolean | undefined | null): boolean => {
+const tieneLineaEspecifica = (
+  linea: string | boolean | undefined | null
+): boolean => {
   const lineaStr = safeString(linea).toLowerCase();
-  return lineaStr !== '' && 
-         lineaStr !== 'sin-linea' &&
-         lineaStr !== 'sin línea' &&
-         lineaStr !== 'sin_linea' &&
-         lineaStr !== 'sin' &&
-         lineaStr !== 'false' &&
-         lineaStr !== 'true';
+  return (
+    lineaStr !== "" &&
+    lineaStr !== "sin-linea" &&
+    lineaStr !== "sin línea" &&
+    lineaStr !== "sin_linea" &&
+    lineaStr !== "sin" &&
+    lineaStr !== "false" &&
+    lineaStr !== "true"
+  );
 };
 
 // Función para verificar si tiene marca específica
-const tieneMarcaEspecifica = (marca: string | boolean | undefined | null): boolean => {
+const tieneMarcaEspecifica = (
+  marca: string | boolean | undefined | null
+): boolean => {
   const marcaStr = safeString(marca).toLowerCase();
-  return marcaStr !== '' && 
-         marcaStr !== 'sin-marca' &&
-         marcaStr !== 'sin marca' &&
-         marcaStr !== 'sin_marca' &&
-         marcaStr !== 'false' &&
-         marcaStr !== 'true';
+  return (
+    marcaStr !== "" &&
+    marcaStr !== "sin-marca" &&
+    marcaStr !== "sin marca" &&
+    marcaStr !== "sin_marca" &&
+    marcaStr !== "false" &&
+    marcaStr !== "true"
+  );
+};
+
+// Función para verificar si un producto tiene al menos 2 de los 4 campos principales
+const tieneAlMenosDosAtributos = (product: Product): boolean => {
+  const atributos = [
+    safeString(product.category) !== "",
+    safeString(product.marca) !== "",
+    safeString(product.linea) !== "",
+    safeString(product.aroma) !== "",
+  ];
+
+  return atributos.filter(Boolean).length >= 2;
 };
 
 // Función para verificar si un producto es individual
 const esProductoIndividual = (product: Product): boolean => {
   // Verificar si tiene categoría
-  const tieneCategoria = safeString(product.category) !== '';
-  
+  const tieneCategoria = safeString(product.category) !== "";
+
   // Verificar si NO tiene marca ni línea específicas (o sea, es individual)
   const noTieneMarca = !tieneMarcaEspecifica(product.marca);
   const noTieneLinea = !tieneLineaEspecifica(product.linea);
-  
+
   // Verificar si tiene características adicionales que lo hacen vendible individualmente
   const tieneCaracteristicas = [
-    safeString(product.tamaño) !== '',
-    safeString(product.cantidad) !== '',
-    safeString(product.color) !== '',
-    safeString(product.tipo) !== '',
-    safeString(product.piedra) !== ''
+    safeString(product.tamaño) !== "",
+    safeString(product.cantidad) !== "",
+    safeString(product.color) !== "",
+    safeString(product.tipo) !== "",
+    safeString(product.piedra) !== "",
   ].some(Boolean);
-  
+
   // Es individual si tiene categoría, no tiene marca/línea específicas, pero tiene otras características
   return tieneCategoria && noTieneMarca && noTieneLinea && tieneCaracteristicas;
 };
 
-export function ProductDetail({ productId, marcaSeleccionada, lineaSeleccionada }: ProductDetailProps) {
+export function ProductDetail({
+  productId,
+  marcaSeleccionada,
+  lineaSeleccionada,
+}: ProductDetailProps) {
   const [product, setProduct] = useState<Product | null>(null);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingVariants, setIsLoadingVariants] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [variantQuantities, setVariantQuantities] = useState<Record<string, number>>({});
+  const [variantQuantities, setVariantQuantities] = useState<
+    Record<string, number>
+  >({});
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
+
+  // SOLUCIÓN: Remover product de las dependencias y usar parámetros
+  const fetchVariants = useCallback(
+    async (
+      category: string,
+      marca: string,
+      currentAroma: string,
+      linea?: string,
+      currentProduct?: Product
+    ) => {
+      setIsLoadingVariants(true);
+      setVariants([]);
+
+      try {
+        console.log("🔍 Iniciando búsqueda de variantes...");
+
+        // Construir múltiples URLs para obtener productos con diferentes combinaciones
+        const urls: string[] = [];
+
+        if (category && marca) {
+          urls.push(
+            `/api/agregarProd?category=${encodeURIComponent(
+              category
+            )}&marca=${encodeURIComponent(marca)}`
+          );
+        }
+
+        if (category && linea) {
+          urls.push(
+            `/api/agregarProd?category=${encodeURIComponent(
+              category
+            )}&linea=${encodeURIComponent(linea)}`
+          );
+        }
+
+        if (marca && linea) {
+          urls.push(
+            `/api/agregarProd?marca=${encodeURIComponent(
+              marca
+            )}&linea=${encodeURIComponent(linea)}`
+          );
+        }
+
+        if (category && marca && linea) {
+          urls.push(
+            `/api/agregarProd?category=${encodeURIComponent(
+              category
+            )}&marca=${encodeURIComponent(marca)}&linea=${encodeURIComponent(
+              linea
+            )}`
+          );
+        }
+
+        console.log("🌐 URLs de consulta:", urls);
+
+        const allProductsPromises = urls.map((url) =>
+          fetch(url)
+            .then((res) => res.json())
+            .catch((err) => {
+              console.error(`Error fetching ${url}:`, err);
+              return { success: false, data: [] };
+            })
+        );
+
+        const allResults = await Promise.all(allProductsPromises);
+        console.log("📦 Respuestas de las consultas:", allResults.length);
+
+        // Combinar todos los productos y eliminar duplicados
+        const todosLosProductos: Product[] = [];
+        const productosVistos = new Set<number>();
+
+        allResults.forEach((result) => {
+          if (result.success && result.data) {
+            result.data.forEach((producto: Product) => {
+              if (!productosVistos.has(producto.id)) {
+                productosVistos.add(producto.id);
+                todosLosProductos.push(producto);
+              }
+            });
+          }
+        });
+
+        console.log(
+          `✅ Se encontraron ${todosLosProductos.length} productos únicos en total`
+        );
+
+        if (todosLosProductos.length === 0) {
+          console.log(
+            "❌ No se encontraron productos con los filtros aplicados"
+          );
+          setVariants([]);
+          return;
+        }
+
+        // Filtrar productos que tengan al menos 2 atributos y aroma
+        const productosValidados = todosLosProductos.filter(
+          (producto: Product) => {
+            const tieneAtributosSuficientes =
+              tieneAlMenosDosAtributos(producto);
+            const tieneAroma = safeString(producto.aroma) !== "";
+            return tieneAtributosSuficientes && tieneAroma;
+          }
+        );
+
+        console.log(
+          `🌸 Productos validados con aromas: ${productosValidados.length} de ${todosLosProductos.length}`
+        );
+
+        if (productosValidados.length > 0) {
+          // Agrupar productos por aroma
+          const productosPorAroma: { [aroma: string]: Product[] } = {};
+
+          productosValidados.forEach((producto: Product) => {
+            const aroma = safeString(producto.aroma);
+            if (!productosPorAroma[aroma]) {
+              productosPorAroma[aroma] = [];
+            }
+            productosPorAroma[aroma].push(producto);
+          });
+
+          console.log(
+            "🌺 Aromas únicos encontrados:",
+            Object.keys(productosPorAroma)
+          );
+
+          // Crear variantes para cada aroma
+          const variantes: ProductVariant[] = [];
+
+          Object.keys(productosPorAroma).forEach((aroma) => {
+            const productosDelAroma = productosPorAroma[aroma];
+            if (productosDelAroma.length > 0) {
+              const productoRepresentativo = productosDelAroma[0];
+
+              const stockTotal = productosDelAroma.reduce(
+                (total, prod) => total + (prod.stock || 0),
+                0
+              );
+
+              let precio = 0;
+              if (typeof productoRepresentativo.price === "string") {
+                const precioLimpio = productoRepresentativo.price
+                  .replace("$", "")
+                  .replace(",", ".")
+                  .trim();
+                precio = parseFloat(precioLimpio);
+                if (isNaN(precio)) {
+                  console.error(
+                    "❌ Error parseando precio:",
+                    productoRepresentativo.price
+                  );
+                  precio = 0;
+                }
+              } else if (typeof productoRepresentativo.price === "number") {
+                precio = productoRepresentativo.price;
+              } else {
+                console.error(
+                  "❌ Tipo de precio no válido:",
+                  typeof productoRepresentativo.price
+                );
+                precio = 0;
+              }
+
+              const variante = {
+                id: productoRepresentativo.id.toString(),
+                name: aroma,
+                price: precio,
+                stock: stockTotal,
+                aroma: aroma,
+                linea:
+                  safeString(productoRepresentativo.linea) ||
+                  linea ||
+                  undefined,
+              };
+
+              console.log("➕ Añadiendo variante:", variante);
+              variantes.push(variante);
+            }
+          });
+
+          console.log("🛍️ Total de variantes creadas:", variantes.length);
+
+          // Incluir también el producto actual si tiene aroma y al menos 2 atributos
+          if (
+            currentProduct &&
+            safeString(currentProduct.aroma) !== "" &&
+            tieneAlMenosDosAtributos(currentProduct)
+          ) {
+            const currentProductVariant: ProductVariant = {
+              id: currentProduct.id.toString(),
+              name: safeString(currentProduct.aroma),
+              price: parseFloat(
+                safeString(currentProduct.price)
+                  .replace("$", "")
+                  .replace(",", ".")
+              ),
+              stock: currentProduct.stock,
+              aroma: safeString(currentProduct.aroma),
+              linea: safeString(currentProduct.linea) || undefined,
+            };
+
+            const exists = variantes.some(
+              (v) => v.aroma === currentProductVariant.aroma
+            );
+            if (!exists) {
+              console.log(
+                "➕ Añadiendo producto actual como variante:",
+                currentProductVariant
+              );
+              setVariants([currentProductVariant, ...variantes]);
+            } else {
+              setVariants(variantes);
+            }
+          } else {
+            setVariants(variantes);
+          }
+
+          // Inicializar cantidades
+          const initialQuantities: Record<string, number> = {};
+          variantes.forEach((variant) => {
+            initialQuantities[variant.id] = 1;
+          });
+          setVariantQuantities(initialQuantities);
+        } else {
+          console.log("❌ No hay productos que cumplan con los criterios");
+          setVariants([]);
+        }
+      } catch (error) {
+        console.error("❌ Error fetching variants:", error);
+        setVariants([]);
+      } finally {
+        setIsLoadingVariants(false);
+      }
+    },
+    []
+  ); // SOLUCIÓN: Array de dependencias vacío
 
   useEffect(() => {
     const fetchProduct = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
-        console.log('🔍 Iniciando fetch del producto con ID:', productId);
+        console.log("🔍 Iniciando fetch del producto con ID:", productId);
         const response = await fetch(`/api/agregarProd?id=${productId}`);
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('text/html')) {
-          throw new Error('Endpoint de API no encontrado. Verifica la ruta.');
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("text/html")) {
+          throw new Error("Endpoint de API no encontrado. Verifica la ruta.");
         }
 
         const data = await response.json();
-        console.log('📦 Respuesta de la API:', data);
+        console.log("📦 Respuesta de la API:", data);
 
         if (!data.success) {
-          throw new Error(data.error || 'Error al cargar el producto');
+          throw new Error(data.error || "Error al cargar el producto");
         }
 
         const productData = data.data;
-        console.log('✅ Producto cargado:', productData);
+        console.log("✅ Producto cargado:", productData);
         setProduct(productData);
 
         // Verificar si es producto individual
         const esIndividual = esProductoIndividual(productData);
-        console.log('🔍 ¿Es producto individual?', esIndividual);
+        console.log("🔍 ¿Es producto individual?", esIndividual);
 
         // Si NO es producto individual y tiene al menos 2 atributos, buscar variantes
         const tieneAtributosSuficientes = tieneAlMenosDosAtributos(productData);
-        
-        if (!esIndividual && tieneAtributosSuficientes) {
-          const marca = marcaSeleccionada || productData.marca;
-          const linea = typeof lineaSeleccionada === 'string' ? lineaSeleccionada : 
-                       typeof productData.linea === 'string' ? productData.linea : undefined;
 
-          console.log('📋 Buscando variantes para producto agrupado:', { 
-            category: productData.category, 
-            marca, 
+        if (!esIndividual && tieneAtributosSuficientes) {
+          const marca = marcaSeleccionada || safeString(productData.marca);
+          const linea =
+            typeof lineaSeleccionada === "string"
+              ? lineaSeleccionada
+              : safeString(productData.linea);
+
+          console.log("📋 Buscando variantes para producto agrupado:", {
+            category: productData.category,
+            marca,
             linea,
-            currentAroma: productData.aroma 
+            currentAroma: productData.aroma,
           });
-          
-          await fetchVariants(productData.category, marca, productData.aroma, linea, productData);
+
+          // SOLUCIÓN: Pasar productData directamente en lugar de depender del estado
+          await fetchVariants(
+            productData.category,
+            marca,
+            safeString(productData.aroma),
+            linea,
+            productData // Pasamos el producto actual como parámetro
+          );
         } else {
-          console.log('ℹ️ Producto individual o sin atributos suficientes, no se buscan variantes');
+          console.log(
+            "ℹ️ Producto individual o sin atributos suficientes, no se buscan variantes"
+          );
           setVariants([]);
         }
-
       } catch (err) {
-        console.error('Error fetching product:', err);
-        setError(err instanceof Error ? err.message : 'Error al cargar el producto');
+        console.error("Error fetching product:", err);
+        setError(
+          err instanceof Error ? err.message : "Error al cargar el producto"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -161,182 +422,18 @@ export function ProductDetail({ productId, marcaSeleccionada, lineaSeleccionada 
     if (productId) {
       fetchProduct();
     }
-  }, [productId, marcaSeleccionada, lineaSeleccionada]);
-
-  const fetchVariants = async (category: string, marca: string, currentAroma: string, linea?: string, currentProduct?: Product) => {
-    setIsLoadingVariants(true);
-    setVariants([]);
-    
-    try {
-      console.log('🔍 Iniciando búsqueda de variantes...');
-      
-      // Construir múltiples URLs para obtener productos con diferentes combinaciones
-      const urls: string[] = [];
-      
-      if (category && marca) {
-        urls.push(`/api/agregarProd?category=${encodeURIComponent(category)}&marca=${encodeURIComponent(marca)}`);
-      }
-      
-      if (category && linea) {
-        urls.push(`/api/agregarProd?category=${encodeURIComponent(category)}&linea=${encodeURIComponent(linea)}`);
-      }
-      
-      if (marca && linea) {
-        urls.push(`/api/agregarProd?marca=${encodeURIComponent(marca)}&linea=${encodeURIComponent(linea)}`);
-      }
-      
-      if (category && marca && linea) {
-        urls.push(`/api/agregarProd?category=${encodeURIComponent(category)}&marca=${encodeURIComponent(marca)}&linea=${encodeURIComponent(linea)}`);
-      }
-
-      console.log('🌐 URLs de consulta:', urls);
-
-      const allProductsPromises = urls.map(url => 
-        fetch(url).then(res => res.json()).catch(err => {
-          console.error(`Error fetching ${url}:`, err);
-          return { success: false, data: [] };
-        })
-      );
-
-      const allResults = await Promise.all(allProductsPromises);
-      console.log('📦 Respuestas de las consultas:', allResults.length);
-
-      // Combinar todos los productos y eliminar duplicados
-      const todosLosProductos: any[] = [];
-      const productosVistos = new Set<number>();
-
-      allResults.forEach(result => {
-        if (result.success && result.data) {
-          result.data.forEach((producto: any) => {
-            if (!productosVistos.has(producto.id)) {
-              productosVistos.add(producto.id);
-              todosLosProductos.push(producto);
-            }
-          });
-        }
-      });
-
-      console.log(`✅ Se encontraron ${todosLosProductos.length} productos únicos en total`);
-      
-      if (todosLosProductos.length === 0) {
-        console.log('❌ No se encontraron productos con los filtros aplicados');
-        setVariants([]);
-        return;
-      }
-
-      // Filtrar productos que tengan al menos 2 atributos y aroma
-      const productosValidados = todosLosProductos.filter((producto: any) => {
-        const tieneAtributosSuficientes = tieneAlMenosDosAtributos(producto);
-        const tieneAroma = producto.aroma && producto.aroma.trim() !== '';
-        return tieneAtributosSuficientes && tieneAroma;
-      });
-      
-      console.log(`🌸 Productos validados con aromas: ${productosValidados.length} de ${todosLosProductos.length}`);
-      
-      if (productosValidados.length > 0) {
-        // Agrupar productos por aroma
-        const productosPorAroma: { [aroma: string]: any[] } = {};
-        
-        productosValidados.forEach((producto: any) => {
-          const aroma = producto.aroma.trim();
-          if (!productosPorAroma[aroma]) {
-            productosPorAroma[aroma] = [];
-          }
-          productosPorAroma[aroma].push(producto);
-        });
-
-        console.log('🌺 Aromas únicos encontrados:', Object.keys(productosPorAroma));
-
-        // Crear variantes para cada aroma
-        const variantes: ProductVariant[] = [];
-        
-        Object.keys(productosPorAroma).forEach(aroma => {
-          const productosDelAroma = productosPorAroma[aroma];
-          if (productosDelAroma.length > 0) {
-            const productoRepresentativo = productosDelAroma[0];
-            
-            const stockTotal = productosDelAroma.reduce((total, prod) => total + (prod.stock || 0), 0);
-            
-            let precio = 0;
-            if (typeof productoRepresentativo.price === 'string') {
-              const precioLimpio = productoRepresentativo.price.replace('$', '').replace(',', '.').trim();
-              precio = parseFloat(precioLimpio);
-              if (isNaN(precio)) {
-                console.error('❌ Error parseando precio:', productoRepresentativo.price);
-                precio = 0;
-              }
-            } else {
-              precio = parseFloat(productoRepresentativo.price);
-            }
-
-            const variante = {
-              id: productoRepresentativo.id.toString(),
-              name: aroma,
-              price: precio,
-              stock: stockTotal,
-              aroma: aroma,
-              linea: productoRepresentativo.linea || linea || undefined
-            };
-
-            console.log('➕ Añadiendo variante:', variante);
-            variantes.push(variante);
-          }
-        });
-
-        console.log('🛍️ Total de variantes creadas:', variantes.length);
-
-        // Incluir también el producto actual si tiene aroma y al menos 2 atributos
-        const productToUse = currentProduct || product;
-        if (productToUse && productToUse.aroma && productToUse.aroma.trim() !== '' && tieneAlMenosDosAtributos(productToUse)) {
-          const currentProductVariant: ProductVariant = {
-            id: productToUse.id.toString(),
-            name: productToUse.aroma,
-            price: parseFloat(productToUse.price.replace('$', '').replace(',', '.')),
-            stock: productToUse.stock,
-            aroma: productToUse.aroma,
-            linea: typeof productToUse.linea === 'string' ? productToUse.linea : undefined
-          };
-          
-          const exists = variantes.some(v => v.aroma === currentProductVariant.aroma);
-          if (!exists) {
-            console.log('➕ Añadiendo producto actual como variante:', currentProductVariant);
-            setVariants([currentProductVariant, ...variantes]);
-          } else {
-            setVariants(variantes);
-          }
-        } else {
-          setVariants(variantes);
-        }
-
-        // Inicializar cantidades
-        const initialQuantities: Record<string, number> = {};
-        variantes.forEach(variant => {
-          initialQuantities[variant.id] = 1;
-        });
-        setVariantQuantities(initialQuantities);
-
-      } else {
-        console.log('❌ No hay productos que cumplan con los criterios');
-        setVariants([]);
-      }
-    } catch (error) {
-      console.error('❌ Error fetching variants:', error);
-      setVariants([]);
-    } finally {
-      setIsLoadingVariants(false);
-    }
-  };
+  }, [productId, marcaSeleccionada, lineaSeleccionada, fetchVariants]);
 
   const handleQuantityChange = (change: number) => {
-    setQuantity(prev => Math.max(1, prev + change));
+    setQuantity((prev) => Math.max(1, prev + change));
   };
 
   const handleAddToCart = () => {
     if (!product) return;
-    
+
     // Convertir precio string a número de forma segura
     let priceNumber = 0;
-    if (product.price && typeof product.price === 'string') {
+    if (product.price && typeof product.price === "string") {
       const cleanedPrice = product.price.replace("$", "").replace(",", ".");
       priceNumber = Number.parseFloat(cleanedPrice) || 0;
     }
@@ -355,21 +452,23 @@ export function ProductDetail({ productId, marcaSeleccionada, lineaSeleccionada 
   };
 
   const handleVariantQuantityChange = (variantId: string, change: number) => {
-    setVariantQuantities(prev => ({
+    setVariantQuantities((prev) => ({
       ...prev,
-      [variantId]: Math.max(1, (prev[variantId] || 1) + change)
+      [variantId]: Math.max(1, (prev[variantId] || 1) + change),
     }));
   };
 
   const handleAddVariantToCart = (variant: ProductVariant) => {
     if (!product) return;
-    
+
     const quantity = variantQuantities[variant.id] || 1;
-    
+
     for (let i = 0; i < quantity; i++) {
       addItem({
         id: parseInt(variant.id),
-        name: `${product.name}${variant.linea ? ` - Línea ${variant.linea}` : ''} - ${variant.name}`,
+        name: `${product.name}${
+          variant.linea ? ` - Línea ${variant.linea}` : ""
+        } - ${variant.name}`,
         price: variant.price,
         image: product.image || "/placeholder.svg",
       });
@@ -418,17 +517,19 @@ export function ProductDetail({ productId, marcaSeleccionada, lineaSeleccionada 
 
   const esIndividual = esProductoIndividual(product);
   const puedeMostrarAromas = !esIndividual && tieneAlMenosDosAtributos(product);
-  const lineaDisplay = typeof lineaSeleccionada === 'string' ? lineaSeleccionada : 
-                     typeof product.linea === 'string' ? product.linea : undefined;
+  const lineaDisplay =
+    typeof lineaSeleccionada === "string"
+      ? lineaSeleccionada
+      : safeString(product.linea);
 
   // Función para obtener el precio formateado del producto
   const getProductPrice = (): number => {
     if (!product.price) return 0;
-    if (typeof product.price === 'string') {
+    if (typeof product.price === "string") {
       const cleanedPrice = product.price.replace("$", "").replace(",", ".");
       return Number.parseFloat(cleanedPrice) || 0;
     }
-    if (typeof product.price === 'number') return product.price;
+    if (typeof product.price === "number") return product.price;
     return 0;
   };
 
@@ -460,14 +561,19 @@ export function ProductDetail({ productId, marcaSeleccionada, lineaSeleccionada 
               {product.name}
               {puedeMostrarAromas && variants.length > 0 && (
                 <span className="text-lg text-gray-600 font-normal ml-2">
-                  ({variants.length} aromas disponibles{lineaDisplay ? ` en línea ${lineaDisplay}` : ''})
+                  ({variants.length} aromas disponibles
+                  {lineaDisplay ? ` en línea ${lineaDisplay}` : ""})
                 </span>
               )}
             </h1>
             <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-              <span>Marca: {marcaSeleccionada || product.marca || 'N/A'}</span>
+              <span>
+                Marca: {marcaSeleccionada || safeString(product.marca) || "N/A"}
+              </span>
               {lineaDisplay && <span>Línea: {lineaDisplay}</span>}
-              {product.aroma && <span>Aroma: {product.aroma}</span>}
+              {safeString(product.aroma) && (
+                <span>Aroma: {safeString(product.aroma)}</span>
+              )}
             </div>
             <p className="text-gray-600 leading-relaxed mb-4">
               {product.description}
@@ -515,85 +621,118 @@ export function ProductDetail({ productId, marcaSeleccionada, lineaSeleccionada 
           )}
 
           {/* CARACTERÍSTICAS DEL PRODUCTO INDIVIDUAL */}
-{esIndividual && (
-  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-    <h3 className="font-semibold text-gray-800 mb-2 text-sm">Características:</h3>
-    <div className="space-y-1 text-xs">
-      {safeString(product.tamaño) !== '' && (
-        <div className="flex items-center">
-          <span className="text-gray-600 font-medium min-w-[60px]">Tamaño:</span>
-          <span className="font-medium text-gray-800 capitalize">
-            {safeString(product.tamaño).toLowerCase().replace(/^\w/, (c) => c.toUpperCase())}
-          </span>
-        </div>
-      )}
-      {safeString(product.cantidad) !== '' && (
-        <div className="flex items-center">
-          <span className="text-gray-600 font-medium min-w-[60px]">Cantidad:</span>
-          <span className="font-medium text-gray-800">{safeString(product.cantidad)}</span>
-        </div>
-      )}
-      {safeString(product.color) !== '' && (
-        <div className="flex items-center">
-          <span className="text-gray-600 font-medium min-w-[60px]">Color:</span>
-          <span className="font-medium text-gray-800 capitalize">
-            {safeString(product.color).toLowerCase().replace(/^\w/, (c) => c.toUpperCase())}
-          </span>
-        </div>
-      )}
-      {safeString(product.tipo) !== '' && (
-        <div className="flex items-center">
-          <span className="text-gray-600 font-medium min-w-[60px]">Tipo:</span>
-          <span className="font-medium text-gray-800 capitalize">
-            {safeString(product.tipo).toLowerCase().replace(/^\w/, (c) => c.toUpperCase())}
-          </span>
-        </div>
-      )}
-      {safeString(product.piedra) !== '' && (
-        <div className="flex items-center">
-          <span className="text-gray-600 font-medium min-w-[60px]">Piedra:</span>
-          <span className="font-medium text-gray-800 capitalize">
-            {safeString(product.piedra).toLowerCase().replace(/^\w/, (c) => c.toUpperCase())}
-          </span>
-        </div>
-      )}
-    </div>
-  </div>
-)}
+          {esIndividual && (
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+              <h3 className="font-semibold text-gray-800 mb-2 text-sm">
+                Características:
+              </h3>
+              <div className="space-y-1 text-xs">
+                {safeString(product.tamaño) !== "" && (
+                  <div className="flex items-center">
+                    <span className="text-gray-600 font-medium min-w-[60px]">
+                      Tamaño:
+                    </span>
+                    <span className="font-medium text-gray-800 capitalize">
+                      {safeString(product.tamaño)
+                        .toLowerCase()
+                        .replace(/^\w/, (c) => c.toUpperCase())}
+                    </span>
+                  </div>
+                )}
+                {safeString(product.cantidad) !== "" && (
+                  <div className="flex items-center">
+                    <span className="text-gray-600 font-medium min-w-[60px]">
+                      Cantidad:
+                    </span>
+                    <span className="font-medium text-gray-800">
+                      {safeString(product.cantidad)}
+                    </span>
+                  </div>
+                )}
+                {safeString(product.color) !== "" && (
+                  <div className="flex items-center">
+                    <span className="text-gray-600 font-medium min-w-[60px]">
+                      Color:
+                    </span>
+                    <span className="font-medium text-gray-800 capitalize">
+                      {safeString(product.color)
+                        .toLowerCase()
+                        .replace(/^\w/, (c) => c.toUpperCase())}
+                    </span>
+                  </div>
+                )}
+                {safeString(product.tipo) !== "" && (
+                  <div className="flex items-center">
+                    <span className="text-gray-600 font-medium min-w-[60px]">
+                      Tipo:
+                    </span>
+                    <span className="font-medium text-gray-800 capitalize">
+                      {safeString(product.tipo)
+                        .toLowerCase()
+                        .replace(/^\w/, (c) => c.toUpperCase())}
+                    </span>
+                  </div>
+                )}
+                {safeString(product.piedra) !== "" && (
+                  <div className="flex items-center">
+                    <span className="text-gray-600 font-medium min-w-[60px]">
+                      Piedra:
+                    </span>
+                    <span className="font-medium text-gray-800 capitalize">
+                      {safeString(product.piedra)
+                        .toLowerCase()
+                        .replace(/^\w/, (c) => c.toUpperCase())}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* LISTADO DE AROMAS PARA PRODUCTOS AGRUPADOS */}
           {puedeMostrarAromas && (
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <h3 className="text-base font-semibold text-gray-800">
-                  {lineaDisplay 
-                    ? `Aromas de la línea ${lineaDisplay}:` 
-                    : 'Aromas disponibles:'
-                  }
+                  {lineaDisplay
+                    ? `Aromas de la línea ${lineaDisplay}:`
+                    : "Aromas disponibles:"}
                 </h3>
-                {isLoadingVariants && <Loader2 className="w-3 h-3 animate-spin text-babalu-primary" />}
+                {isLoadingVariants && (
+                  <Loader2 className="w-3 h-3 animate-spin text-babalu-primary" />
+                )}
               </div>
-              
+
               {variants.length > 0 ? (
                 <div className="space-y-2 max-h-80 overflow-y-auto">
                   {variants.map((variant: ProductVariant) => (
-                    <div key={variant.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div
+                      key={variant.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                    >
                       <div className="flex-1">
-                        <span className="font-medium text-gray-800 text-sm">{variant.name}</span>
+                        <span className="font-medium text-gray-800 text-sm">
+                          {variant.name}
+                        </span>
                         <div className="text-xs text-gray-600">
-                          {formatPrice(variant.price)} • {variant.stock} disponibles
+                          {formatPrice(variant.price)} • {variant.stock}{" "}
+                          disponibles
                           {variant.linea && !lineaDisplay && (
-                            <span className="ml-1 text-gray-500">(Línea {variant.linea})</span>
+                            <span className="ml-1 text-gray-500">
+                              (Línea {variant.linea})
+                            </span>
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         <div className="flex items-center border border-gray-300 rounded">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleVariantQuantityChange(variant.id, -1)}
+                            onClick={() =>
+                              handleVariantQuantityChange(variant.id, -1)
+                            }
                             className="px-1 py-0 hover:bg-gray-100 h-6 w-6"
                             disabled={variant.stock === 0}
                           >
@@ -607,7 +746,9 @@ export function ProductDetail({ productId, marcaSeleccionada, lineaSeleccionada 
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleVariantQuantityChange(variant.id, 1)}
+                            onClick={() =>
+                              handleVariantQuantityChange(variant.id, 1)
+                            }
                             className="px-1 py-0 hover:bg-gray-100 h-6 w-6"
                             disabled={variant.stock === 0}
                           >
@@ -630,10 +771,9 @@ export function ProductDetail({ productId, marcaSeleccionada, lineaSeleccionada 
               ) : !isLoadingVariants ? (
                 <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <p className="text-gray-500 text-sm">
-                    {lineaDisplay 
+                    {lineaDisplay
                       ? `No hay aromas disponibles en la línea ${lineaDisplay}`
-                      : 'No hay aromas disponibles'
-                    }
+                      : "No hay aromas disponibles"}
                   </p>
                 </div>
               ) : null}
@@ -644,7 +784,10 @@ export function ProductDetail({ productId, marcaSeleccionada, lineaSeleccionada 
           <div className="pt-4 border-t border-gray-200">
             <div className="mb-3">
               <span className="text-gray-600 text-sm">Categoría: </span>
-              <a href="#" className="text-babalu-primary hover:text-babalu-dark text-sm">
+              <a
+                href="#"
+                className="text-babalu-primary hover:text-babalu-dark text-sm"
+              >
                 {product.category}
               </a>
             </div>

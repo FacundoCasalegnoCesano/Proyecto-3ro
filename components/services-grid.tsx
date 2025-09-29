@@ -3,7 +3,7 @@
 import { ServiceCard } from "./service-card";
 import { useState } from "react";
 import { Button } from "../components/ui/button";
-import { Filter, Search, Star, Users, Clock } from "lucide-react";
+import { Search, Star, Users, Clock } from "lucide-react";
 
 interface Service {
   id: string;
@@ -17,8 +17,10 @@ interface Service {
 }
 
 export function ServicesGrid() {
-  const [filtroSeleccionado, setFiltroSeleccionado] = useState<'todos' | 'tarot' | 'energia' | 'limpieza'>('todos');
-  const [busqueda, setBusqueda] = useState('');
+  const [filtroSeleccionado, setFiltroSeleccionado] = useState<
+    "todos" | "tarot" | "energia" | "limpieza"
+  >("todos");
+  const [busqueda, setBusqueda] = useState("");
 
   const services: Service[] = [
     {
@@ -36,7 +38,7 @@ export function ServicesGrid() {
         "Conexión con tu intuición",
         "Perspectiva sobre relaciones y trabajo",
         "Comprensión de patrones de vida",
-        "Orientación espiritual personalizada"
+        "Orientación espiritual personalizada",
       ],
     },
     {
@@ -45,7 +47,8 @@ export function ServicesGrid() {
       subtitle: "Sanación Energética",
       description:
         "Terapia de sanación energética que utiliza la imposición de manos para canalizar energía universal. El Reiki ayuda a equilibrar los chakras, reducir el estrés y promover la sanación natural del cuerpo y la mente. Una experiencia profundamente relajante que restaura tu equilibrio interno.",
-      image: "/placeholder.svg?height=300&width=400&text=Reiki+Session&bg=E8F5E8",
+      image:
+        "/placeholder.svg?height=300&width=400&text=Reiki+Session&bg=E8F5E8",
       price: "4000",
       duration: "90 minutos",
       benefits: [
@@ -54,7 +57,7 @@ export function ServicesGrid() {
         "Promueve la autocuración física, mental y emocional",
         "Reduce el estrés y la ansiedad",
         "Fortalece el sistema inmunológico",
-        "Aumenta la vitalidad y energía"
+        "Aumenta la vitalidad y energía",
       ],
     },
     {
@@ -63,7 +66,8 @@ export function ServicesGrid() {
       subtitle: "Purificación del Aura",
       description:
         "Ritual de limpieza energética con péndulo y cristales que se utiliza para detectar y eliminar bloqueos energéticos en el cuerpo y el entorno, promoviendo el equilibrio, la paz y la armonía. Ideal para liberar energías estancadas y restaurar tu vibración natural.",
-      image: "/placeholder.svg?height=300&width=400&text=Spiritual+Cleansing&bg=F0E6FF",
+      image:
+        "/placeholder.svg?height=300&width=400&text=Spiritual+Cleansing&bg=F0E6FF",
       price: "2800",
       duration: "45 minutos",
       benefits: [
@@ -72,7 +76,7 @@ export function ServicesGrid() {
         "Restauración del flujo energético",
         "Mayor claridad mental",
         "Sensación de ligereza y renovación",
-        "Protección energética personal"
+        "Protección energética personal",
       ],
     },
     {
@@ -81,7 +85,8 @@ export function ServicesGrid() {
       subtitle: "Armonización del Hogar",
       description:
         "Limpieza energética completa de hogares, oficinas o locales comerciales. Utilizamos sahumerios, cristales y técnicas ancestrales para purificar y armonizar los espacios, creando un ambiente de paz y prosperidad. Transformamos la energía de tu hogar o lugar de trabajo.",
-      image: "/placeholder.svg?height=300&width=400&text=Space+Cleansing&bg=FFF4E6",
+      image:
+        "/placeholder.svg?height=300&width=400&text=Space+Cleansing&bg=FFF4E6",
       price: "5500",
       duration: "2-3 horas",
       benefits: [
@@ -90,7 +95,7 @@ export function ServicesGrid() {
         "Armonización de todos los espacios",
         "Protección duradera del hogar",
         "Mejora de la prosperidad",
-        "Ambiente de paz y tranquilidad"
+        "Ambiente de paz y tranquilidad",
       ],
     },
     {
@@ -99,7 +104,8 @@ export function ServicesGrid() {
       subtitle: "Liberación de Bloqueos",
       description:
         "Herramienta de radiestesia vibracional usada para diagnosticar y equilibrar el campo energético de una persona o espacio. El péndulo hebreo es una técnica especializada que permite identificar y liberar bloqueos profundos, facilitando un proceso de sanación integral y transformación personal.",
-      image: "/placeholder.svg?height=300&width=400&text=Hebrew+Pendulum&bg=FFE6F0",
+      image:
+        "/placeholder.svg?height=300&width=400&text=Hebrew+Pendulum&bg=FFE6F0",
       price: "10000",
       duration: "1-2 horas",
       benefits: [
@@ -108,7 +114,7 @@ export function ServicesGrid() {
         "Desintoxicación energética completa",
         "Bienestar emocional y mental",
         "Liberación de bloqueos ancestrales",
-        "Limpieza energética especializada"
+        "Limpieza energética especializada",
       ],
     },
     {
@@ -117,7 +123,8 @@ export function ServicesGrid() {
       subtitle: "Sabiduría Ancestral",
       description:
         "Es una herramienta que permite profundizar en el autoconocimiento y la comprensión de uno mismo, siendo guía y orientación en momentos de incertidumbre o cambio. También permite al consultante realizar una reflexión e introspección, ofreciendo una perspectiva única y profunda sobre la vida y su entorno, conectando con la sabiduría ancestral africana.",
-      image: "/placeholder.svg?height=300&width=400&text=African+Tarot&bg=E6F3FF",
+      image:
+        "/placeholder.svg?height=300&width=400&text=African+Tarot&bg=E6F3FF",
       price: "10000",
       duration: "1-2 horas",
       benefits: [
@@ -126,44 +133,54 @@ export function ServicesGrid() {
         "Conexión con sabiduría ancestral",
         "Desbloqueo de potencial interno",
         "Claridad sobre propósito de vida",
-        "Integración de aspectos sombra"
+        "Integración de aspectos sombra",
       ],
-    }
+    },
   ];
 
   // Filtrar servicios
-  const serviciosFiltrados = services.filter(service => {
-    const coincideBusqueda = service.title.toLowerCase().includes(busqueda.toLowerCase()) ||
-                           service.subtitle.toLowerCase().includes(busqueda.toLowerCase()) ||
-                           service.description.toLowerCase().includes(busqueda.toLowerCase());
+  const serviciosFiltrados = services.filter((service) => {
+    const coincideBusqueda =
+      service.title.toLowerCase().includes(busqueda.toLowerCase()) ||
+      service.subtitle.toLowerCase().includes(busqueda.toLowerCase()) ||
+      service.description.toLowerCase().includes(busqueda.toLowerCase());
 
-    if (filtroSeleccionado === 'todos') return coincideBusqueda;
-    
-    if (filtroSeleccionado === 'tarot') {
-      return coincideBusqueda && (service.id === 'tarot' || service.id === 'tarot-africano');
+    if (filtroSeleccionado === "todos") return coincideBusqueda;
+
+    if (filtroSeleccionado === "tarot") {
+      return (
+        coincideBusqueda &&
+        (service.id === "tarot" || service.id === "tarot-africano")
+      );
     }
-    
-    if (filtroSeleccionado === 'energia') {
-      return coincideBusqueda && (service.id === 'reiki' || service.id === 'pendulo-hebreo');
+
+    if (filtroSeleccionado === "energia") {
+      return (
+        coincideBusqueda &&
+        (service.id === "reiki" || service.id === "pendulo-hebreo")
+      );
     }
-    
-    if (filtroSeleccionado === 'limpieza') {
-      return coincideBusqueda && (service.id === 'limpieza-energetica' || service.id === 'limpieza-espacios');
+
+    if (filtroSeleccionado === "limpieza") {
+      return (
+        coincideBusqueda &&
+        (service.id === "limpieza-energetica" ||
+          service.id === "limpieza-espacios")
+      );
     }
 
     return coincideBusqueda;
   });
 
   const filtros = [
-    { id: 'todos' as const, label: 'Todos los Servicios', icon: Star },
-    { id: 'tarot' as const, label: 'Lecturas de Tarot', icon: Star },
-    { id: 'energia' as const, label: 'Sanación Energética', icon: Users },
-    { id: 'limpieza' as const, label: 'Limpiezas', icon: Clock },
+    { id: "todos" as const, label: "Todos los Servicios", icon: Star },
+    { id: "tarot" as const, label: "Lecturas de Tarot", icon: Star },
+    { id: "energia" as const, label: "Sanación Energética", icon: Users },
+    { id: "limpieza" as const, label: "Limpiezas", icon: Clock },
   ];
 
   return (
     <div className="w-full">
-
       {/* Controles de filtrado y búsqueda */}
       <div className="mb-8 space-y-4">
         {/* Barra de búsqueda */}
@@ -186,7 +203,9 @@ export function ServicesGrid() {
               <Button
                 key={filtro.id}
                 onClick={() => setFiltroSeleccionado(filtro.id)}
-                variant={filtroSeleccionado === filtro.id ? "default" : "outline"}
+                variant={
+                  filtroSeleccionado === filtro.id ? "default" : "outline"
+                }
                 className={`flex items-center space-x-2 ${
                   filtroSeleccionado === filtro.id
                     ? "bg-babalu-primary hover:bg-babalu-dark"
@@ -204,10 +223,13 @@ export function ServicesGrid() {
       {/* Indicador de resultados */}
       {busqueda && (
         <div className="mb-6 text-center text-gray-600">
-          {serviciosFiltrados.length === 0 
+          {serviciosFiltrados.length === 0
             ? `No se encontraron servicios para "${busqueda}"`
-            : `${serviciosFiltrados.length} servicio${serviciosFiltrados.length === 1 ? '' : 's'} encontrado${serviciosFiltrados.length === 1 ? '' : 's'} para "${busqueda}"`
-          }
+            : `${serviciosFiltrados.length} servicio${
+                serviciosFiltrados.length === 1 ? "" : "s"
+              } encontrado${
+                serviciosFiltrados.length === 1 ? "" : "s"
+              } para "${busqueda}"`}
         </div>
       )}
 
@@ -227,10 +249,10 @@ export function ServicesGrid() {
           <p className="text-gray-500 mb-4">
             Intenta cambiar los filtros o términos de búsqueda
           </p>
-          <Button 
+          <Button
             onClick={() => {
-              setBusqueda('');
-              setFiltroSeleccionado('todos');
+              setBusqueda("");
+              setFiltroSeleccionado("todos");
             }}
             className="bg-babalu-primary hover:bg-babalu-dark"
           >
@@ -245,19 +267,20 @@ export function ServicesGrid() {
           ¿No estás seguro qué servicio elegir?
         </h2>
         <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-          Cada persona es única y sus necesidades espirituales también. Si tienes dudas sobre cuál 
-          servicio es el más adecuado para ti, estaremos encantados de ayudarte en una consulta gratuita.
+          Cada persona es única y sus necesidades espirituales también. Si
+          tienes dudas sobre cuál servicio es el más adecuado para ti, estaremos
+          encantados de ayudarte en una consulta gratuita.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
             variant="outline"
             className="bg-white hover:bg-gray-50"
-            onClick={() => window.open('https://wa.me/5491123456789', '_blank')}
+            onClick={() => window.open("https://wa.me/5491123456789", "_blank")}
           >
             💬 Consulta por WhatsApp
           </Button>
           <Button
-            onClick={() => window.location.href = '/contacto'}
+            onClick={() => (window.location.href = "/contacto")}
             className="bg-babalu-primary hover:bg-babalu-dark text-white"
           >
             📞 Consultame Por Correo

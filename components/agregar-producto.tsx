@@ -1,33 +1,36 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "./ui/button"
-import { Plus, Package } from "lucide-react"
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Plus, Package } from "lucide-react";
 
 interface AgregarProductoProps {
-  onAddProduct?: () => void
-  className?: string
+  onAddProduct?: () => void;
+  className?: string;
 }
 
-export function AgregarProducto({ onAddProduct, className = "" }: AgregarProductoProps) {
-  const [isLoading, setIsLoading] = useState(false)
+export function AgregarProducto({
+  onAddProduct,
+  className = "",
+}: AgregarProductoProps) {
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleAddProduct = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       if (onAddProduct) {
-        onAddProduct()
+        onAddProduct();
       } else {
         // Redirigir a la página de agregar producto por defecto
-        window.location.href = "/productos/agregar"
+        window.location.href = "/productos/agregar";
       }
     } catch (error) {
-      console.error("Error al agregar producto:", error)
+      console.error("Error al agregar producto:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div
@@ -38,7 +41,9 @@ export function AgregarProducto({ onAddProduct, className = "" }: AgregarProduct
           <Package className="w-6 h-6 text-babalu-primary" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-800">Agregar Nuevo Producto</h3>
+          <h3 className="text-lg font-semibold text-gray-800">
+            Agregar Nuevo Producto
+          </h3>
           <p className="text-sm text-gray-600">Añade productos a tu catálogo</p>
         </div>
       </div>
@@ -52,5 +57,5 @@ export function AgregarProducto({ onAddProduct, className = "" }: AgregarProduct
         <span>{isLoading ? "Cargando..." : "Agregar Producto"}</span>
       </Button>
     </div>
-  )
+  );
 }

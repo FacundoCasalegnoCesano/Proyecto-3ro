@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { LoginForm } from "../../components/login-page"
+import { LoginForm } from "../../components/login-page";
 
 export function LoginPageContent() {
   return (
@@ -8,8 +8,12 @@ export function LoginPageContent() {
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Iniciar Sesión</h2>
-          <p className="mt-2 text-sm text-gray-600">Accede a tu cuenta para gestionar tus pedidos y reservas</p>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900">
+            Iniciar Sesión
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Accede a tu cuenta para gestionar tus pedidos y reservas
+          </p>
         </div>
 
         {/* Formulario de login */}
@@ -18,7 +22,10 @@ export function LoginPageContent() {
         {/* Enlaces adicionales */}
         <div className="text-center space-y-4">
           <div className="text-sm">
-            <a href="/reset-password" className="text-babalu-primary hover:text-babalu-dark transition-colors">
+            <a
+              href="/reset-password"
+              className="text-babalu-primary hover:text-babalu-dark transition-colors"
+            >
               ¿Olvidaste tu contraseña?
             </a>
           </div>
@@ -40,7 +47,9 @@ export function LoginPageContent() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-50 text-gray-500">O continúa con</span>
+            <span className="px-2 bg-gray-50 text-gray-500">
+              O continúa con
+            </span>
           </div>
         </div>
 
@@ -83,5 +92,5 @@ export function LoginPageContent() {
         </div>
       </div>
     </div>
-  )
+  );
 }

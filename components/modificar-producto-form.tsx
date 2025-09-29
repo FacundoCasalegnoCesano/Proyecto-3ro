@@ -1,60 +1,76 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Button } from "./ui/button"
-import ImageUploader from "./imageUploader"
-import { Package, DollarSign, ImageIcon, Tag, FileText, Save, Loader2, ArrowLeft, Plus, X, Flower2, Box } from "lucide-react"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { Button } from "./ui/button";
+import ImageUploader from "./imageUploader";
+import {
+  Package,
+  DollarSign,
+  ImageIcon,
+  Tag,
+  FileText,
+  Save,
+  Loader2,
+  ArrowLeft,
+  Plus,
+  X,
+  Flower2,
+  Box,
+} from "lucide-react";
+import Image from "next/image";
 
 interface UploadedImage {
-  publicId: string
-  url: string
+  publicId: string;
+  url: string;
 }
 
 interface ProductFormData {
-  id: number
-  name: string
-  price: string
-  category: string
-  marca: string
-  aroma: string
-  description: string
-  stock: number
-  images: UploadedImage[]
+  id: number;
+  name: string;
+  price: string;
+  category: string;
+  marca: string;
+  aroma: string;
+  description: string;
+  stock: number;
+  images: UploadedImage[];
 }
 
 interface FormErrors {
-  name?: string
-  price?: string
-  category?: string
-  marca?: string
-  aroma?: string
-  description?: string
-  stock?: string
-  images?: string
-  general?: string
+  name?: string;
+  price?: string;
+  category?: string;
+  marca?: string;
+  aroma?: string;
+  description?: string;
+  stock?: string;
+  images?: string;
+  general?: string;
 }
 
 interface CategoryOption {
-  value: string
-  label: string
+  value: string;
+  label: string;
 }
 
 interface MarcaOption {
-  value: string
-  label: string
+  value: string;
+  label: string;
 }
 
 interface AromaOption {
-  value: string
-  label: string
+  value: string;
+  label: string;
 }
 
 interface ModificarProductoFormProps {
-  productId?: string
+  productId?: string;
 }
 
-export function ModificarProductoForm({ productId }: ModificarProductoFormProps) {
+export function ModificarProductoForm({
+  productId,
+}: ModificarProductoFormProps) {
   const [formData, setFormData] = useState<ProductFormData>({
     id: 0,
     name: "",
@@ -64,114 +80,142 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
     aroma: "",
     description: "",
     stock: 0,
-    images: []
-  })
+    images: [],
+  });
 
-  const [isLoading, setIsLoading] = useState(false)
-  const [isLoadingProduct, setIsLoadingProduct] = useState(true)
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [successMessage, setSuccessMessage] = useState("")
-  const [uploadMode, setUploadMode] = useState<'single' | 'multiple' | null>('single')
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Estados para categorías, marcas y aromas
-  const [categories, setCategories] = useState<CategoryOption[]>([])
-  const [marcas, setMarcas] = useState<MarcaOption[]>([])
-  const [aromas, setAromas] = useState<AromaOption[]>([])
-  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false)
-  const [showNewMarcaInput, setShowNewMarcaInput] = useState(false)
-  const [showNewAromaInput, setShowNewAromaInput] = useState(false)
-  const [newCategoryValue, setNewCategoryValue] = useState("")
-  const [newMarcaValue, setNewMarcaValue] = useState("")
-  const [newAromaValue, setNewAromaValue] = useState("")
-  const [isLoadingOptions, setIsLoadingOptions] = useState(true)
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [marcas, setMarcas] = useState<MarcaOption[]>([]);
+  const [aromas, setAromas] = useState<AromaOption[]>([]);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [showNewMarcaInput, setShowNewMarcaInput] = useState(false);
+  const [showNewAromaInput, setShowNewAromaInput] = useState(false);
+  const [newCategoryValue, setNewCategoryValue] = useState("");
+  const [newMarcaValue, setNewMarcaValue] = useState("");
+  const [newAromaValue, setNewAromaValue] = useState("");
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
 
   // Función para verificar si la categoría es sahumerio
   const isSahumerioCategory = (category: string): boolean => {
-    return category.toLowerCase().includes('sahumerio')
-  }
+    return category.toLowerCase().includes("sahumerio");
+  };
 
   // Cargar categorías al montar el componente
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        setIsLoadingOptions(true)
-        
+        setIsLoadingOptions(true);
+
         // Obtener categorías únicas
-        const categoriesResponse = await fetch('/api/agregarProd?getCategories=true')
+        const categoriesResponse = await fetch(
+          "/api/agregarProd?getCategories=true"
+        );
         if (categoriesResponse.ok) {
-          const categoriesData = await categoriesResponse.json()
+          const categoriesData = await categoriesResponse.json();
           if (categoriesData.success) {
-            setCategories(categoriesData.data.map((cat: string) => ({ value: cat, label: cat })))
+            setCategories(
+              categoriesData.data.map((cat: string) => ({
+                value: cat,
+                label: cat,
+              }))
+            );
           }
         }
       } catch (error) {
-        console.error('Error cargando categorías:', error)
+        console.error("Error cargando categorías:", error);
       } finally {
-        setIsLoadingOptions(false)
+        setIsLoadingOptions(false);
       }
-    }
+    };
 
-    loadCategories()
-  }, [])
+    loadCategories();
+  }, []);
 
   // Cargar marcas cuando cambie la categoría
   useEffect(() => {
     const loadMarcas = async () => {
       if (!formData.category) {
-        setMarcas([])
-        setAromas([])
-        return
+        setMarcas([]);
+        setAromas([]);
+        return;
       }
 
       try {
         // Obtener marcas únicas para la categoría seleccionada
-        const marcasResponse = await fetch(`/api/agregarProd?getMarcas=true&category=${encodeURIComponent(formData.category)}`)
+        const marcasResponse = await fetch(
+          `/api/agregarProd?getMarcas=true&category=${encodeURIComponent(
+            formData.category
+          )}`
+        );
         if (marcasResponse.ok) {
-          const marcasData = await marcasResponse.json()
+          const marcasData = await marcasResponse.json();
           if (marcasData.success) {
-            setMarcas(marcasData.data.map((marca: string) => ({ value: marca, label: marca })))
+            setMarcas(
+              marcasData.data.map((marca: string) => ({
+                value: marca,
+                label: marca,
+              }))
+            );
           }
         }
       } catch (error) {
-        console.error('Error cargando marcas:', error)
-        setMarcas([])
+        console.error("Error cargando marcas:", error);
+        setMarcas([]);
       }
-    }
+    };
 
-    loadMarcas()
-  }, [formData.category])
+    loadMarcas();
+  }, [formData.category]);
 
   // Cargar aromas cuando cambien la categoría y marca (solo para sahumerios)
   useEffect(() => {
     const loadAromas = async () => {
-      if (!formData.category || !formData.marca || !isSahumerioCategory(formData.category)) {
-        setAromas([])
-        return
+      if (
+        !formData.category ||
+        !formData.marca ||
+        !isSahumerioCategory(formData.category)
+      ) {
+        setAromas([]);
+        return;
       }
 
       try {
         // Obtener aromas únicos para la categoría y marca seleccionadas
-        const aromasResponse = await fetch(`/api/agregarProd?getAromas=true&category=${encodeURIComponent(formData.category)}&marca=${encodeURIComponent(formData.marca)}`)
+        const aromasResponse = await fetch(
+          `/api/agregarProd?getAromas=true&category=${encodeURIComponent(
+            formData.category
+          )}&marca=${encodeURIComponent(formData.marca)}`
+        );
         if (aromasResponse.ok) {
-          const aromasData = await aromasResponse.json()
+          const aromasData = await aromasResponse.json();
           if (aromasData.success) {
-            setAromas(aromasData.data.map((aroma: string) => ({ value: aroma, label: aroma })))
+            setAromas(
+              aromasData.data.map((aroma: string) => ({
+                value: aroma,
+                label: aroma,
+              }))
+            );
           }
         }
       } catch (error) {
-        console.error('Error cargando aromas:', error)
-        setAromas([])
+        console.error("Error cargando aromas:", error);
+        setAromas([]);
       }
-    }
+    };
 
-    loadAromas()
-  }, [formData.category, formData.marca])
+    loadAromas();
+  }, [formData.category, formData.marca]);
 
   // Cargar datos del producto al montar el componente
   useEffect(() => {
     const loadProductData = async () => {
       if (!productId) return;
-      
+
       setIsLoadingProduct(true);
       try {
         // Obtener datos reales de la API
@@ -180,36 +224,36 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
 
         if (data.success) {
           const productData = data.data;
-          
+
           // Convertir imágenes existentes al formato esperado
           const productImages: UploadedImage[] = [];
           if (productData.image || productData.imgUrl) {
             productImages.push({
               publicId: productData.imgPublicId || "",
-              url: productData.image || productData.imgUrl
+              url: productData.image || productData.imgUrl,
             });
           }
-          
+
           // Formatear los datos para el formulario
           setFormData({
             id: productData.id,
             name: productData.name,
-            price: productData.price.replace('$', ''), // Remover el símbolo de dólar
+            price: productData.price.replace("$", ""), // Remover el símbolo de dólar
             category: productData.category,
             marca: productData.marca || "",
             aroma: productData.aroma || "",
             description: productData.description,
             stock: productData.stock || 0,
-            images: productImages
+            images: productImages,
           });
         } else {
           setErrors({
-            general: "Error al cargar los datos del producto: " + data.error
+            general: "Error al cargar los datos del producto: " + data.error,
           });
         }
-      } catch (error) {
+      } catch {
         setErrors({
-          general: "Error de conexión al cargar los datos del producto"
+          general: "Error de conexión al cargar los datos del producto",
         });
       } finally {
         setIsLoadingProduct(false);
@@ -217,275 +261,322 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
     };
 
     loadProductData();
-  }, [productId])
+  }, [productId]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }))
+    }));
 
     // Limpiar errores cuando el usuario empiece a escribir
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({
         ...prev,
         [name]: undefined,
-      }))
+      }));
     }
 
     // Limpiar mensaje de éxito
     if (successMessage) {
-      setSuccessMessage("")
+      setSuccessMessage("");
     }
-  }
+  };
 
   const handleCategoryChange = (value: string) => {
     if (value === "add-new") {
-      setShowNewCategoryInput(true)
-      setFormData(prev => ({ ...prev, category: "", marca: "", aroma: "" }))
-      setMarcas([]) // Limpiar marcas cuando se va a agregar nueva categoría
-      setAromas([]) // Limpiar aromas cuando se va a agregar nueva categoría
+      setShowNewCategoryInput(true);
+      setFormData((prev) => ({ ...prev, category: "", marca: "", aroma: "" }));
+      setMarcas([]); // Limpiar marcas cuando se va a agregar nueva categoría
+      setAromas([]); // Limpiar aromas cuando se va a agregar nueva categoría
     } else {
-      setFormData(prev => ({ 
-        ...prev, 
-        category: value, 
-        marca: "", 
-        aroma: "" // Limpiar aroma cuando cambia categoría
-      }))
-      setShowNewCategoryInput(false)
+      setFormData((prev) => ({
+        ...prev,
+        category: value,
+        marca: "",
+        aroma: "", // Limpiar aroma cuando cambia categoría
+      }));
+      setShowNewCategoryInput(false);
       if (errors.category) {
-        setErrors(prev => ({ ...prev, category: undefined }))
+        setErrors((prev) => ({ ...prev, category: undefined }));
       }
       if (errors.marca) {
-        setErrors(prev => ({ ...prev, marca: undefined }))
+        setErrors((prev) => ({ ...prev, marca: undefined }));
       }
       if (errors.aroma) {
-        setErrors(prev => ({ ...prev, aroma: undefined }))
+        setErrors((prev) => ({ ...prev, aroma: undefined }));
       }
     }
-  }
+  };
 
   const handleMarcaChange = (value: string) => {
     if (value === "add-new") {
-      setShowNewMarcaInput(true)
-      setFormData(prev => ({ ...prev, marca: "", aroma: "" }))
+      setShowNewMarcaInput(true);
+      setFormData((prev) => ({ ...prev, marca: "", aroma: "" }));
     } else {
-      setFormData(prev => ({ ...prev, marca: value, aroma: "" })) // Limpiar aroma cuando cambia marca
-      setShowNewMarcaInput(false)
+      setFormData((prev) => ({ ...prev, marca: value, aroma: "" })); // Limpiar aroma cuando cambia marca
+      setShowNewMarcaInput(false);
       if (errors.marca) {
-        setErrors(prev => ({ ...prev, marca: undefined }))
+        setErrors((prev) => ({ ...prev, marca: undefined }));
       }
       if (errors.aroma) {
-        setErrors(prev => ({ ...prev, aroma: undefined }))
+        setErrors((prev) => ({ ...prev, aroma: undefined }));
       }
     }
-  }
+  };
 
   const handleAromaChange = (value: string) => {
     if (value === "add-new") {
-      setShowNewAromaInput(true)
-      setFormData(prev => ({ ...prev, aroma: "" }))
+      setShowNewAromaInput(true);
+      setFormData((prev) => ({ ...prev, aroma: "" }));
     } else {
-      setFormData(prev => ({ ...prev, aroma: value }))
-      setShowNewAromaInput(false)
+      setFormData((prev) => ({ ...prev, aroma: value }));
+      setShowNewAromaInput(false);
       if (errors.aroma) {
-        setErrors(prev => ({ ...prev, aroma: undefined }))
+        setErrors((prev) => ({ ...prev, aroma: undefined }));
       }
     }
-  }
+  };
 
   const handleAddNewCategory = async () => {
     if (newCategoryValue.trim()) {
       // Solo agregamos localmente, ya que las categorías se crean automáticamente cuando se crea un producto
-      const newCategory = { value: newCategoryValue.trim(), label: newCategoryValue.trim() }
-      setCategories(prev => [...prev, newCategory])
-      setFormData(prev => ({ ...prev, category: newCategoryValue.trim() }))
-      setNewCategoryValue("")
-      setShowNewCategoryInput(false)
+      const newCategory = {
+        value: newCategoryValue.trim(),
+        label: newCategoryValue.trim(),
+      };
+      setCategories((prev) => [...prev, newCategory]);
+      setFormData((prev) => ({ ...prev, category: newCategoryValue.trim() }));
+      setNewCategoryValue("");
+      setShowNewCategoryInput(false);
       if (errors.category) {
-        setErrors(prev => ({ ...prev, category: undefined }))
+        setErrors((prev) => ({ ...prev, category: undefined }));
       }
-      console.log(`✅ Nueva categoría añadida localmente: "${newCategoryValue.trim()}"`)
+      console.log(
+        `✅ Nueva categoría añadida localmente: "${newCategoryValue.trim()}"`
+      );
     }
-  }
+  };
 
   const handleAddNewMarca = async () => {
     if (newMarcaValue.trim() && formData.category) {
       try {
         // Guardar la marca en la base de datos
-        const response = await fetch(`/api/agregarProd?saveMarca=true&category=${encodeURIComponent(formData.category)}&marca=${encodeURIComponent(newMarcaValue.trim())}`)
-        
+        const response = await fetch(
+          `/api/agregarProd?saveMarca=true&category=${encodeURIComponent(
+            formData.category
+          )}&marca=${encodeURIComponent(newMarcaValue.trim())}`
+        );
+
         if (response.ok) {
-          const newMarca = { value: newMarcaValue.trim(), label: newMarcaValue.trim() }
-          setMarcas(prev => [...prev, newMarca])
-          setFormData(prev => ({ ...prev, marca: newMarcaValue.trim() }))
-          setNewMarcaValue("")
-          setShowNewMarcaInput(false)
+          const newMarca = {
+            value: newMarcaValue.trim(),
+            label: newMarcaValue.trim(),
+          };
+          setMarcas((prev) => [...prev, newMarca]);
+          setFormData((prev) => ({ ...prev, marca: newMarcaValue.trim() }));
+          setNewMarcaValue("");
+          setShowNewMarcaInput(false);
           if (errors.marca) {
-            setErrors(prev => ({ ...prev, marca: undefined }))
+            setErrors((prev) => ({ ...prev, marca: undefined }));
           }
-          console.log(`✅ Marca "${newMarcaValue.trim()}" guardada en categoría "${formData.category}"`)
+          console.log(
+            `✅ Marca "${newMarcaValue.trim()}" guardada en categoría "${
+              formData.category
+            }"`
+          );
         } else {
-          console.error('Error al guardar la marca')
+          console.error("Error al guardar la marca");
           // Aún así agregamos la marca localmente para no interrumpir el flujo
-          const newMarca = { value: newMarcaValue.trim(), label: newMarcaValue.trim() }
-          setMarcas(prev => [...prev, newMarca])
-          setFormData(prev => ({ ...prev, marca: newMarcaValue.trim() }))
-          setNewMarcaValue("")
-          setShowNewMarcaInput(false)
+          const newMarca = {
+            value: newMarcaValue.trim(),
+            label: newMarcaValue.trim(),
+          };
+          setMarcas((prev) => [...prev, newMarca]);
+          setFormData((prev) => ({ ...prev, marca: newMarcaValue.trim() }));
+          setNewMarcaValue("");
+          setShowNewMarcaInput(false);
         }
       } catch (error) {
-        console.error('Error al guardar marca:', error)
+        console.error("Error al guardar marca:", error);
         // En caso de error, aún así agregamos localmente
-        const newMarca = { value: newMarcaValue.trim(), label: newMarcaValue.trim() }
-        setMarcas(prev => [...prev, newMarca])
-        setFormData(prev => ({ ...prev, marca: newMarcaValue.trim() }))
-        setNewMarcaValue("")
-        setShowNewMarcaInput(false)
+        const newMarca = {
+          value: newMarcaValue.trim(),
+          label: newMarcaValue.trim(),
+        };
+        setMarcas((prev) => [...prev, newMarca]);
+        setFormData((prev) => ({ ...prev, marca: newMarcaValue.trim() }));
+        setNewMarcaValue("");
+        setShowNewMarcaInput(false);
       }
     }
-  }
+  };
 
   const handleAddNewAroma = async () => {
     if (newAromaValue.trim() && formData.category && formData.marca) {
       try {
         // Guardar el aroma en la base de datos
-        const response = await fetch(`/api/agregarProd?saveAroma=true&category=${encodeURIComponent(formData.category)}&marca=${encodeURIComponent(formData.marca)}&aroma=${encodeURIComponent(newAromaValue.trim())}`)
-        
+        const response = await fetch(
+          `/api/agregarProd?saveAroma=true&category=${encodeURIComponent(
+            formData.category
+          )}&marca=${encodeURIComponent(
+            formData.marca
+          )}&aroma=${encodeURIComponent(newAromaValue.trim())}`
+        );
+
         if (response.ok) {
-          const newAroma = { value: newAromaValue.trim(), label: newAromaValue.trim() }
-          setAromas(prev => [...prev, newAroma])
-          setFormData(prev => ({ ...prev, aroma: newAromaValue.trim() }))
-          setNewAromaValue("")
-          setShowNewAromaInput(false)
+          const newAroma = {
+            value: newAromaValue.trim(),
+            label: newAromaValue.trim(),
+          };
+          setAromas((prev) => [...prev, newAroma]);
+          setFormData((prev) => ({ ...prev, aroma: newAromaValue.trim() }));
+          setNewAromaValue("");
+          setShowNewAromaInput(false);
           if (errors.aroma) {
-            setErrors(prev => ({ ...prev, aroma: undefined }))
+            setErrors((prev) => ({ ...prev, aroma: undefined }));
           }
-          console.log(`✅ Aroma "${newAromaValue.trim()}" guardado para marca "${formData.marca}" en categoría "${formData.category}"`)
+          console.log(
+            `✅ Aroma "${newAromaValue.trim()}" guardado para marca "${
+              formData.marca
+            }" en categoría "${formData.category}"`
+          );
         } else {
-          console.error('Error al guardar el aroma')
+          console.error("Error al guardar el aroma");
           // Aún así agregamos el aroma localmente para no interrumpir el flujo
-          const newAroma = { value: newAromaValue.trim(), label: newAromaValue.trim() }
-          setAromas(prev => [...prev, newAroma])
-          setFormData(prev => ({ ...prev, aroma: newAromaValue.trim() }))
-          setNewAromaValue("")
-          setShowNewAromaInput(false)
+          const newAroma = {
+            value: newAromaValue.trim(),
+            label: newAromaValue.trim(),
+          };
+          setAromas((prev) => [...prev, newAroma]);
+          setFormData((prev) => ({ ...prev, aroma: newAromaValue.trim() }));
+          setNewAromaValue("");
+          setShowNewAromaInput(false);
         }
       } catch (error) {
-        console.error('Error al guardar aroma:', error)
+        console.error("Error al guardar aroma:", error);
         // En caso de error, aún así agregamos localmente
-        const newAroma = { value: newAromaValue.trim(), label: newAromaValue.trim() }
-        setAromas(prev => [...prev, newAroma])
-        setFormData(prev => ({ ...prev, aroma: newAromaValue.trim() }))
-        setNewAromaValue("")
-        setShowNewAromaInput(false)
+        const newAroma = {
+          value: newAromaValue.trim(),
+          label: newAromaValue.trim(),
+        };
+        setAromas((prev) => [...prev, newAroma]);
+        setFormData((prev) => ({ ...prev, aroma: newAromaValue.trim() }));
+        setNewAromaValue("");
+        setShowNewAromaInput(false);
       }
     }
-  }
+  };
 
   const handleCancelNewCategory = () => {
-    setShowNewCategoryInput(false)
-    setNewCategoryValue("")
-  }
+    setShowNewCategoryInput(false);
+    setNewCategoryValue("");
+  };
 
   const handleCancelNewMarca = () => {
-    setShowNewMarcaInput(false)
-    setNewMarcaValue("")
-  }
+    setShowNewMarcaInput(false);
+    setNewMarcaValue("");
+  };
 
   const handleCancelNewAroma = () => {
-    setShowNewAromaInput(false)
-    setNewAromaValue("")
-  }
+    setShowNewAromaInput(false);
+    setNewAromaValue("");
+  };
 
   const handleImageUpload = (result: { publicId: string; url: string }) => {
-    if (!result.url) return // Si se elimina la imagen
+    if (!result.url) return; // Si se elimina la imagen
 
     const newImage: UploadedImage = {
       publicId: result.publicId,
-      url: result.url
-    }
+      url: result.url,
+    };
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: [newImage] // Reemplazar con una sola imagen
-    }))
+      images: [newImage], // Reemplazar con una sola imagen
+    }));
 
     // Limpiar errores si había
     if (errors.images) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        images: undefined
-      }))
+        images: undefined,
+      }));
     }
-  }
+  };
 
   const handleImageRemove = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: []
-    }))
-  }
+      images: [],
+    }));
+  };
 
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
+    const newErrors: FormErrors = {};
 
     // Validar nombre
     if (!formData.name.trim()) {
-      newErrors.name = "El nombre del producto es requerido"
+      newErrors.name = "El nombre del producto es requerido";
     } else if (formData.name.trim().length < 3) {
-      newErrors.name = "El nombre debe tener al menos 3 caracteres"
+      newErrors.name = "El nombre debe tener al menos 3 caracteres";
     }
 
     // Validar precio
     if (!formData.price.trim()) {
-      newErrors.price = "El precio es requerido"
+      newErrors.price = "El precio es requerido";
     } else if (!/^\d+(\.\d{1,2})?$/.test(formData.price)) {
-      newErrors.price = "Ingresa un precio válido (ej: 25.99)"
+      newErrors.price = "Ingresa un precio válido (ej: 25.99)";
     }
 
     // Validar categoría
     if (!formData.category) {
-      newErrors.category = "Selecciona o agrega una categoría"
+      newErrors.category = "Selecciona o agrega una categoría";
     }
 
     // Validar marca
     if (!formData.marca) {
-      newErrors.marca = "La marca es requerida"
+      newErrors.marca = "La marca es requerida";
     } else if (formData.marca.trim().length < 2) {
-      newErrors.marca = "La marca debe tener al menos 2 caracteres"
+      newErrors.marca = "La marca debe tener al menos 2 caracteres";
     }
 
     // Validar aroma solo si la categoría es sahumerio
     if (isSahumerioCategory(formData.category)) {
       if (!formData.aroma) {
-        newErrors.aroma = "El aroma es requerido para productos de categoría Sahumerio"
+        newErrors.aroma =
+          "El aroma es requerido para productos de categoría Sahumerio";
       } else if (formData.aroma.trim().length < 2) {
-        newErrors.aroma = "El aroma debe tener al menos 2 caracteres"
+        newErrors.aroma = "El aroma debe tener al menos 2 caracteres";
       }
     }
 
     // Validar descripción
     if (!formData.description.trim()) {
-      newErrors.description = "La descripción es requerida"
+      newErrors.description = "La descripción es requerida";
     } else if (formData.description.trim().length < 10) {
-      newErrors.description = "La descripción debe tener al menos 10 caracteres"
+      newErrors.description =
+        "La descripción debe tener al menos 10 caracteres";
     }
 
     // Validar stock
     if (formData.stock < 0) {
-      newErrors.stock = "El stock no puede ser negativo"
+      newErrors.stock = "El stock no puede ser negativo";
     }
 
     // Validar imágenes
     if (formData.images.length === 0) {
-      newErrors.images = "Se requiere al menos una imagen del producto"
+      newErrors.images = "Se requiere al menos una imagen del producto";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -499,23 +590,23 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
 
     try {
       // Enviar datos actualizados a la API
-      const response = await fetch('/api/agregarProd', {
-        method: 'PUT',
+      const response = await fetch("/api/agregarProd", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           id: formData.id,
           nombre: formData.name,
           precio: formData.price,
           descripcion: formData.description,
-          imgUrl: formData.images[0]?.url || '',
-          imgPublicId: formData.images[0]?.publicId || '',
+          imgUrl: formData.images[0]?.url || "",
+          imgPublicId: formData.images[0]?.publicId || "",
           category: formData.category,
           marca: formData.marca,
           aroma: formData.aroma,
           stock: formData.stock,
-          allImages: formData.images
+          allImages: formData.images,
         }),
       });
 
@@ -523,28 +614,28 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
 
       if (data.success) {
         setSuccessMessage("¡Producto modificado exitosamente!");
-        
+
         // Mantener el mensaje de éxito por un tiempo
         setTimeout(() => {
           setSuccessMessage("");
         }, 3000);
       } else {
         setErrors({
-          general: "Error al modificar el producto: " + data.error
+          general: "Error al modificar el producto: " + data.error,
         });
       }
-    } catch (error) {
+    } catch {
       setErrors({
-        general: "Error de conexión al modificar el producto"
+        general: "Error de conexión al modificar el producto",
       });
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   const handleGoBack = () => {
-    window.location.href = "/productos"
-  }
+    window.location.href = "/productos";
+  };
 
   // Mostrar loading mientras se cargan los datos
   if (isLoadingProduct) {
@@ -557,7 +648,7 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -565,7 +656,9 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
       {/* Header con botón de volver */}
       <div className="flex items-center justify-between p-6 border-b border-gray-200">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800">Modificar Producto</h2>
+          <h2 className="text-xl font-semibold text-gray-800">
+            Modificar Producto
+          </h2>
           <p className="text-sm text-gray-600">ID: #{formData.id}</p>
         </div>
         <Button
@@ -602,7 +695,10 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Nombre del producto */}
             <div className="md:col-span-2">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Nombre del Producto
               </label>
               <input
@@ -616,12 +712,17 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                 }`}
                 placeholder="Ej: Sahumerio de Lavanda Premium"
               />
-              {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+              )}
             </div>
 
             {/* Precio */}
             <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="price"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 <DollarSign className="w-4 h-4 inline mr-1" />
                 Precio (ARS)
               </label>
@@ -636,12 +737,17 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                 }`}
                 placeholder="2500"
               />
-              {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
+              {errors.price && (
+                <p className="mt-1 text-sm text-red-600">{errors.price}</p>
+              )}
             </div>
 
             {/* Stock */}
             <div>
-              <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="stock"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 <Box className="w-4 h-4 inline mr-1" />
                 Stock Disponible
               </label>
@@ -656,12 +762,17 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                   errors.stock ? "border-red-300" : "border-gray-300"
                 }`}
               />
-              {errors.stock && <p className="mt-1 text-sm text-red-600">{errors.stock}</p>}
+              {errors.stock && (
+                <p className="mt-1 text-sm text-red-600">{errors.stock}</p>
+              )}
             </div>
 
             {/* Categoría */}
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="category"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 <Tag className="w-4 h-4 inline mr-1" />
                 Categoría
               </label>
@@ -677,7 +788,9 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                   disabled={isLoadingOptions}
                 >
                   <option value="">
-                    {isLoadingOptions ? "Cargando categorías..." : "Selecciona una categoría"}
+                    {isLoadingOptions
+                      ? "Cargando categorías..."
+                      : "Selecciona una categoría"}
                   </option>
                   {categories.map((category) => (
                     <option key={category.value} value={category.value}>
@@ -694,7 +807,9 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                     onChange={(e) => setNewCategoryValue(e.target.value)}
                     placeholder="Nueva categoría"
                     className="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary"
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddNewCategory()}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && handleAddNewCategory()
+                    }
                   />
                   <Button
                     type="button"
@@ -714,12 +829,17 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                   </Button>
                 </div>
               )}
-              {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category}</p>}
+              {errors.category && (
+                <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+              )}
             </div>
 
             {/* Marca */}
             <div>
-              <label htmlFor="marca" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="marca"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Marca <span className="text-red-500">*</span>
               </label>
               {!showNewMarcaInput ? (
@@ -734,12 +854,11 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                   disabled={!formData.category || isLoadingOptions}
                 >
                   <option value="">
-                    {!formData.category 
-                      ? "Primero selecciona una categoría" 
-                      : marcas.length === 0 
-                        ? "No hay marcas para esta categoría"
-                        : "Seleccionar marca"
-                    }
+                    {!formData.category
+                      ? "Primero selecciona una categoría"
+                      : marcas.length === 0
+                      ? "No hay marcas para esta categoría"
+                      : "Seleccionar marca"}
                   </option>
                   {marcas.map((marca) => (
                     <option key={marca.value} value={marca.value}>
@@ -756,7 +875,7 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                     onChange={(e) => setNewMarcaValue(e.target.value)}
                     placeholder="Nueva marca"
                     className="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary"
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddNewMarca()}
+                    onKeyPress={(e) => e.key === "Enter" && handleAddNewMarca()}
                   />
                   <Button
                     type="button"
@@ -776,18 +895,26 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                   </Button>
                 </div>
               )}
-              {errors.marca && <p className="mt-1 text-sm text-red-600">{errors.marca}</p>}
-              {formData.category && marcas.length === 0 && !showNewMarcaInput && (
-                <p className="mt-1 text-xs text-blue-600">
-                  Esta es una categoría nueva. Agrega la primera marca para esta categoría.
-                </p>
+              {errors.marca && (
+                <p className="mt-1 text-sm text-red-600">{errors.marca}</p>
               )}
+              {formData.category &&
+                marcas.length === 0 &&
+                !showNewMarcaInput && (
+                  <p className="mt-1 text-xs text-blue-600">
+                    Esta es una categoría nueva. Agrega la primera marca para
+                    esta categoría.
+                  </p>
+                )}
             </div>
 
             {/* Aroma - Solo mostrar si la categoría es sahumerio */}
             {isSahumerioCategory(formData.category) && (
               <div className="md:col-span-2">
-                <label htmlFor="aroma" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="aroma"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   <Flower2 className="w-4 h-4 inline mr-1" />
                   Aroma <span className="text-red-500">*</span>
                 </label>
@@ -803,12 +930,11 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                     disabled={!formData.marca || isLoadingOptions}
                   >
                     <option value="">
-                      {!formData.marca 
-                        ? "Primero selecciona una marca" 
-                        : aromas.length === 0 
-                          ? "No hay aromas para esta marca"
-                          : "Seleccionar aroma"
-                      }
+                      {!formData.marca
+                        ? "Primero selecciona una marca"
+                        : aromas.length === 0
+                        ? "No hay aromas para esta marca"
+                        : "Seleccionar aroma"}
                     </option>
                     {aromas.map((aroma) => (
                       <option key={aroma.value} value={aroma.value}>
@@ -825,7 +951,9 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                       onChange={(e) => setNewAromaValue(e.target.value)}
                       placeholder="Nuevo aroma (ej: Lavanda, Rosa, Sándalo)"
                       className="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary"
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddNewAroma()}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" && handleAddNewAroma()
+                      }
                     />
                     <Button
                       type="button"
@@ -845,12 +973,16 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                     </Button>
                   </div>
                 )}
-                {errors.aroma && <p className="mt-1 text-sm text-red-600">{errors.aroma}</p>}
-                {formData.marca && aromas.length === 0 && !showNewAromaInput && (
-                  <p className="mt-1 text-xs text-blue-600">
-                    Agrega el primer aroma para esta marca de sahumerios.
-                  </p>
+                {errors.aroma && (
+                  <p className="mt-1 text-sm text-red-600">{errors.aroma}</p>
                 )}
+                {formData.marca &&
+                  aromas.length === 0 &&
+                  !showNewAromaInput && (
+                    <p className="mt-1 text-xs text-blue-600">
+                      Agrega el primer aroma para esta marca de sahumerios.
+                    </p>
+                  )}
                 <p className="mt-1 text-xs text-gray-500">
                   El aroma es requerido para productos de categoría Sahumerio.
                 </p>
@@ -867,7 +999,10 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
           </h3>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Descripción del Producto
             </label>
             <textarea
@@ -881,7 +1016,9 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
               }`}
               placeholder="Describe las características, beneficios y usos del producto..."
             />
-            {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
+            {errors.description && (
+              <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+            )}
           </div>
         </div>
 
@@ -898,16 +1035,19 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                 Imagen principal del producto
               </h4>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Imágenes subidas */}
               {formData.images.map((image, index) => (
                 <div key={index} className="relative">
                   <div className="aspect-square border border-gray-300 rounded-lg overflow-hidden">
-                    <img
+                    <Image
                       src={image.url}
                       alt={`Imagen ${index + 1}`}
                       className="w-full h-full object-cover"
+                      width={300}
+                      height={300}
+                      priority={index === 0}
                     />
                   </div>
                   <button
@@ -919,7 +1059,7 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
                   </button>
                 </div>
               ))}
-              
+
               {/* Uploader de imagen */}
               <ImageUploader
                 label="Cambiar imagen"
@@ -928,13 +1068,20 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
               />
             </div>
 
-            {errors.images && <p className="text-sm text-red-600">{errors.images}</p>}
+            {errors.images && (
+              <p className="text-sm text-red-600">{errors.images}</p>
+            )}
           </div>
         </div>
 
         {/* Botones de acción */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-          <Button type="button" variant="outline" onClick={handleGoBack} className="px-6 py-3 bg-transparent">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGoBack}
+            className="px-6 py-3 bg-transparent"
+          >
             Cancelar
           </Button>
 
@@ -958,5 +1105,5 @@ export function ModificarProductoForm({ productId }: ModificarProductoFormProps)
         </div>
       </form>
     </div>
-  )
+  );
 }

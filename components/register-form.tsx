@@ -1,28 +1,28 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "./ui/button"
-import { Eye, EyeOff, Mail, Lock, User, Calendar, Loader2 } from "lucide-react"
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Eye, EyeOff, Mail, Lock, User, Calendar, Loader2 } from "lucide-react";
 
 interface FormData {
-  email: string
-  firstName: string
-  lastName: string
-  birthDate: string
-  password: string
-  confirmPassword: string
+  email: string;
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  password: string;
+  confirmPassword: string;
 }
 
 interface FormErrors {
-  email?: string
-  firstName?: string
-  lastName?: string 
-  birthDate?: string
-  password?: string
-  confirmPassword?: string
-  general?: string
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  birthDate?: string;
+  password?: string;
+  confirmPassword?: string;
+  general?: string;
 }
 
 export function RegisterForm() {
@@ -33,118 +33,119 @@ export function RegisterForm() {
     birthDate: "",
     password: "",
     confirmPassword: "",
-  })
+  });
 
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<FormErrors>({})
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }))
+    }));
 
     // Limpiar errores cuando el usuario empiece a escribir
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({
         ...prev,
         [name]: undefined,
-      }))
+      }));
     }
-  }
+  };
 
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
+    const newErrors: FormErrors = {};
 
     // Validar email
     if (!formData.email) {
-      newErrors.email = "El correo electrónico es requerido"
+      newErrors.email = "El correo electrónico es requerido";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Ingresa un correo electrónico válido"
+      newErrors.email = "Ingresa un correo electrónico válido";
     }
 
     // Validar nombre
     if (!formData.firstName.trim()) {
-      newErrors.firstName = "El nombre es requerido"
+      newErrors.firstName = "El nombre es requerido";
     } else if (formData.firstName.trim().length < 2) {
-      newErrors.firstName = "El nombre debe tener al menos 2 caracteres"
+      newErrors.firstName = "El nombre debe tener al menos 2 caracteres";
     }
 
     // Validar apellido
     if (!formData.lastName.trim()) {
-      newErrors.lastName = "El apellido es requerido"
+      newErrors.lastName = "El apellido es requerido";
     } else if (formData.lastName.trim().length < 2) {
-      newErrors.lastName = "El apellido debe tener al menos 2 caracteres"
+      newErrors.lastName = "El apellido debe tener al menos 2 caracteres";
     }
 
     // Validar fecha de nacimiento
     if (!formData.birthDate) {
-      newErrors.birthDate = "La fecha de nacimiento es requerida"
+      newErrors.birthDate = "La fecha de nacimiento es requerida";
     } else {
-      const birthDate = new Date(formData.birthDate)
-      const today = new Date()
-      const age = today.getFullYear() - birthDate.getFullYear()
+      const birthDate = new Date(formData.birthDate);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
 
       if (age < 13) {
-        newErrors.birthDate = "Debes tener al menos 13 años para registrarte"
+        newErrors.birthDate = "Debes tener al menos 13 años para registrarte";
       } else if (age > 120) {
-        newErrors.birthDate = "Por favor ingresa una fecha válida"
+        newErrors.birthDate = "Por favor ingresa una fecha válida";
       }
     }
 
     // Validar contraseña
     if (!formData.password) {
-      newErrors.password = "La contraseña es requerida"
+      newErrors.password = "La contraseña es requerida";
     } else if (formData.password.length < 8) {
-      newErrors.password = "La contraseña debe tener al menos 8 caracteres"
+      newErrors.password = "La contraseña debe tener al menos 8 caracteres";
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = "La contraseña debe contener al menos una mayúscula, una minúscula y un número"
+      newErrors.password =
+        "La contraseña debe contener al menos una mayúscula, una minúscula y un número";
     }
 
     // Validar confirmación de contraseña
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Confirma tu contraseña"
+      newErrors.confirmPassword = "Confirma tu contraseña";
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Las contraseñas no coinciden"
+      newErrors.confirmPassword = "Las contraseñas no coinciden";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
-      return
+      return;
     }
 
-    setIsLoading(true)
-    setErrors({})
+    setIsLoading(true);
+    setErrors({});
 
     try {
       // Simular llamada a API
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Aquí iría la lógica real de registro
-      console.log("Datos de registro:", formData)
+      console.log("Datos de registro:", formData);
 
       // Simular éxito
-      alert("¡Registro exitoso! Bienvenido a Babalu Aye")
+      alert("¡Registro exitoso! Bienvenido a Babalu Aye");
       // Redirigir al login o dashboard
-      window.location.href = "/iniciar-sesion"
+      window.location.href = "/iniciar-sesion";
     } catch (error) {
-      console.error("Error en registro:", error)
+      console.error("Error en registro:", error);
       setErrors({
         general: "Error al crear la cuenta. Intenta nuevamente.",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200">
@@ -160,7 +161,10 @@ export function RegisterForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Nombre */}
           <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="firstName"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Nombre
             </label>
             <div className="relative">
@@ -180,12 +184,17 @@ export function RegisterForm() {
                 placeholder="Tu nombre"
               />
             </div>
-            {errors.firstName && <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>}
+            {errors.firstName && (
+              <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+            )}
           </div>
 
           {/* Apellido */}
           <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="lastName"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Apellido
             </label>
             <div className="relative">
@@ -205,13 +214,18 @@ export function RegisterForm() {
                 placeholder="Tu apellido"
               />
             </div>
-            {errors.lastName && <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>}
+            {errors.lastName && (
+              <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+            )}
           </div>
         </div>
 
         {/* Email */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Correo Electrónico
           </label>
           <div className="relative">
@@ -231,12 +245,17 @@ export function RegisterForm() {
               placeholder="tu@email.com"
             />
           </div>
-          {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+          )}
         </div>
 
         {/* Fecha de nacimiento */}
         <div>
-          <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="birthDate"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Fecha de Nacimiento
           </label>
           <div className="relative">
@@ -254,12 +273,17 @@ export function RegisterForm() {
               }`}
             />
           </div>
-          {errors.birthDate && <p className="mt-1 text-sm text-red-600">{errors.birthDate}</p>}
+          {errors.birthDate && (
+            <p className="mt-1 text-sm text-red-600">{errors.birthDate}</p>
+          )}
         </div>
 
         {/* Contraseña */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Contraseña
           </label>
           <div className="relative">
@@ -290,12 +314,17 @@ export function RegisterForm() {
               )}
             </button>
           </div>
-          {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+          )}
         </div>
 
         {/* Confirmar contraseña */}
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="confirmPassword"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Confirmar Contraseña
           </label>
           <div className="relative">
@@ -326,7 +355,11 @@ export function RegisterForm() {
               )}
             </button>
           </div>
-          {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
+          {errors.confirmPassword && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.confirmPassword}
+            </p>
+          )}
         </div>
 
         {/* Términos y condiciones */}
@@ -343,11 +376,17 @@ export function RegisterForm() {
           <div className="ml-3 text-sm">
             <label htmlFor="terms" className="text-gray-600">
               Acepto los{" "}
-              <a href="#" className="text-babalu-primary hover:text-babalu-dark">
+              <a
+                href="#"
+                className="text-babalu-primary hover:text-babalu-dark"
+              >
                 términos y condiciones
               </a>{" "}
               y la{" "}
-              <a href="#" className="text-babalu-primary hover:text-babalu-dark">
+              <a
+                href="#"
+                className="text-babalu-primary hover:text-babalu-dark"
+              >
                 política de privacidad
               </a>
             </label>
@@ -374,7 +413,9 @@ export function RegisterForm() {
 
         {/* Información de seguridad */}
         <div className="bg-green-50 border border-green-200 rounded-md p-4">
-          <p className="text-sm text-green-800 font-medium mb-2">Requisitos de contraseña:</p>
+          <p className="text-sm text-green-800 font-medium mb-2">
+            Requisitos de contraseña:
+          </p>
           <ul className="text-sm text-green-700 space-y-1">
             <li>• Mínimo 8 caracteres</li>
             <li>• Al menos una letra mayúscula</li>
@@ -384,5 +425,5 @@ export function RegisterForm() {
         </div>
       </form>
     </div>
-  )
+  );
 }

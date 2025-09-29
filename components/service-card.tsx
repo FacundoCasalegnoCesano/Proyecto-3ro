@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Button } from "../components/ui/button";
-import { Clock, DollarSign, CheckCircle, ArrowRight, Star } from "lucide-react";
+import { Clock, DollarSign, CheckCircle, Star } from "lucide-react";
 import { useState } from "react";
 
 interface Service {
@@ -65,17 +65,24 @@ export function ServiceCard({ service }: ServiceCardProps) {
             </h3>
             <div className="flex items-center ml-2">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <Star
+                  key={i}
+                  className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                />
               ))}
             </div>
           </div>
-          <p className="text-babalu-primary font-medium text-lg">{service.subtitle}</p>
+          <p className="text-babalu-primary font-medium text-lg">
+            {service.subtitle}
+          </p>
         </div>
 
         {/* Descripción */}
-        <p className={`text-gray-600 leading-relaxed mb-6 transition-all duration-300 ${
-          isExpanded ? '' : 'line-clamp-3'
-        }`}>
+        <p
+          className={`text-gray-600 leading-relaxed mb-6 transition-all duration-300 ${
+            isExpanded ? "" : "line-clamp-3"
+          }`}
+        >
           {service.description}
         </p>
 
@@ -85,7 +92,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
             onClick={handleVerMas}
             className="text-babalu-primary hover:text-babalu-dark text-sm font-medium mb-4 transition-colors"
           >
-            {isExpanded ? 'Ver menos' : 'Ver más'}
+            {isExpanded ? "Ver menos" : "Ver más"}
           </button>
         )}
 
@@ -110,14 +117,19 @@ export function ServiceCard({ service }: ServiceCardProps) {
             Beneficios principales:
           </h4>
           <ul className="space-y-2">
-            {(isExpanded ? service.benefits : service.benefits.slice(0, 3)).map((benefit, index) => (
-              <li key={index} className="flex items-start space-x-3 group/item">
-                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0 group-hover/item:scale-110 transition-transform" />
-                <span className="text-sm text-gray-600 group-hover/item:text-gray-800 transition-colors">
-                  {benefit}
-                </span>
-              </li>
-            ))}
+            {(isExpanded ? service.benefits : service.benefits.slice(0, 3)).map(
+              (benefit, index) => (
+                <li
+                  key={index}
+                  className="flex items-start space-x-3 group/item"
+                >
+                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0 group-hover/item:scale-110 transition-transform" />
+                  <span className="text-sm text-gray-600 group-hover/item:text-gray-800 transition-colors">
+                    {benefit}
+                  </span>
+                </li>
+              )
+            )}
             {!isExpanded && service.benefits.length > 3 && (
               <li className="text-sm text-babalu-primary font-medium ml-7">
                 +{service.benefits.length - 3} beneficios más...
@@ -134,11 +146,12 @@ export function ServiceCard({ service }: ServiceCardProps) {
           >
             <span>Reservar Sesión</span>
           </Button>
-          
+
           {/* Información adicional */}
           <div className="text-center">
             <p className="text-xs text-gray-500 mb-2">
-              ✓ Confirmación inmediata por email • ✓ Puedes cancelar hasta 24h antes
+              ✓ Confirmación inmediata por email • ✓ Puedes cancelar hasta 24h
+              antes
             </p>
           </div>
         </div>

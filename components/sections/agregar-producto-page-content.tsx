@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { AgregarProductoForm } from "components/agregar-producto-form"
+import { AgregarProductoForm } from "components/agregar-producto-form";
 
 export function AgregarProductoPageContent() {
   return (
@@ -8,7 +8,9 @@ export function AgregarProductoPageContent() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Agregar Nuevo Producto</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Agregar Nuevo Producto
+          </h1>
           <p className="mt-2 text-sm text-gray-600">
             Completa la información del producto para agregarlo a tu catálogo
           </p>
@@ -18,5 +20,5 @@ export function AgregarProductoPageContent() {
         <AgregarProductoForm />
       </div>
     </div>
-  )
+  );
 }

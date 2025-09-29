@@ -1,14 +1,24 @@
-import { ProductCard } from "./product-card"
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "../components/ui/carousel"
-import { Product } from "app/types/product" // Importar la interfaz compartida
+import { ProductCard } from "./product-card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "../components/ui/carousel";
+import { Product } from "app/types/product"; // Importar la interfaz compartida
 
 interface ProductGridProps {
-  title?: string
-  products: Product[]
-  className?: string
+  title?: string;
+  products: Product[];
+  className?: string;
 }
 
-export function ProductGrid({ title, products, className = "" }: ProductGridProps) {
+export function ProductGrid({
+  title,
+  products,
+  className = "",
+}: ProductGridProps) {
   return (
     <section className={`py-12 bg-gray-50 ${className}`}>
       <div className="container mx-auto px-4">
@@ -34,5 +44,5 @@ export function ProductGrid({ title, products, className = "" }: ProductGridProp
         </Carousel>
       </div>
     </section>
-  )
+  );
 }

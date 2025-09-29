@@ -1,8 +1,8 @@
 // hooks/useAuth.ts
-'use client'
+"use client";
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState } from "react";
+import { signIn } from "next-auth/react";
 
 interface UseAuthProps {
   onSuccess?: () => void;
@@ -20,7 +20,7 @@ export const useAuth = ({ onSuccess, onError }: UseAuthProps = {}) => {
     setSuccess(false);
 
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         email,
         password,
         redirect: false, // No redirigir automáticamente
@@ -35,10 +35,10 @@ export const useAuth = ({ onSuccess, onError }: UseAuthProps = {}) => {
         setSuccess(true);
         onSuccess?.();
         // El modal se encargará de la redirección
-        console.log('Login exitoso, el modal manejará la redirección');
+        console.log("Login exitoso, el modal manejará la redirección");
       }
-    } catch (err) {
-      const errorMessage = 'Ocurrió un error durante el inicio de sesión';
+    } catch {
+      const errorMessage = "Ocurrió un error durante el inicio de sesión";
       setError(errorMessage);
       onError?.(errorMessage);
     } finally {
@@ -48,23 +48,23 @@ export const useAuth = ({ onSuccess, onError }: UseAuthProps = {}) => {
 
   const getErrorMessage = (error: string): string => {
     switch (error) {
-      case 'CredentialsSignin':
-        return 'Credenciales inválidas. Verifica tu email y contraseña.';
-      case 'Configuration':
-        return 'Error de configuración del servidor';
-      case 'AccessDenied':
-        return 'Acceso denegado';
-      case 'Verification':
-        return 'El token de verificación ha expirado o es inválido';
+      case "CredentialsSignin":
+        return "Credenciales inválidas. Verifica tu email y contraseña.";
+      case "Configuration":
+        return "Error de configuración del servidor";
+      case "AccessDenied":
+        return "Acceso denegado";
+      case "Verification":
+        return "El token de verificación ha expirado o es inválido";
       default:
-        return 'Error al iniciar sesión. Intenta nuevamente.';
+        return "Error al iniciar sesión. Intenta nuevamente.";
     }
   };
 
-  return { 
-    handleLogin, 
-    isLoading, 
-    error, 
-    success
+  return {
+    handleLogin,
+    isLoading,
+    error,
+    success,
   };
 };

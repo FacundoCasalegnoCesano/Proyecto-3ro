@@ -1,49 +1,52 @@
 // app/components/user-dropdown.tsx
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
-import { User, Settings, LogOut, ChevronDown } from "lucide-react"
-import { Button } from "./ui/button"
-import { useRouter } from "next/navigation"
+import { useState, useRef, useEffect } from "react";
+import { User, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Button } from "./ui/button";
+import { useRouter } from "next/navigation";
 
 interface UserDropdownProps {
   user: {
-    firstName: string
-    lastName: string
-    email: string
-  }
-  onLogout: () => void
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  onLogout: () => void;
 }
 
 export function UserDropdown({ user, onLogout }: UserDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = () => {
-    setIsOpen(false)
-    onLogout()
-  }
+    setIsOpen(false);
+    onLogout();
+  };
 
   const handleSettings = () => {
-    setIsOpen(false)
+    setIsOpen(false);
     // Redirigir a la página de configuración en app/(pages)/configuracion
-    router.push("/configuracion")
-  }
+    router.push("/configuracion");
+  };
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -57,8 +60,14 @@ export function UserDropdown({ user, onLogout }: UserDropdownProps) {
         <div className="w-6 h-6 bg-babalu-primary rounded-full flex items-center justify-center">
           <User className="w-4 h-4 text-white" />
         </div>
-        <span className="hidden md:block text-sm font-medium">{user.firstName}</span>
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <span className="hidden md:block text-sm font-medium">
+          {user.firstName}
+        </span>
+        <ChevronDown
+          className={`w-4 h-4 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
       </Button>
 
       {/* Dropdown menu */}
@@ -100,5 +109,5 @@ export function UserDropdown({ user, onLogout }: UserDropdownProps) {
         </div>
       )}
     </div>
-  )
+  );
 }

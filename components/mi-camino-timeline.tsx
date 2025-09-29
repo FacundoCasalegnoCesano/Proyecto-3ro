@@ -1,25 +1,25 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Image from "next/image"
-import { Calendar, MapPin, Award, Heart, Sparkles, Users } from "lucide-react"
+import { useState } from "react";
+import Image from "next/image";
+import { Calendar, MapPin, Award, Heart, Sparkles, Users } from "lucide-react";
 
 interface TimelineEvent {
-  id: string
-  year: string
-  date: string
-  title: string
-  description: string
-  location?: string
-  type: "education" | "milestone" | "achievement" | "personal"
-  image?: string
-  icon: React.ComponentType<{ className?: string }>
+  id: string;
+  year: string;
+  date: string;
+  title: string;
+  description: string;
+  location?: string;
+  type: "education" | "milestone" | "achievement" | "personal";
+  image?: string;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 export function MiCaminoTimeline() {
-  const [selectedEvent, setSelectedEvent] = useState<string | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
 
   const timelineEvents: TimelineEvent[] = [
     {
@@ -32,7 +32,8 @@ export function MiCaminoTimeline() {
       location: "Buenos Aires, Argentina",
       type: "personal",
       icon: Sparkles,
-      image: "/placeholder.svg?height=200&width=300&text=Spiritual+Awakening&bg=E8F5E8",
+      image:
+        "/placeholder.svg?height=200&width=300&text=Spiritual+Awakening&bg=E8F5E8",
     },
     {
       id: "reiki-1",
@@ -44,7 +45,8 @@ export function MiCaminoTimeline() {
       location: "Centro Holístico Luz Dorada",
       type: "education",
       icon: Award,
-      image: "/placeholder.svg?height=200&width=300&text=Reiki+Level+1&bg=FFE4B5",
+      image:
+        "/placeholder.svg?height=200&width=300&text=Reiki+Level+1&bg=FFE4B5",
     },
     {
       id: "primeros-clientes",
@@ -55,7 +57,8 @@ export function MiCaminoTimeline() {
         "Comencé a ofrecer mis primeras sesiones de Reiki a familiares y amigos. La respuesta fue increíble y confirmó que este era mi verdadero llamado. Cada sesión me enseñaba algo nuevo.",
       type: "milestone",
       icon: Users,
-      image: "/placeholder.svg?height=200&width=300&text=First+Sessions&bg=F0E6FF",
+      image:
+        "/placeholder.svg?height=200&width=300&text=First+Sessions&bg=F0E6FF",
     },
     {
       id: "tarot",
@@ -66,7 +69,8 @@ export function MiCaminoTimeline() {
         "Descubrí el Tarot Rider-Waite y me fascinó su capacidad para brindar guía y claridad. Dediqué meses al estudio intensivo de cada carta y su simbolismo profundo.",
       type: "education",
       icon: Sparkles,
-      image: "/placeholder.svg?height=200&width=300&text=Tarot+Learning&bg=FFB6C1",
+      image:
+        "/placeholder.svg?height=200&width=300&text=Tarot+Learning&bg=FFB6C1",
     },
     {
       id: "reiki-2",
@@ -78,7 +82,8 @@ export function MiCaminoTimeline() {
       location: "Formación Online - Pandemia",
       type: "education",
       icon: Award,
-      image: "/placeholder.svg?height=200&width=300&text=Reiki+Level+2&bg=E0FFFF",
+      image:
+        "/placeholder.svg?height=200&width=300&text=Reiki+Level+2&bg=E0FFFF",
     },
     {
       id: "espacio-propio",
@@ -90,7 +95,8 @@ export function MiCaminoTimeline() {
       location: "Villa Crespo, CABA",
       type: "milestone",
       icon: MapPin,
-      image: "/placeholder.svg?height=200&width=300&text=Sacred+Space&bg=F5DEB3",
+      image:
+        "/placeholder.svg?height=200&width=300&text=Sacred+Space&bg=F5DEB3",
     },
     {
       id: "reiki-master",
@@ -101,7 +107,8 @@ export function MiCaminoTimeline() {
         "Alcancé el nivel de Maestra en Reiki Usui. Ahora puedo iniciar a otros en esta hermosa práctica y transmitir las enseñanzas que tanto han transformado mi vida.",
       type: "achievement",
       icon: Award,
-      image: "/placeholder.svg?height=200&width=300&text=Reiki+Master&bg=FFD700",
+      image:
+        "/placeholder.svg?height=200&width=300&text=Reiki+Master&bg=FFD700",
     },
     {
       id: "expansion",
@@ -112,7 +119,8 @@ export function MiCaminoTimeline() {
         "Incorporé la limpieza espiritual y de espacios a mis servicios. También comencé a trabajar con productos artesanales como sahumerios y cristales.",
       type: "milestone",
       icon: Sparkles,
-      image: "/placeholder.svg?height=200&width=300&text=Service+Expansion&bg=DDA0DD",
+      image:
+        "/placeholder.svg?height=200&width=300&text=Service+Expansion&bg=DDA0DD",
     },
     {
       id: "presente",
@@ -125,44 +133,47 @@ export function MiCaminoTimeline() {
       icon: Heart,
       image: "/placeholder.svg?height=200&width=300&text=Present+Day&bg=FFC0CB",
     },
-  ]
+  ];
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case "education":
-        return "bg-blue-100 text-blue-800 border-blue-200"
+        return "bg-blue-100 text-blue-800 border-blue-200";
       case "milestone":
-        return "bg-green-100 text-green-800 border-green-200"
+        return "bg-green-100 text-green-800 border-green-200";
       case "achievement":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "personal":
-        return "bg-purple-100 text-purple-800 border-purple-200"
+        return "bg-purple-100 text-purple-800 border-purple-200";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
-  }
+  };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
       case "education":
-        return "Formación"
+        return "Formación";
       case "milestone":
-        return "Hito"
+        return "Hito";
       case "achievement":
-        return "Logro"
+        return "Logro";
       case "personal":
-        return "Personal"
+        return "Personal";
       default:
-        return "Evento"
+        return "Evento";
     }
-  }
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-8">
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4">Mi Camino Espiritual</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-4">
+          Mi Camino Espiritual
+        </h2>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Un recorrido por los momentos más importantes que han marcado mi desarrollo como sanadora y guía espiritual
+          Un recorrido por los momentos más importantes que han marcado mi
+          desarrollo como sanadora y guía espiritual
         </p>
       </div>
 
@@ -173,27 +184,48 @@ export function MiCaminoTimeline() {
         {/* Eventos */}
         <div className="space-y-12">
           {timelineEvents.map((event, index) => (
-            <div key={event.id} className={`flex items-center ${index % 2 === 0 ? "flex-row" : "flex-row-reverse"}`}>
+            <div
+              key={event.id}
+              className={`flex items-center ${
+                index % 2 === 0 ? "flex-row" : "flex-row-reverse"
+              }`}
+            >
               {/* Contenido */}
-              <div className={`w-5/12 ${index % 2 === 0 ? "pr-8 text-right" : "pl-8 text-left"}`}>
+              <div
+                className={`w-5/12 ${
+                  index % 2 === 0 ? "pr-8 text-right" : "pl-8 text-left"
+                }`}
+              >
                 <div
                   className={`bg-white border-2 border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer ${
-                    selectedEvent === event.id ? "border-babalu-primary shadow-lg" : ""
+                    selectedEvent === event.id
+                      ? "border-babalu-primary shadow-lg"
+                      : ""
                   }`}
-                  onClick={() => setSelectedEvent(selectedEvent === event.id ? null : event.id)}
+                  onClick={() =>
+                    setSelectedEvent(
+                      selectedEvent === event.id ? null : event.id
+                    )
+                  }
                 >
                   {/* Año destacado */}
-                  <div className="text-2xl font-bold text-babalu-primary mb-2">{event.year}</div>
+                  <div className="text-2xl font-bold text-babalu-primary mb-2">
+                    {event.year}
+                  </div>
 
                   {/* Tipo de evento */}
                   <div
-                    className={`inline-block px-3 py-1 rounded-full text-xs font-medium border mb-3 ${getTypeColor(event.type)}`}
+                    className={`inline-block px-3 py-1 rounded-full text-xs font-medium border mb-3 ${getTypeColor(
+                      event.type
+                    )}`}
                   >
                     {getTypeLabel(event.type)}
                   </div>
 
                   {/* Título */}
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">{event.title}</h3>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    {event.title}
+                  </h3>
 
                   {/* Fecha */}
                   <div className="flex items-center text-sm text-gray-500 mb-3">
@@ -210,7 +242,9 @@ export function MiCaminoTimeline() {
                   )}
 
                   {/* Descripción */}
-                  <p className="text-gray-600 leading-relaxed">{event.description}</p>
+                  <p className="text-gray-600 leading-relaxed">
+                    {event.description}
+                  </p>
 
                   {/* Imagen expandible */}
                   {selectedEvent === event.id && event.image && (
@@ -243,10 +277,12 @@ export function MiCaminoTimeline() {
 
       {/* Llamada a la acción */}
       <div className="text-center mt-16 p-8 bg-gradient-to-r from-babalu-primary/10 to-babalu-primary/5 rounded-xl">
-        <h3 className="text-2xl font-bold text-gray-800 mb-4">¿Quieres ser parte de mi historia?</h3>
+        <h3 className="text-2xl font-bold text-gray-800 mb-4">
+          ¿Quieres ser parte de mi historia?
+        </h3>
         <p className="text-gray-600 mb-6 max-w-xl mx-auto">
-          Cada persona que llega a mi consulta se convierte en parte de este camino. Permíteme acompañarte en tu proceso
-          de sanación y crecimiento.
+          Cada persona que llega a mi consulta se convierte en parte de este
+          camino. Permíteme acompañarte en tu proceso de sanación y crecimiento.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
@@ -266,5 +302,5 @@ export function MiCaminoTimeline() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,10 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
-'use client';
-import { useState } from 'react';
-import { CldUploadWidget } from 'next-cloudinary';
-import type { CloudinaryUploadWidgetResults } from 'next-cloudinary';
-import { Button } from './ui/button';
-import { ImageIcon, Trash2 } from 'lucide-react';
+"use client";
+import { useState } from "react";
+import { CldUploadWidget } from "next-cloudinary";
+import type { CloudinaryUploadWidgetResults } from "next-cloudinary";
+import { Button } from "./ui/button";
+import { ImageIcon, Trash2 } from "lucide-react";
+import Image from "next/image";
 
 interface CloudinaryUploadResultInfo {
   public_id: string;
@@ -26,19 +27,20 @@ export default function ImageUploader({
 
   const handleDelete = () => {
     setImageUrl(null);
-    onUpload({ publicId: '', url: '' });
+    onUpload({ publicId: "", url: "" });
   };
 
   const handleUploadSuccess = (results: CloudinaryUploadWidgetResults) => {
-    const info = typeof results.info === 'string' 
-      ? { public_id: '', secure_url: results.info } 
-      : results.info as CloudinaryUploadResultInfo;
+    const info =
+      typeof results.info === "string"
+        ? { public_id: "", secure_url: results.info }
+        : (results.info as CloudinaryUploadResultInfo);
 
     if (info?.secure_url) {
       setImageUrl(info.secure_url);
       onUpload({
         publicId: info.public_id,
-        url: info.secure_url
+        url: info.secure_url,
       });
     }
   };
@@ -48,10 +50,12 @@ export default function ImageUploader({
       <div className="flex items-center justify-center h-40 border-2 border-dashed border-gray-300 rounded overflow-hidden">
         {imageUrl ? (
           <div className="relative w-full h-full group">
-            <img
+            <Image
               src={imageUrl}
               alt="Uploaded"
               className="w-full h-full object-contain rounded"
+              width={300}
+              height={300}
             />
             <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button

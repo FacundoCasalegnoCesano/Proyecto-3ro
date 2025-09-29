@@ -1,75 +1,75 @@
 // components/login-page.tsx
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Button } from "./ui/button"
-import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react"
-import { useAuth } from "../app/hooks/useAuth"
-import { LoginWelcomeModal } from "./login-welcome-modal"
+import type React from "react";
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
+import { useAuth } from "../app/hooks/useAuth";
+import { LoginWelcomeModal } from "./login-welcome-modal";
 
 export function LoginForm() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-  })
-  const [showPassword, setShowPassword] = useState(false)
+  });
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{
-    email?: string
-    password?: string
-  }>({})
-  
-  const { handleLogin, isLoading, error: authError, success } = useAuth()
+    email?: string;
+    password?: string;
+  }>({});
+
+  const { handleLogin, isLoading, error: authError } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }))
+    }));
 
     if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({
         ...prev,
         [name]: undefined,
-      }))
+      }));
     }
-  }
+  };
 
   const validateForm = () => {
-    const newErrors: typeof errors = {}
+    const newErrors: typeof errors = {};
 
     if (!formData.email) {
-      newErrors.email = "El correo electrónico es requerido"
+      newErrors.email = "El correo electrónico es requerido";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Ingresa un correo electrónico válido"
+      newErrors.email = "Ingresa un correo electrónico válido";
     }
 
     if (!formData.password) {
-      newErrors.password = "La contraseña es requerida"
+      newErrors.password = "La contraseña es requerida";
     } else if (formData.password.length < 6) {
-      newErrors.password = "La contraseña debe tener al menos 6 caracteres"
+      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
-      return
+      return;
     }
 
-    await handleLogin(formData.email, formData.password)
-  }
+    await handleLogin(formData.email, formData.password);
+  };
 
   return (
     <>
       {/* Modal de bienvenida como componente separado */}
       <LoginWelcomeModal />
-      
+
       {/* Formulario de login */}
       <div className="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200">
         <form className="space-y-6" onSubmit={handleSubmit}>
@@ -82,7 +82,10 @@ export function LoginForm() {
 
           {/* Campo de email */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Correo Electrónico
             </label>
             <div className="relative">
@@ -102,12 +105,17 @@ export function LoginForm() {
                 placeholder="tu@email.com"
               />
             </div>
-            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+            )}
           </div>
 
           {/* Campo de contraseña */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Contraseña
             </label>
             <div className="relative">
@@ -138,7 +146,9 @@ export function LoginForm() {
                 )}
               </button>
             </div>
-            {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+            )}
           </div>
 
           {/* Botón de envío */}
@@ -161,7 +171,9 @@ export function LoginForm() {
 
           {/* Credenciales de prueba */}
           <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-            <p className="text-sm text-blue-800 font-medium mb-2">Credenciales de prueba:</p>
+            <p className="text-sm text-blue-800 font-medium mb-2">
+              Credenciales de prueba:
+            </p>
             <p className="text-sm text-blue-700">
               <strong>Email:</strong> admin@babalu.com
               <br />
@@ -171,5 +183,5 @@ export function LoginForm() {
         </form>
       </div>
     </>
-  )
+  );
 }

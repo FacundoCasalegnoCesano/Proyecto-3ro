@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { StockProductos } from "components/stock-productos"
-import { Button } from "../../components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import { AdminAgregarProducto } from "components/admin-agregar-producto"
+import { StockProductos } from "components/stock-productos";
+import { Button } from "../../components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { AdminAgregarProducto } from "components/admin-agregar-producto";
 
 export function StockPageContent() {
   const handleGoBack = () => {
-    window.location.href = "/productos"
-  }
+    window.location.href = "/productos";
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -16,8 +16,12 @@ export function StockPageContent() {
         {/* Header con botón de volver */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestión de Stock</h1>
-            <p className="mt-2 text-sm text-gray-600">Administra el inventario y stock de todos tus productos</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Gestión de Stock
+            </h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Administra el inventario y stock de todos tus productos
+            </p>
           </div>
 
           <Button
@@ -39,5 +43,5 @@ export function StockPageContent() {
         <StockProductos />
       </div>
     </div>
-  )
+  );
 }

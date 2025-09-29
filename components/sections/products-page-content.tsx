@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useSession } from "next-auth/react"
-import { ProductsSidebar } from "../../components/products-sidebar"
-import { ProductsGridPage } from "../../components/products-grid-page"
-import { ProductsHeader } from "../../components/products-header"
-import { Button } from "components/ui/button"
-import { Package } from "lucide-react"
+import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { ProductsSidebar } from "../../components/products-sidebar";
+import { ProductsGridPage } from "../../components/products-grid-page";
+import { ProductsHeader } from "../../components/products-header";
+import { Button } from "components/ui/button";
+import { Package } from "lucide-react";
 
 export function ProductsPageContent() {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState("default")
-  const { data: session, status } = useSession()
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("default");
+  const { data: session, status } = useSession();
 
   const handleStockRedirect = () => {
-    window.location.href = "/productos/stock"
-  }
+    window.location.href = "/productos/stock";
+  };
 
   // Mostrar loading mientras se carga la sesión
   if (status === "loading") {
@@ -24,14 +24,16 @@ export function ProductsPageContent() {
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white py-8">
           <div className="container mx-auto px-4">
-            <h1 className="text-4xl font-bold text-center text-gray-800">Tienda</h1>
+            <h1 className="text-4xl font-bold text-center text-gray-800">
+              Tienda
+            </h1>
           </div>
         </div>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Cargando...</div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -39,12 +41,14 @@ export function ProductsPageContent() {
       {/* Título principal */}
       <div className="bg-white py-8">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold text-center text-gray-800">Tienda</h1>
+          <h1 className="text-4xl font-bold text-center text-gray-800">
+            Tienda
+          </h1>
         </div>
       </div>
 
       {/* Mostrar solo si el usuario es admin */}
-      {session?.user?.rol === 'admin' && (
+      {session?.user?.rol === "admin" && (
         <div className="container mx-auto px-4 py-2">
           <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200">
             <div className="flex items-center space-x-3">
@@ -52,8 +56,12 @@ export function ProductsPageContent() {
                 <Package className="w-6 h-6 text-babalu-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">Gestionar Stock</h3>
-                <p className="text-sm text-gray-600">Ver y administrar el inventario de productos</p>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Gestionar Stock
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Ver y administrar el inventario de productos
+                </p>
               </div>
             </div>
 
@@ -67,12 +75,15 @@ export function ProductsPageContent() {
           </div>
         </div>
       )}
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex gap-8">
           {/* Sidebar de categorías */}
           <div className="w-64 flex-shrink-0">
-            <ProductsSidebar selectedCategory={selectedCategory} onCategoryChange={setSelectedCategory} />
+            <ProductsSidebar
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+            />
           </div>
 
           {/* Contenido principal */}
@@ -84,10 +95,14 @@ export function ProductsPageContent() {
               onSortChange={setSortBy}
             />
 
-            <ProductsGridPage selectedCategory={selectedCategory} searchQuery={searchQuery} sortBy={sortBy} />
+            <ProductsGridPage
+              selectedCategory={selectedCategory}
+              searchQuery={searchQuery}
+              sortBy={sortBy}
+            />
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

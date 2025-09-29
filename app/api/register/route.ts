@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createUser } from "../../../lib/auth-helpers";
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   console.log("API de registro llamada");
 

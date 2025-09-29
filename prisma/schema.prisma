@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Products {
+  id            Int     @id @default(autoincrement())
+  nombre        String
+  descripcion   String
+  precio        String
+  imgUrl        String
+  imgPublicId   String
+  category      String? @default("Sin categoría") @db.VarChar(100)
+  empresaEnvios Int
+  Linea         String? @db.VarChar(100)
+  marca         String? @db.VarChar(100)
+  aroma         String? @db.VarChar(100)
+  color         String? @db.VarChar(100)
+  tamaño        String? @db.VarChar(100)
+  tipo          String? @db.VarChar(100)
+  tipoPiedra    String? @db.VarChar(100)
+  cantidad      String? @db.VarChar(100)
+  stock         Int     @default(0)
+  envios        deliver @relation(fields: [empresaEnvios], references: [id], onDelete: Cascade)
+  @@index([empresaEnvios, category])
+  @@map("products")
+}
+
+// Nueva tabla para gestionar marcas por categoría
+model CategoryMarca {
+  id       Int    @id @default(autoincrement())
+  category String @db.VarChar(100)
+  marca    String @db.VarChar(100)
+  Linea    String @db.VarChar(100)
+  aroma    String @db.VarChar(100)
+
+  @@unique([category, marca, aroma, Linea]) // Evitar duplicados de la misma marca en la misma categoría
+  @@map("category_marca")
+}
+
+model deliver {
+  id        Int @id @default(autoincrement())
+  empresaId Int
+  empresa   empresa    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  productos Products[]
+  @@index([empresaId])
+  @@map("deliver")
+}
+
+model empresa {
+  id        Int     @id @default(autoincrement())
+  nombre    String
+  direccion String?
+  telefono  String?
+  delivers  deliver[]
+  @@map("empresa")
+}
+
+model user {
+  id           Int      @id @default(autoincrement())
+  nombre       String
+  apellido     String
+  email        String   @unique
+  password     String
+  fechaNac     DateTime
+  calle        String?
+  ciudad       String?
+  provincia    String?
+  codigoPostal String?
+  pais         String?  @default("Argentina")
+  rol          String @default("user")
+  @@map("user")
+}
+
+model Reserva {
+  id                Int      @id @default(autoincrement())
+  reservaId         String   @unique @map("reserva_id") // ID único para mostrar al cliente
+  servicioId        String   @map("servicio_id")
+  servicioNombre    String   @map("servicio_nombre")
+  servicioPrecio    String   @map("servicio_precio")
+  servicioDuracion  String   @map("servicio_duracion")
+  fecha             DateTime
+  hora              String
+  clienteNombre     String   @map("cliente_nombre")
+  clienteApellido   String   @map("cliente_apellido")
+  clienteEmail      String   @map("cliente_email")
+  clienteTelefono   String   @map("cliente_telefono")
+  mensaje           String?
+  estado            ReservaEstado @default(PENDIENTE)
+  googleEventId     String?  @map("google_event_id")
+  googleCalendarLink String? @map("google_calendar_link")
+  emailEnviado      Boolean  @default(false)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("reservas")
+  @@index([reservaId])
+  @@index([fecha, hora])
+  @@index([clienteEmail])
+  @@index([estado])
+  @@index([createdAt])
+}
+
+enum ReservaEstado {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+  COMPLETADA
+}

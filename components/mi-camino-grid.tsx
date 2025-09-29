@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { MiCaminoCard } from "./mi-camino-card"
+import { MiCaminoCard } from "./mi-camino-card";
 
 interface MiCaminoSection {
-  id: string
-  title: string
-  content: string
-  image: string
+  id: string;
+  title: string;
+  content: string;
+  image: string;
 }
 
 export function MiCaminoGrid() {
@@ -47,13 +47,17 @@ export function MiCaminoGrid() {
       content: `He creado un ambiente especial donde la energía fluye libremente. Mi consulta está diseñada para generar paz y tranquilidad, con cristales, plantas sagradas y una decoración que invita a la relajación. Cada elemento ha sido cuidadosamente seleccionado para potenciar la experiencia de sanación y conexión espiritual.`,
       image: "/img/sacred-space.jpg", // Cambia por tu imagen real
     },
-  ]
+  ];
 
   return (
     <div className="space-y-8 lg:space-y-16">
       {sections.map((section, index) => (
-        <MiCaminoCard key={section.id} section={section} reverse={index % 2 !== 0} />
+        <MiCaminoCard
+          key={section.id}
+          section={section}
+          reverse={index % 2 !== 0}
+        />
       ))}
     </div>
-  )
+  );
 }

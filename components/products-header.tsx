@@ -1,16 +1,21 @@
-"use client"
+"use client";
 
-import { Search, Mic } from "lucide-react"
-import { Button } from "../components/ui/button"
+import { Search, Mic } from "lucide-react";
+import { Button } from "../components/ui/button";
 
 interface ProductsHeaderProps {
-  searchQuery: string
-  onSearchChange: (query: string) => void
-  sortBy: string
-  onSortChange: (sort: string) => void
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  sortBy: string;
+  onSortChange: (sort: string) => void;
 }
 
-export function ProductsHeader({ searchQuery, onSearchChange, sortBy, onSortChange }: ProductsHeaderProps) {
+export function ProductsHeader({
+  searchQuery,
+  onSearchChange,
+  sortBy,
+  onSortChange,
+}: ProductsHeaderProps) {
   return (
     <div className="flex items-center gap-4 mb-8">
       {/* Barra de búsqueda */}
@@ -49,5 +54,5 @@ export function ProductsHeader({ searchQuery, onSearchChange, sortBy, onSortChan
         </select>
       </div>
     </div>
-  )
+  );
 }

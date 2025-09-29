@@ -1,209 +1,218 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "./ui/button"
-import { Eye, EyeOff, Mail, Lock, Loader2, CheckCircle, ArrowLeft } from "lucide-react"
+import { useState } from "react";
+import { Button } from "./ui/button";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  Loader2,
+  CheckCircle,
+  ArrowLeft,
+} from "lucide-react";
 
-type FormStep = "email" | "verification" | "newPassword" | "success"
+type FormStep = "email" | "verification" | "newPassword" | "success";
 
 interface FormData {
-  email: string
-  verificationCode: string
-  newPassword: string
-  confirmPassword: string
+  email: string;
+  verificationCode: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 interface FormErrors {
-  email?: string
-  verificationCode?: string
-  newPassword?: string
-  confirmPassword?: string
-  general?: string
+  email?: string;
+  verificationCode?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+  general?: string;
 }
 
 export function ResetPasswordForm() {
-  const [currentStep, setCurrentStep] = useState<FormStep>("email")
+  const [currentStep, setCurrentStep] = useState<FormStep>("email");
   const [formData, setFormData] = useState<FormData>({
     email: "",
     verificationCode: "",
     newPassword: "",
     confirmPassword: "",
-  })
+  });
 
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<FormErrors>({})
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }))
+    }));
 
     // Limpiar errores cuando el usuario empiece a escribir
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({
         ...prev,
         [name]: undefined,
-      }))
+      }));
     }
-  }
+  };
 
   const validateEmail = (): boolean => {
-    const newErrors: FormErrors = {}
+    const newErrors: FormErrors = {};
 
     if (!formData.email) {
-      newErrors.email = "El correo electrónico es requerido"
+      newErrors.email = "El correo electrónico es requerido";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Ingresa un correo electrónico válido"
+      newErrors.email = "Ingresa un correo electrónico válido";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const validateVerificationCode = (): boolean => {
-    const newErrors: FormErrors = {}
+    const newErrors: FormErrors = {};
 
     if (!formData.verificationCode) {
-      newErrors.verificationCode = "El código de verificación es requerido"
+      newErrors.verificationCode = "El código de verificación es requerido";
     } else if (formData.verificationCode.length !== 6) {
-      newErrors.verificationCode = "El código debe tener 6 dígitos"
+      newErrors.verificationCode = "El código debe tener 6 dígitos";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const validateNewPassword = (): boolean => {
-    const newErrors: FormErrors = {}
+    const newErrors: FormErrors = {};
 
     if (!formData.newPassword) {
-      newErrors.newPassword = "La nueva contraseña es requerida"
+      newErrors.newPassword = "La nueva contraseña es requerida";
     } else if (formData.newPassword.length < 8) {
-      newErrors.newPassword = "La contraseña debe tener al menos 8 caracteres"
+      newErrors.newPassword = "La contraseña debe tener al menos 8 caracteres";
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.newPassword)) {
-      newErrors.newPassword = "La contraseña debe contener al menos una mayúscula, una minúscula y un número"
+      newErrors.newPassword =
+        "La contraseña debe contener al menos una mayúscula, una minúscula y un número";
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Confirma tu nueva contraseña"
+      newErrors.confirmPassword = "Confirma tu nueva contraseña";
     } else if (formData.newPassword !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Las contraseñas no coinciden"
+      newErrors.confirmPassword = "Las contraseñas no coinciden";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateEmail()) {
-      return
+      return;
     }
 
-    setIsLoading(true)
-    setErrors({})
+    setIsLoading(true);
+    setErrors({});
 
     try {
       // Simular envío de código
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Simular verificación de email existente
       if (formData.email === "admin@babalu.com") {
-        setCurrentStep("verification")
+        setCurrentStep("verification");
       } else {
         setErrors({
           email: "No encontramos una cuenta asociada a este correo electrónico",
-        })
+        });
       }
     } catch (error) {
-      console.error("Error al enviar el código:", error)
+      console.error("Error al enviar el código:", error);
       setErrors({
         general: "Error al enviar el código. Intenta nuevamente.",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleVerificationSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateVerificationCode()) {
-      return
+      return;
     }
 
-    setIsLoading(true)
-    setErrors({})
+    setIsLoading(true);
+    setErrors({});
 
     try {
       // Simular verificación del código
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Simular código correcto
       if (formData.verificationCode === "123456") {
-        setCurrentStep("newPassword")
+        setCurrentStep("newPassword");
       } else {
         setErrors({
           verificationCode: "Código incorrecto. Intenta con 123456",
-        })
+        });
       }
     } catch (error) {
-      console.error("Error al verificar el código:", error)
+      console.error("Error al verificar el código:", error);
       setErrors({
         general: "Error al verificar el código. Intenta nuevamente.",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateNewPassword()) {
-      return
+      return;
     }
 
-    setIsLoading(true)
-    setErrors({})
+    setIsLoading(true);
+    setErrors({});
 
     try {
       // Simular actualización de contraseña
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      console.log("Nueva contraseña establecida para:", formData.email)
-      setCurrentStep("success")
+      console.log("Nueva contraseña establecida para:", formData.email);
+      setCurrentStep("success");
     } catch (error) {
-      console.error("Error al actualizar la contraseña:", error)
+      console.error("Error al actualizar la contraseña:", error);
       setErrors({
         general: "Error al actualizar la contraseña. Intenta nuevamente.",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleResendCode = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      alert("Código reenviado a " + formData.email)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      alert("Código reenviado a " + formData.email);
     } catch (error) {
-      console.error("Error al reenviar el código:", error)
+      console.error("Error al reenviar el código:", error);
       setErrors({
         general: "Error al reenviar el código.",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const renderEmailStep = () => (
     <div className="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200">
@@ -215,7 +224,10 @@ export function ResetPasswordForm() {
         )}
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Correo Electrónico
           </label>
           <div className="relative">
@@ -235,7 +247,9 @@ export function ResetPasswordForm() {
               placeholder="tu@email.com"
             />
           </div>
-          {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+          )}
         </div>
 
         <Button
@@ -254,14 +268,16 @@ export function ResetPasswordForm() {
         </Button>
 
         <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-          <p className="text-sm text-blue-800 font-medium mb-2">Email de prueba:</p>
+          <p className="text-sm text-blue-800 font-medium mb-2">
+            Email de prueba:
+          </p>
           <p className="text-sm text-blue-700">
             <strong>Email:</strong> admin@babalu.com
           </p>
         </div>
       </form>
     </div>
-  )
+  );
 
   const renderVerificationStep = () => (
     <div className="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200">
@@ -270,7 +286,8 @@ export function ResetPasswordForm() {
           <Mail className="w-8 h-8 text-babalu-primary" />
         </div>
         <p className="text-sm text-gray-600">
-          Hemos enviado un código de 6 dígitos a <strong>{formData.email}</strong>
+          Hemos enviado un código de 6 dígitos a{" "}
+          <strong>{formData.email}</strong>
         </p>
       </div>
 
@@ -282,7 +299,10 @@ export function ResetPasswordForm() {
         )}
 
         <div>
-          <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="verificationCode"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Código de Verificación
           </label>
           <input
@@ -297,7 +317,11 @@ export function ResetPasswordForm() {
             }`}
             placeholder="000000"
           />
-          {errors.verificationCode && <p className="mt-1 text-sm text-red-600">{errors.verificationCode}</p>}
+          {errors.verificationCode && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.verificationCode}
+            </p>
+          )}
         </div>
 
         <Button
@@ -336,14 +360,16 @@ export function ResetPasswordForm() {
         </button>
 
         <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-          <p className="text-sm text-blue-800 font-medium mb-2">Código de prueba:</p>
+          <p className="text-sm text-blue-800 font-medium mb-2">
+            Código de prueba:
+          </p>
           <p className="text-sm text-blue-700">
             <strong>Código:</strong> 123456
           </p>
         </div>
       </form>
     </div>
-  )
+  );
 
   const renderNewPasswordStep = () => (
     <div className="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200">
@@ -352,7 +378,8 @@ export function ResetPasswordForm() {
           <CheckCircle className="w-8 h-8 text-green-600" />
         </div>
         <p className="text-sm text-gray-600">
-          Código verificado correctamente. Ahora puedes establecer tu nueva contraseña.
+          Código verificado correctamente. Ahora puedes establecer tu nueva
+          contraseña.
         </p>
       </div>
 
@@ -364,7 +391,10 @@ export function ResetPasswordForm() {
         )}
 
         <div>
-          <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="newPassword"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Nueva Contraseña
           </label>
           <div className="relative">
@@ -394,11 +424,16 @@ export function ResetPasswordForm() {
               )}
             </button>
           </div>
-          {errors.newPassword && <p className="mt-1 text-sm text-red-600">{errors.newPassword}</p>}
+          {errors.newPassword && (
+            <p className="mt-1 text-sm text-red-600">{errors.newPassword}</p>
+          )}
         </div>
 
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="confirmPassword"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Confirmar Nueva Contraseña
           </label>
           <div className="relative">
@@ -428,7 +463,11 @@ export function ResetPasswordForm() {
               )}
             </button>
           </div>
-          {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
+          {errors.confirmPassword && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.confirmPassword}
+            </p>
+          )}
         </div>
 
         <Button
@@ -447,7 +486,9 @@ export function ResetPasswordForm() {
         </Button>
 
         <div className="bg-green-50 border border-green-200 rounded-md p-4">
-          <p className="text-sm text-green-800 font-medium mb-2">Requisitos de contraseña:</p>
+          <p className="text-sm text-green-800 font-medium mb-2">
+            Requisitos de contraseña:
+          </p>
           <ul className="text-sm text-green-700 space-y-1">
             <li>• Mínimo 8 caracteres</li>
             <li>• Al menos una letra mayúscula</li>
@@ -457,7 +498,7 @@ export function ResetPasswordForm() {
         </div>
       </form>
     </div>
-  )
+  );
 
   const renderSuccessStep = () => (
     <div className="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200 text-center">
@@ -465,9 +506,12 @@ export function ResetPasswordForm() {
         <CheckCircle className="w-12 h-12 text-green-600" />
       </div>
 
-      <h3 className="text-2xl font-bold text-gray-900 mb-4">¡Contraseña Actualizada!</h3>
+      <h3 className="text-2xl font-bold text-gray-900 mb-4">
+        ¡Contraseña Actualizada!
+      </h3>
       <p className="text-gray-600 mb-8">
-        Tu contraseña ha sido restablecida exitosamente. Ya puedes iniciar sesión con tu nueva contraseña.
+        Tu contraseña ha sido restablecida exitosamente. Ya puedes iniciar
+        sesión con tu nueva contraseña.
       </p>
 
       <div className="space-y-4">
@@ -486,7 +530,7 @@ export function ResetPasswordForm() {
         </button>
       </div>
     </div>
-  )
+  );
 
   return (
     <>
@@ -495,5 +539,5 @@ export function ResetPasswordForm() {
       {currentStep === "newPassword" && renderNewPasswordStep()}
       {currentStep === "success" && renderSuccessStep()}
     </>
-  )
+  );
 }

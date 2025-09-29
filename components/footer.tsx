@@ -1,29 +1,33 @@
-import { Instagram, Phone, Mail } from "lucide-react"
+import { Instagram, Phone, Mail } from "lucide-react";
 
 interface FooterLink {
-  href: string
-  label: string
+  href: string;
+  label: string;
 }
 
 interface FooterSection {
-  title: string
-  links: FooterLink[]
+  title: string;
+  links: FooterLink[];
 }
 
 interface FooterProps {
-  sections?: FooterSection[]
+  sections?: FooterSection[];
   contactInfo?: {
-    instagram?: string
-    phone?: string
-    email?: string
-  }
+    instagram?: string;
+    phone?: string;
+    email?: string;
+  };
   footerText?: {
-    quote?: string
-    copyright?: string
-  }
+    quote?: string;
+    copyright?: string;
+  };
 }
 
-export function Footer({ sections = [], contactInfo = {}, footerText = {} }: FooterProps) {
+export function Footer({
+  sections = [],
+  contactInfo = {},
+  footerText = {},
+}: FooterProps) {
   const defaultSections: FooterSection[] = [
     {
       title: "Mapa Del Sitio",
@@ -45,9 +49,9 @@ export function Footer({ sections = [], contactInfo = {}, footerText = {} }: Foo
       title: "Mi Camino",
       links: [{ href: "/mi-camino", label: "Sobre Mi" }],
     },
-  ]
+  ];
 
-  const finalSections = sections.length > 0 ? sections : defaultSections
+  const finalSections = sections.length > 0 ? sections : defaultSections;
 
   return (
     <footer className="bg-white py-12 border-t">
@@ -105,10 +109,11 @@ export function Footer({ sections = [], contactInfo = {}, footerText = {} }: Foo
             {footerText.quote || "Tu energía habla más fuerte que tus palabras"}
           </p>
           <p className="text-gray-500 text-xs">
-            {footerText.copyright || "Todos los derechos reservados © 2025 Facundo Casalegno Cesano"}
+            {footerText.copyright ||
+              "Todos los derechos reservados © 2025 Facundo Casalegno Cesano"}
           </p>
         </div>
       </div>
     </footer>
-  )
+  );
 }

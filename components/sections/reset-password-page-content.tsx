@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { ResetPasswordForm } from "../../components/reset-password-form"
+import { ResetPasswordForm } from "../../components/reset-password-form";
 
 export function ResetPasswordPageContent() {
   return (
@@ -8,9 +8,12 @@ export function ResetPasswordPageContent() {
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Restablecer Contraseña</h2>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900">
+            Restablecer Contraseña
+          </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Ingresa tu correo electrónico para recibir las instrucciones de restablecimiento
+            Ingresa tu correo electrónico para recibir las instrucciones de
+            restablecimiento
           </p>
         </div>
 
@@ -41,5 +44,5 @@ export function ResetPasswordPageContent() {
         </div>
       </div>
     </div>
-  )
+  );
 }

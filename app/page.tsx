@@ -10,9 +10,15 @@ export default function HomePage() {
     <PageLayout>
       <HeaderSection />
       <HeroSection />
-      <ProductsSection />
+      <div>
+      <ProductsSection 
+      title="PRODUCTOS MAS VENDIDOS" 
+      productIds={[4,5,3,6,1]}/>
+      </div>
       <NavigationSection />
-      <ProductsSection showTitle={false} className="border-t-0" />
+      <ProductsSection 
+      title="PRODUCTOS RECOMENDADOS"
+      productIds={[7,8,2]}/>
       <FooterSection />
     </PageLayout>
   )

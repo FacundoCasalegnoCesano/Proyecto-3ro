@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { HeroCarousel } from "../../components/hero-carousel"
-import { Button } from "../../components/ui/button"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { HeroCarousel } from "../../components/hero-carousel";
+import { Button } from "../../components/ui/button";
 
-// Mover heroImages fuera del componente para evitar recreación en cada render
 const heroImages = [
   {
     src: "/img/cartas-tarot.jpg",
@@ -12,10 +12,11 @@ const heroImages = [
     focalPoint: "center center",
     content: {
       title: "Descubre tu Destino con el Tarot",
-      description: "Consultas personalizadas de Tarot Rider-Waite para guiar tu camino espiritual.",
+      description:
+        "Consultas personalizadas de Tarot Rider-Waite para guiar tu camino espiritual.",
       buttonText: "Reservar Lectura",
-      buttonAction: () => console.log("Reservar lectura de tarot")
-    }
+      buttonAction: () => {},
+    },
   },
   {
     src: "/img/1744750643661.jpg",
@@ -23,10 +24,11 @@ const heroImages = [
     focalPoint: "center 30%",
     content: {
       title: "Sanación Energética con Reiki",
-      description: "Sesiones de Reiki para equilibrar tu energía vital y reducir el estrés.",
+      description:
+        "Sesiones de Reiki para equilibrar tu energía vital y reducir el estrés.",
       buttonText: "Agendar Sesión",
-      buttonAction: () => console.log("Agendar sesión de Reiki")
-    }
+      buttonAction: () => {},
+    },
   },
   {
     src: "/placeholder.svg?height=500&width=800",
@@ -36,37 +38,41 @@ const heroImages = [
       title: "Limpieza Espiritual Profunda",
       description: "Rituales de limpieza energética para purificar tu aura.",
       buttonText: "Conocer Más",
-      buttonAction: () => console.log("Mostrar información de limpieza espiritual")
-    }
-  }
-]
+      buttonAction: () => {},
+    },
+  },
+];
 
 export function HeroSection() {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isInitialized, setIsInitialized] = useState(false)
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const router = useRouter();
 
   const handleSlideChange = (index: number) => {
-    console.log("Slide cambiado a:", index)
-    setCurrentIndex(index)
-    setIsInitialized(true)
-  }
+    console.log("Slide cambiado a:", index);
+    setCurrentIndex(index);
+    setIsInitialized(true);
+  };
 
-  // Debug: Verificar cambios
+  const handleButtonAction = () => {
+    router.push("/servicios");
+  };
+
   useEffect(() => {
     if (isInitialized) {
-      console.log("Índice actual:", currentIndex)
-      console.log("Contenido actual:", heroImages[currentIndex]?.content)
+      console.log("Índice actual:", currentIndex);
+      console.log("Contenido actual:", heroImages[currentIndex]?.content);
     }
-  }, [currentIndex, isInitialized]) // Ahora heroImages no es una dependencia porque está fuera del componente
+  }, [currentIndex, isInitialized]);
 
-  const currentContent = heroImages[currentIndex]?.content || {}
+  const currentContent = heroImages[currentIndex]?.content || {};
 
   return (
     <section className="w-full h-[70vh] min-h-[500px] max-h-[800px] relative">
-      <HeroCarousel 
-        images={heroImages} 
-        className="h-full" 
-        onSlideChange={handleSlideChange} 
+      <HeroCarousel
+        images={heroImages}
+        className="h-full"
+        onSlideChange={handleSlideChange}
       />
 
       {/* Contenido dinámico */}
@@ -81,7 +87,7 @@ export function HeroSection() {
             </p>
             <Button
               className="bg-babalu-primary hover:bg-babalu-dark text-white"
-              onClick={currentContent.buttonAction}
+              onClick={handleButtonAction}
             >
               {currentContent.buttonText}
             </Button>
@@ -95,11 +101,13 @@ export function HeroSection() {
         {heroImages.map((_, index) => (
           <button
             key={index}
-            className={`w-3 h-3 rounded-full transition-all ${currentIndex === index ? 'bg-white w-6' : 'bg-white/50'}`}
+            className={`w-3 h-3 rounded-full transition-all ${
+              currentIndex === index ? "bg-white w-6" : "bg-white/50"
+            }`}
             aria-label={`Ir a slide ${index + 1}`}
           />
         ))}
       </div>
     </section>
-  )
+  );
 }

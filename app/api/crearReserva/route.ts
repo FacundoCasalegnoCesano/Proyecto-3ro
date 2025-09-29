@@ -4,6 +4,8 @@ import { getGoogleCalendarClient } from "../../../lib/googleCalendar";
 import { PrismaClient, ReservaEstado } from "@prisma/client";
 import nodemailer from "nodemailer";
 
+export const dynamic = 'force-dynamic'
+
 const prisma = new PrismaClient();
 
 interface ServicioData {

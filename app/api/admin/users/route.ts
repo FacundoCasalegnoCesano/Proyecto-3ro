@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "lib/prisma";
 import { verifyAdminRole } from "lib/auth-utils";
 
+export const dynamic = 'force-dynamic'
+
 // Obtener todos los usuarios (solo admin)
 export async function GET() {
   try {

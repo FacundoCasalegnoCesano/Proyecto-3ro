@@ -4,6 +4,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./lib/prisma";
 import bcrypt from "bcryptjs";
 
+export const dynamic = 'force-dynamic'
+
 // Extender la interfaz de usuario de NextAuth para incluir tus campos personalizados + rol
 declare module "next-auth" {
   interface User {

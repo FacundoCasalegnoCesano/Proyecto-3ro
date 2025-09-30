@@ -3,8 +3,10 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "auth.config";
 import { prisma } from "lib/prisma";
 
+// AGREGA ESTA LÍNEA - Indica que este archivo es para Server Components/API routes
+export const dynamic = 'force-dynamic'
+
 export async function verifyAdminRole() {
-  // ← Eliminado request no utilizado
   try {
     const session = await getServerSession(authOptions);
 
@@ -61,7 +63,6 @@ export async function verifyAdminRole() {
 }
 
 export async function requireAuth() {
-  // ← Eliminado request no utilizado
   try {
     const session = await getServerSession(authOptions);
 

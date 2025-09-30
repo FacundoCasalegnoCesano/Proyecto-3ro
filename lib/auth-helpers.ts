@@ -2,6 +2,9 @@
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
+// AGREGA ESTA LÍNEA
+export const dynamic = 'force-dynamic'
+
 interface CreateUserData {
   nombre: string;
   apellido: string;
@@ -28,7 +31,6 @@ export async function createUser(userData: CreateUserData) {
   const hashedPassword = await bcrypt.hash(password, 12);
 
   // Crear usuario
-  // Crear usuario y retornar sin password en la misma consulta
   const user = await prisma.user.create({
     data: {
       nombre,

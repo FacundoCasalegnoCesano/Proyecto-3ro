@@ -26,8 +26,30 @@ model Products {
   cantidad      String? @db.VarChar(100)
   stock         Int     @default(0)
   envios        deliver @relation(fields: [empresaEnvios], references: [id], onDelete: Cascade)
+  cartItems   Cart[]   // Nueva relación con Cart
   @@index([empresaEnvios, category])
   @@map("products")
+}
+
+model Cart {
+  id        Int      @id @default(autoincrement())
+  user_id   String?  // Para usuarios autenticados (email o ID)
+  session_id String? // Para usuarios no autenticados
+  product_id Int
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relaciones
+  product Products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  
+  @@map("cart")
+  
+  // Índices para mejor performance
+  @@index([user_id])
+  @@index([session_id])
+  @@index([product_id])
+  @@index([user_id, session_id])
 }
 
 // Nueva tabla para gestionar marcas por categoría

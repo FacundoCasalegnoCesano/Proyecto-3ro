@@ -1,15 +1,13 @@
-// compra-page-content.tsx
+// sections/compra-page-content.tsx
 "use client"
 
-import { CompraForm } from "components/compra-form"
-import { ResumenCompra } from "components/resumen-compra"
+import { CompraWizard } from "components/compra/CompraWizard"
 import { useCart } from "../../contexts/cart-context"
-import { useAuthStatus } from "app/hooks/useAuthStatus" // Nuevo hook
+import { useAuthStatus } from "app/hooks/useAuthStatus"
 import { useEffect } from "react"
 
-
 export function CompraPageContent() {
-  const { state: cartState, getTotalItems, getTotalPrice } = useCart()
+  const { getTotalItems } = useCart()
   const { isLoggedIn, isLoading: authLoading } = useAuthStatus()
 
   // Redirigir si el carrito está vacío
@@ -48,17 +46,8 @@ export function CompraPageContent() {
           <p className="mt-2 text-sm text-gray-600">Completa tu información para procesar el pago de forma segura</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Formulario de compra */}
-          <div className="lg:col-span-2">
-            <CompraForm />
-          </div>
-
-          {/* Resumen de compra */}
-          <div className="lg:col-span-1">
-            <ResumenCompra items={cartState.items} totalPrice={getTotalPrice()} />
-          </div>
-        </div>
+        {/* CompraWizard ahora maneja su propio layout con ResumenCompra */}
+        <CompraWizard />
       </div>
     </div>
   )

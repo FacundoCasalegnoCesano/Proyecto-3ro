@@ -94,82 +94,97 @@ export function CarritoDetalle({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Products List */}
-          <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 p-6 transition-all duration-300 hover:scale-[1.01]"
-              >
-                <div className="flex gap-6">
-                  {/* Image */}
-                  <div className="relative w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl overflow-hidden flex-shrink-0 shadow-md">
-                    <Image 
-                      src={item.image || "/placeholder.svg"} 
-                      alt={item.name} 
-                      fill 
-                      className="object-cover" 
-                    />
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">{item.name}</h3>
-                        <div className="flex items-center gap-2">
-                          <Tag className="w-4 h-4 text-babalu-primary" />
-                          <p className="text-2xl font-bold text-babalu-primary">{formatPrice(item.price)}</p>
-                          <span className="text-sm text-gray-500">c/u</span>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRemoveItem(item.id)}
-                        className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200 hover:scale-110"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </Button>
-                    </div>
-
-                    {/* Quantity and Subtotal */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm text-gray-600 font-medium">Cantidad:</span>
-                        <div className="flex items-center bg-gray-100 rounded-xl overflow-hidden">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                            className="w-10 h-10 p-0 hover:bg-babalu-primary/10 hover:text-babalu-primary transition-all duration-200"
-                            disabled={item.quantity <= 1}
-                          >
-                            <Minus className="w-4 h-4" />
-                          </Button>
-
-                          <span className="w-12 text-center font-bold text-lg">{item.quantity}</span>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                            className="w-10 h-10 p-0 hover:bg-babalu-primary/10 hover:text-babalu-primary transition-all duration-200"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-sm text-gray-600 mb-1">Subtotal</p>
-                        <p className="text-2xl font-bold text-gray-900">{formatPrice(item.price * item.quantity)}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          {/* Products List Container */}
+          <div className="lg:col-span-2">
+            {/* Contenedor diferenciado para los productos */}
+            <div className="bg-gradient-to-br from-blue-50/50 to-indigo-50/30 rounded-2xl shadow-sm border border-blue-100/50 p-6 mb-4">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5 text-babalu-primary" />
+                  Productos en el carrito
+                </h2>
+                <span className="bg-babalu-primary/10 text-babalu-primary px-3 py-1 rounded-full text-sm font-medium">
+                  {totalItems} {totalItems === 1 ? "item" : "items"}
+                </span>
               </div>
-            ))}
+              
+              <div className="space-y-4">
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="group bg-white/80 backdrop-blur-sm rounded-xl shadow-sm hover:shadow-md border border-blue-100/50 p-4 transition-all duration-300 hover:bg-white"
+                  >
+                    <div className="flex gap-4">
+                      {/* Image - Más pequeña */}
+                      <div className="relative w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
+                        <Image 
+                          src={item.image || "/placeholder.svg"} 
+                          alt={item.name} 
+                          fill 
+                          className="object-cover" 
+                        />
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">{item.name}</h3>
+                            <div className="flex items-center gap-2">
+                              <Tag className="w-3 h-3 text-babalu-primary" />
+                              <p className="text-xl font-bold text-babalu-primary">{formatPrice(item.price)}</p>
+                              <span className="text-xs text-gray-500">c/u</span>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onRemoveItem(item.id)}
+                            className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200 hover:scale-110 flex-shrink-0 ml-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+
+                        {/* Quantity and Subtotal */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-gray-600 font-medium">Cantidad:</span>
+                            <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                                className="w-8 h-8 p-0 hover:bg-babalu-primary/10 hover:text-babalu-primary transition-all duration-200"
+                                disabled={item.quantity <= 1}
+                              >
+                                <Minus className="w-3 h-3" />
+                              </Button>
+
+                              <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                                className="w-8 h-8 p-0 hover:bg-babalu-primary/10 hover:text-babalu-primary transition-all duration-200"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="text-xs text-gray-600 mb-1">Subtotal</p>
+                            <p className="text-lg font-bold text-gray-900">{formatPrice(item.price * item.quantity)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* Clear Cart Button */}
             {items.length > 0 && (

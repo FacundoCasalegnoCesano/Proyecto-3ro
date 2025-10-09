@@ -2,15 +2,24 @@
 
 import Image from "next/image"
 import { Package, Truck, CreditCard } from "lucide-react"
-import { CartItem } from "app/types/cart"// Importar la interfaz compartida
+import { CartItem } from "app/types/cart"
+
+interface ShippingOption {
+  carrier: string
+  service: string
+  price: number
+  deliveryDays: number
+  estimatedDate: string
+}
 
 interface ResumenCompraProps {
   items: CartItem[]
   totalPrice: number
+  shippingOption?: ShippingOption | null
 }
 
-export function ResumenCompra({ items, totalPrice }: ResumenCompraProps) {
-  const shippingCost = totalPrice > 5000 ? 0 : 500 // Envío gratis si supera $5000
+export function ResumenCompra({ items, totalPrice, shippingOption }: ResumenCompraProps) {
+  const shippingCost = shippingOption?.price || 0
   const tax = totalPrice * 0.21 // IVA 21%
   const finalTotal = totalPrice + shippingCost + tax
 
@@ -64,9 +73,14 @@ export function ResumenCompra({ items, totalPrice }: ResumenCompraProps) {
             <Truck className="w-4 h-4 mr-1" />
             Envío
           </span>
-          <span className={`font-medium ${shippingCost === 0 ? "text-green-600" : "text-gray-900"}`}>
-            {shippingCost === 0 ? "Gratis" : formatPrice(shippingCost)}
-          </span>
+          {shippingOption ? (
+            <div className="text-right">
+              <span className="font-medium text-gray-900">{formatPrice(shippingCost)}</span>
+              <p className="text-xs text-gray-500">{shippingOption.carrier} - {shippingOption.service}</p>
+            </div>
+          ) : (
+            <span className="text-gray-500 text-xs">A calcular</span>
+          )}
         </div>
 
         <div className="flex justify-between text-sm">
@@ -80,11 +94,14 @@ export function ResumenCompra({ items, totalPrice }: ResumenCompraProps) {
         </div>
       </div>
 
-      {/* Información de envío gratis */}
-      {totalPrice < 5000 && (
-        <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-          <p className="text-sm text-orange-800 text-center">
-            <strong>¡Faltan {formatPrice(5000 - totalPrice)} para envío gratis!</strong>
+      {/* Información de envío (si está seleccionado) */}
+      {shippingOption && (
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-800">
+            <strong>Entrega estimada:</strong> {shippingOption.deliveryDays} días hábiles
+          </p>
+          <p className="text-xs text-blue-600 mt-1">
+            Fecha aproximada: {shippingOption.estimatedDate}
           </p>
         </div>
       )}
@@ -94,11 +111,6 @@ export function ResumenCompra({ items, totalPrice }: ResumenCompraProps) {
         <div className="flex items-center space-x-2 text-sm text-gray-600">
           <CreditCard className="w-4 h-4" />
           <span>Pago seguro con SSL</span>
-        </div>
-
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <Truck className="w-4 h-4" />
-          <span>Envío gratis en compras superiores a $5000</span>
         </div>
 
         <div className="flex items-center space-x-2 text-sm text-gray-600">

@@ -1,3 +1,4 @@
+// contexts/cart-context.tsx
 "use client"
 
 import { createContext, useContext, useReducer, type ReactNode, useEffect } from "react"
@@ -42,23 +43,26 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       return { ...state, isLoading: action.payload }
 
     case "SET_ITEMS":
-      return { ...state, items: action.payload, isLoading: false }
+      // Filtrar duplicados al cargar items
+      const uniqueItems = action.payload.filter((item, index, self) => 
+        index === self.findIndex(i => i.id === item.id)
+      )
+      return { ...state, items: uniqueItems, isLoading: false }
 
     case "ADD_ITEM": {
-      const existingItem = state.items.find((item) => item.id === action.payload.id)
-      if (existingItem) {
-        return {
-          ...state,
-          items: state.items.map((item) =>
-            item.id === action.payload.id 
-              ? { ...item, quantity: item.quantity + action.payload.quantity } 
-              : item
-          ),
-        }
-      }
-      return {
-        ...state,
-        items: [...state.items, action.payload],
+      const existingItemIndex = state.items.findIndex((item) => item.id === action.payload.id)
+      
+      if (existingItemIndex > -1) {
+        // Si ya existe, actualizar la cantidad
+        const updatedItems = state.items.map((item, index) =>
+          index === existingItemIndex 
+            ? { ...item, quantity: item.quantity + action.payload.quantity }
+            : item
+        )
+        return { ...state, items: updatedItems }
+      } else {
+        // Si no existe, agregar nuevo item
+        return { ...state, items: [...state.items, action.payload] }
       }
     }
 
@@ -69,19 +73,19 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       }
 
     case "UPDATE_QUANTITY": {
-      const newQuantity = action.payload.quantity
-      if (newQuantity <= 0) {
+      const { id, quantity } = action.payload
+      
+      if (quantity <= 0) {
         return {
           ...state,
-          items: state.items.filter((item) => item.id !== action.payload.id),
+          items: state.items.filter((item) => item.id !== id),
         }
       }
+      
       return {
         ...state,
         items: state.items.map((item) =>
-          item.id === action.payload.id 
-            ? { ...item, quantity: newQuantity } 
-            : item
+          item.id === id ? { ...item, quantity } : item
         ),
       }
     }
@@ -134,8 +138,49 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // Función para mostrar toast de éxito
+  const mostrarToastSuccess = (mensaje: string) => {
+    // Reemplaza con tu implementación de toast
+    console.log('✅', mensaje)
+    if (typeof window !== 'undefined' && (window as any).toast) {
+      (window as any).toast.success(mensaje)
+    }
+  }
+
+  // Función para mostrar toast de error
+  const mostrarToastError = (mensaje: string) => {
+    // Reemplaza con tu implementación de toast
+    console.log('❌', mensaje)
+    if (typeof window !== 'undefined' && (window as any).toast) {
+      (window as any).toast.error(mensaje)
+    }
+  }
+
   const addItem = async (item: CartItem) => {
     try {
+      // VERIFICAR STOCK ANTES DE AGREGAR
+      const stockResponse = await fetch(`/api/productos?id=${item.id}`)
+      if (stockResponse.ok) {
+        const stockResult = await stockResponse.json()
+        if (stockResult.success) {
+          const producto = stockResult.data
+          
+          // Verificar stock disponible
+          const itemExistente = state.items.find(i => i.id === item.id)
+          const cantidadEnCarrito = itemExistente ? itemExistente.quantity : 0
+          const cantidadTotalSolicitada = cantidadEnCarrito + item.quantity
+          
+          if (cantidadTotalSolicitada > producto.stock) {
+            const disponible = producto.stock - cantidadEnCarrito
+            const nombreCompleto = `${producto.name}${producto.linea ? ` (${producto.linea}` : ''}${producto.aroma ? ` - ${producto.aroma}` : ''}${producto.linea ? ')' : ''}`
+            
+            mostrarToastError(`Stock insuficiente para: ${nombreCompleto} - Solicitado: ${item.quantity}, Disponible: ${disponible > 0 ? disponible : 0}`)
+            return
+          }
+        }
+      }
+
+      // Si hay stock, proceder con la adición
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: {
@@ -151,10 +196,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const result = await response.json()
         if (result.success) {
           dispatch({ type: "ADD_ITEM", payload: result.data })
+          const nombreCompleto = `${item.name}${item.linea ? ` (${item.linea}` : ''}${item.aroma ? ` - ${item.aroma}` : ''}${item.linea ? ')' : ''}`
+          mostrarToastSuccess(`${nombreCompleto} agregado al carrito`)
         }
+      } else {
+        const errorResult = await response.json()
+        mostrarToastError(errorResult.error || 'Error al agregar producto al carrito')
       }
     } catch (error) {
       console.error('❌ Error agregando item:', error)
+      mostrarToastError('Error al agregar producto al carrito')
     }
   }
 
@@ -166,14 +217,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         dispatch({ type: "REMOVE_ITEM", payload: id })
+        mostrarToastSuccess('Producto eliminado del carrito')
       }
     } catch (error) {
       console.error('❌ Error eliminando item:', error)
+      mostrarToastError('Error al eliminar producto del carrito')
     }
   }
 
   const updateQuantity = async (id: number, quantity: number) => {
     try {
+      // VERIFICAR STOCK ANTES DE ACTUALIZAR
+      if (quantity > 0) {
+        const stockResponse = await fetch(`/api/productos?id=${id}`)
+        if (stockResponse.ok) {
+          const stockResult = await stockResponse.json()
+          if (stockResult.success) {
+            const producto = stockResult.data
+            
+            if (quantity > producto.stock) {
+              const itemExistente = state.items.find(i => i.id === id)
+              const nombreCompleto = `${producto.name}${producto.linea ? ` (${producto.linea}` : ''}${producto.aroma ? ` - ${producto.aroma}` : ''}${producto.linea ? ')' : ''}`
+              mostrarToastError(`Stock insuficiente para: ${nombreCompleto} - Máximo disponible: ${producto.stock}`)
+              return
+            }
+          }
+        }
+      }
+
       const response = await fetch('/api/cart', {
         method: 'PUT',
         headers: {
@@ -195,9 +266,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
             dispatch({ type: "REMOVE_ITEM", payload: id })
           }
         }
+      } else {
+        const errorResult = await response.json()
+        mostrarToastError(errorResult.error || 'Error al actualizar cantidad')
       }
     } catch (error) {
       console.error('❌ Error actualizando cantidad:', error)
+      mostrarToastError('Error al actualizar cantidad')
     }
   }
 
@@ -205,8 +280,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       // Implementar limpieza del carrito en la API si es necesario
       dispatch({ type: "CLEAR_CART" })
+      mostrarToastSuccess('Carrito vaciado')
     } catch (error) {
       console.error('❌ Error limpiando carrito:', error)
+      mostrarToastError('Error al vaciar el carrito')
     }
   }
 

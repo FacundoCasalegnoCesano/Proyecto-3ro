@@ -1,9 +1,8 @@
+// app/layout.tsx (más limpio)
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { CartProvider } from "../contexts/cart-context"
-import { CartModal } from "../components/cart-modal"
 import { Providers } from "app/providers/SessionProvider"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -19,13 +18,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
-      <body className={inter.className}>
+    <html lang="es" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <Providers>
-        <CartProvider>
           {children}
-          <CartModal />
-        </CartProvider>
         </Providers>
       </body>
     </html>

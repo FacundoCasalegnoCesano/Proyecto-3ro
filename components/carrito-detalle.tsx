@@ -1,12 +1,13 @@
+// components/carrito-detalle.tsx
 "use client"
 
 import { Button } from "./ui/button"
 import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, Tag, Package } from "lucide-react"
 import Image from "next/image"
-import { CartItem } from "app/types/cart" // Importa la interfaz compartida
+import { CartItem } from "app/types/cart"
 
 interface CarritoDetalleProps {
-  items?: CartItem[] // Usa la interfaz compartida
+  items?: CartItem[]
   totalItems?: number
   subtotal?: number
   iva?: number
@@ -130,10 +131,32 @@ export function CarritoDetalle({
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex-1">
                             <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">{item.name}</h3>
+                            
+                            {/* MOSTRAR LÍNEA Y AROMA */}
+                            {(item.linea || item.aroma) && (
+                              <div className="flex flex-wrap gap-1 mb-2">
+                                {item.linea && (
+                                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                    Línea: {item.linea}
+                                  </span>
+                                )}
+                                {item.aroma && (
+                                  <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                                    Aroma: {item.aroma}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            
                             <div className="flex items-center gap-2">
                               <Tag className="w-3 h-3 text-babalu-primary" />
                               <p className="text-xl font-bold text-babalu-primary">{formatPrice(item.price)}</p>
                               <span className="text-xs text-gray-500">c/u</span>
+                            </div>
+                            
+                            {/* MOSTRAR STOCK DISPONIBLE */}
+                            <div className="text-xs text-gray-500 mt-1">
+                              Stock disponible: {item.stockIndividual}
                             </div>
                           </div>
                           <Button

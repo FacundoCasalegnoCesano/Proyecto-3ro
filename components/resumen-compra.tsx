@@ -1,3 +1,4 @@
+// components/resumen-compra.tsx
 "use client"
 
 import Image from "next/image"
@@ -30,6 +31,11 @@ export function ResumenCompra({ items, totalPrice, shippingOption }: ResumenComp
     }).format(price)
   }
 
+  // Función para generar keys únicas
+  const getUniqueKey = (item: CartItem, index: number) => {
+    return `${item.id}-${item.quantity}-${index}`
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
       <div className="flex items-center space-x-2 mb-6">
@@ -39,14 +45,18 @@ export function ResumenCompra({ items, totalPrice, shippingOption }: ResumenComp
 
       {/* Items del carrito */}
       <div className="space-y-4 mb-6">
-        {items.map((item) => (
-          <div key={item.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+        {items.map((item, index) => (
+          <div 
+            key={getUniqueKey(item, index)} // Key única que incluye id, cantidad e índice
+            className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
+          >
             <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
               <Image
                 src={item.image || "/placeholder.svg"}
                 alt={item.name}
                 width={48}
                 height={48}
+                sizes="48px"
                 className="w-full h-full object-cover"
               />
             </div>

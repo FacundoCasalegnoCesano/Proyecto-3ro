@@ -133,3 +133,33 @@ enum ReservaEstado {
   CANCELADA
   COMPLETADA
 }
+
+model Order {
+  id        Int         @id @default(autoincrement())
+  userId    String
+  subtotal  Float
+  shippingCost Float
+  tax       Float
+  total     Float
+  paymentMethod String
+  shippingAddress String // JSON stringified
+  shippingMethod String  // JSON stringified
+  status    String      @default("pending") // pending, completed, cancelled
+  orderDate DateTime    @default(now())
+  items     OrderItem[]
+  
+  @@map("orders")
+}
+
+model OrderItem {
+  id           Int     @id @default(autoincrement())
+  orderId      Int
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    Int
+  quantity     Int
+  price        Float
+  productName  String
+  productImage String
+  
+  @@map("order_items")
+}

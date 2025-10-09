@@ -7,8 +7,9 @@ import { ShippingStep } from "./steps/ShippingStep"
 import { PaymentStep } from "./steps/PaymentStep"
 import { useCart } from "../../contexts/cart-context"
 import { useSession } from "next-auth/react"
-import { CheckCircle, Loader2 } from "lucide-react"
+import { CheckCircle, Package, Truck, CreditCard, Calendar, MapPin, Loader2 } from "lucide-react"
 import { ResumenCompra } from "../resumen-compra"
+import { toast } from "sonner"
 
 // Tipo genérico para errores
 export interface FormErrors {
@@ -66,7 +67,7 @@ interface StepProps {
 
 export function CompraWizard() {
   const { data: session, status } = useSession()
-  const { clearCart, state, getTotalPrice, getTotalItems } = useCart()
+  const { state, getTotalPrice, getTotalItems } = useCart()
 
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<PaymentData>({
@@ -93,6 +94,7 @@ export function CompraWizard() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [orderSuccess, setOrderSuccess] = useState(false)
   const [loadingUserData, setLoadingUserData] = useState(true)
+  const [orderData, setOrderData] = useState<any>(null)
 
   // Cargar datos del usuario al montar el componente
   useEffect(() => {
@@ -156,6 +158,41 @@ export function CompraWizard() {
     loadUserData()
   }, [session])
 
+
+  const checkCurrentStock = async (cartItems: any[]) => {
+    try {
+      const stockPromises = cartItems.map(async (item) => {
+        const response = await fetch(`/api/agregarProd?id=${item.id}`)
+        if (response.ok) {
+          const result = await response.json()
+          return {
+            id: item.id,
+            name: item.name,
+            requested: item.quantity,
+            available: result.data?.stock || 0
+          }
+        }
+        return {
+          id: item.id,
+          name: item.name, 
+          requested: item.quantity,
+          available: 0
+        }
+      })
+
+      const stockResults = await Promise.all(stockPromises)
+      const outOfStockItems = stockResults.filter(item => item.requested > item.available)
+      
+      return {
+        available: outOfStockItems.length === 0,
+        outOfStockItems
+      }
+    } catch (error) {
+      console.error('Error verificando stock:', error)
+      return { available: false, outOfStockItems: [] }
+    }
+  }
+
   const updateFormData = (newData: Partial<PaymentData>) => {
     setFormData(prev => ({ ...prev, ...newData }))
   }
@@ -172,20 +209,146 @@ export function CompraWizard() {
     setIsLoading(true)
 
     try {
-      // Simular procesamiento de pago
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      // Verificar stock antes de enviar
+      console.log('🔍 Verificando stock actual...')
+      const stockCheck = await checkCurrentStock(state.items)
       
-      console.log("Procesando pago:", finalData)
-      setOrderSuccess(true)
-      clearCart()
+      if (!stockCheck.available) {
+        const errorMessage = `Stock insuficiente para: ${stockCheck.outOfStockItems.map(item => 
+          `${item.name} (solicitado: ${item.requested}, disponible: ${item.available})`
+        ).join(', ')}`
+        
+        toast.error("Error en el stock", {
+          description: errorMessage
+        })
+        setErrors({ general: errorMessage })
+        setIsLoading(false)
+        return
+      }
 
-      setTimeout(() => {
-        window.location.href = "/"
-      }, 3000)
+      console.log('✅ Stock verificado, procesando orden...')
+      
+      // Mostrar toast de carga
+      const loadingToast = toast.loading("Procesando tu compra...")
+      
+      const orderResponse = await processOrder(finalData, state.items)
+      
+      // Cerrar toast de carga
+      toast.dismiss(loadingToast)
+      
+      if (orderResponse.success) {
+        // Mostrar toast de éxito
+        toast.success("¡Compra realizada!", {
+          description: `Tu orden #${orderResponse.order.orderNumber} ha sido procesada exitosamente`,
+          duration: 3000,
+        })
+        
+        setOrderData(orderResponse.order)
+        setOrderSuccess(true)
+        
+        // ⚠️ ELIMINADO: clearCart() - No limpiar el carrito aquí para evitar alerts
+        
+        // Redirigir después de 3 segundos
+        setTimeout(() => {
+          window.location.href = "/"
+        }, 3000)
+      } else {
+        // Manejar error de stock insuficiente del servidor
+        if (orderResponse.outOfStockItems) {
+          const errorMessage = `Stock insuficiente durante el procesamiento: ${orderResponse.outOfStockItems.map((item: any) => 
+            `${item.name} (solicitado: ${item.requested}, disponible: ${item.available})`
+          ).join(', ')}`
+          
+          toast.error("Error en el stock", {
+            description: errorMessage
+          })
+          setErrors({ general: errorMessage })
+        } else {
+          toast.error("Error al procesar el pago", {
+            description: orderResponse.error || "Intenta nuevamente."
+          })
+          setErrors({ general: orderResponse.error || "Error al procesar el pago. Intenta nuevamente." })
+        }
+      }
     } catch (error) {
+      toast.error("Error inesperado", {
+        description: "Ocurrió un error al procesar tu compra."
+      })
       setErrors({ general: "Error al procesar el pago. Intenta nuevamente." })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // Función para procesar la orden y actualizar stock
+  const processOrder = async (paymentData: PaymentData, cartItems: any[]) => {
+    try {
+      console.log('🔄 Enviando orden al servidor...', {
+        paymentData: {
+          calle: paymentData.calle,
+          ciudad: paymentData.ciudad,
+          provincia: paymentData.provincia,
+          codigoPostal: paymentData.codigoPostal,
+          pais: paymentData.pais,
+          shippingOption: paymentData.shippingOption,
+          paymentMethod: paymentData.paymentMethod
+        },
+        items: cartItems.length,
+        subtotal: getTotalPrice(),
+        shipping: paymentData.shippingOption?.price || 0
+      })
+
+      // Preparar los datos del carrito
+      const cartItemsData = cartItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image || "/placeholder.svg"
+      }))
+
+      const requestData = {
+        paymentData: {
+          ...paymentData,
+          // Asegurar que shippingOption esté presente
+          shippingOption: paymentData.shippingOption || {
+            name: "Envío estándar",
+            carrier: "Correo Argentino", 
+            service: "Estándar",
+            price: 0,
+            deliveryDays: 5,
+            estimatedDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('es-AR')
+          }
+        },
+        cartItems: cartItemsData,
+        subtotal: getTotalPrice(),
+        shippingCost: paymentData.shippingOption?.price || 0,
+      }
+
+      console.log('📤 Enviando datos:', JSON.stringify(requestData, null, 2))
+
+      const response = await fetch("/api/orders/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+      })
+
+      const result = await response.json()
+      
+      if (!response.ok) {
+        console.error('❌ Error del servidor:', result)
+        throw new Error(result.error || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      return result
+    } catch (error) {
+      console.error("❌ Error procesando orden:", error)
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : "Error al procesar la orden" 
+      }
     }
   }
 
@@ -227,28 +390,218 @@ export function CompraWizard() {
     )
   }
 
-  if (orderSuccess) {
+  if (orderSuccess && orderData) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-8 text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-12 h-12 text-green-600" />
+        {/* Resumen de compra exitosa */}
+        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-8">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-12 h-12 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Pago Exitoso!</h2>
+            <p className="text-gray-600">
+              Tu pedido ha sido procesado correctamente. Recibirás un email de confirmación en breve.
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">¡Pago Exitoso!</h2>
-          <p className="text-gray-600 mb-6">
-            Tu pedido ha sido procesado correctamente. Recibirás un email de confirmación en breve.
-          </p>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <p className="text-green-800 font-medium">Número de orden: #ORD-{Date.now()}</p>
+
+          {/* Información de la orden */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-green-800 font-medium">Orden #{orderData.orderNumber}</p>
+                <p className="text-green-600 text-sm">
+                  <Calendar className="w-4 h-4 inline mr-1" />
+                  Fecha: {new Date(orderData.createdAt).toLocaleDateString('es-AR')}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-green-800 font-bold text-lg">
+                  {new Intl.NumberFormat("es-AR", {
+                    style: "currency",
+                    currency: "ARS",
+                  }).format(orderData.total)}
+                </p>
+                <p className="text-green-600 text-sm">{orderData.items.length} productos</p>
+              </div>
+            </div>
           </div>
-          <p className="text-sm text-gray-500">Serás redirigido automáticamente...</p>
+
+          {/* Detalles de la orden */}
+          <div className="space-y-6">
+            {/* Información de envío */}
+            <div className="border border-gray-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Truck className="w-5 h-5 text-babalu-primary mr-2" />
+                Información de Envío
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Dirección de entrega</p>
+                  <p className="text-gray-600">{orderData.shippingAddress.calle}</p>
+                  <p className="text-gray-600">{orderData.shippingAddress.ciudad}, {orderData.shippingAddress.provincia}</p>
+                  <p className="text-gray-600">CP: {orderData.shippingAddress.codigoPostal}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Método de envío</p>
+                  <p className="text-gray-600">{orderData.shippingMethod.name}</p>
+                  <p className="text-gray-600">
+                    <Calendar className="w-4 h-4 inline mr-1" />
+                    Entrega estimada: {orderData.shippingMethod.estimatedDate}
+                  </p>
+                  <p className="text-gray-600">
+                    Costo: {new Intl.NumberFormat("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    }).format(orderData.shippingCost)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Información de pago */}
+            <div className="border border-gray-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <CreditCard className="w-5 h-5 text-babalu-primary mr-2" />
+                Información de Pago
+              </h3>
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Método de pago</p>
+                  <p className="text-gray-600">
+                    {orderData.paymentMethod === "mercado-pago" 
+                      ? "Mercado Pago" 
+                      : orderData.paymentMethod === "credit-card"
+                        ? "Tarjeta de crédito"
+                        : "Tarjeta de débito"
+                    }
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-700">Total pagado</p>
+                  <p className="text-babalu-primary font-bold text-lg">
+                    {new Intl.NumberFormat("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    }).format(orderData.total)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Productos comprados */}
+            <div className="border border-gray-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Package className="w-5 h-5 text-babalu-primary mr-2" />
+                Productos en tu pedido
+              </h3>
+              <div className="space-y-4">
+                {orderData.items.map((item: any) => (
+                  <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                        <img
+                          src={item.image || "/placeholder.svg"}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900">{item.name}</h4>
+                        <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {new Intl.NumberFormat("es-AR", {
+                          style: "currency",
+                          currency: "ARS",
+                        }).format(item.price * item.quantity)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Intl.NumberFormat("es-AR", {
+                          style: "currency",
+                          currency: "ARS",
+                        }).format(item.price)} c/u
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Resumen de totales */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h4 className="font-semibold text-gray-900 mb-4">Resumen de totales</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>
+                    {new Intl.NumberFormat("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    }).format(orderData.subtotal)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Envío:</span>
+                  <span>
+                    {new Intl.NumberFormat("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    }).format(orderData.shippingCost)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>IVA (21%):</span>
+                  <span>
+                    {new Intl.NumberFormat("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    }).format(orderData.tax)}
+                  </span>
+                </div>
+                <div className="border-t border-gray-200 pt-2">
+                  <div className="flex justify-between font-semibold text-lg">
+                    <span>Total:</span>
+                    <span className="text-babalu-primary">
+                      {new Intl.NumberFormat("es-AR", {
+                        style: "currency",
+                        currency: "ARS",
+                      }).format(orderData.total)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center py-4">
+              <p className="text-sm text-gray-500">
+                Serás redirigido automáticamente a la página principal en 5 segundos...
+              </p>
+            </div>
+          </div>
         </div>
+
+        {/* Columna del resumen */}
         <div className="lg:col-span-1">
-          <ResumenCompra 
-            items={state.items} 
-            totalPrice={getTotalPrice()} 
-            shippingOption={formData.shippingOption}
-          />
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-blue-900 mb-4">¿Qué sigue?</h3>
+            <div className="space-y-3 text-sm text-blue-800">
+              <div className="flex items-start space-x-2">
+                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <p>Recibirás un email de confirmación con los detalles de tu pedido</p>
+              </div>
+              <div className="flex items-start space-x-2">
+                <Package className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <p>Prepararemos tu pedido y te notificaremos cuando sea enviado</p>
+              </div>
+              <div className="flex items-start space-x-2">
+                <Truck className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                <p>Recibirás un código de seguimiento para monitorear tu envío</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )

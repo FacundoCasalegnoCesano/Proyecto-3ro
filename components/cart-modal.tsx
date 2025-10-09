@@ -1,27 +1,27 @@
+// components/cart-modal.tsx
 "use client"
 
 import { Button } from "../components/ui/button"
 import { X, Plus, Minus, Trash2, ShoppingBag, Tag } from "lucide-react"
 import Image from "next/image"
-import { useCartModal } from "app/hooks/useCartModal"
+import { useCart } from "contexts/cart-context"
 
 export function CartModal() {
   const {
-    isOpen,
-    items,
-    totalPrice,
-    totalItems,
-    onClose,
-    onUpdateQuantity,
-    onRemoveItem,
-    onClearCart,
-    onViewFullCart,
-  } = useCartModal()
+    state,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    closeCart,
+    getTotalPrice,
+    getTotalItems,
+  } = useCart()
 
-  if (!isOpen) return null
+  const { isOpen, items } = state
+  const totalPrice = getTotalPrice()
+  const totalItems = getTotalItems()
 
   const formatPrice = (price: number) => {
-    // Asegurarse de que el precio sea un número válido
     const validPrice = Number(price) || 0
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
@@ -29,8 +29,27 @@ export function CartModal() {
     }).format(validPrice)
   }
 
+  const handleUpdateQuantity = (id: number, quantity: number) => {
+    updateQuantity(id, quantity)
+  }
+
+  const handleRemoveItem = (id: number) => {
+    removeItem(id)
+  }
+
+  const handleClearCart = () => {
+    clearCart()
+  }
+
+  const handleViewFullCart = () => {
+    closeCart()
+    window.location.href = "/carrito"
+  }
+
+  if (!isOpen) return null
+
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm flex justify-end" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm flex justify-end" onClick={closeCart}>
       <div
         className="bg-gradient-to-b from-white to-gray-50 w-full max-w-md h-full shadow-2xl transform transition-transform duration-300 ease-in-out"
         onClick={(e) => e.stopPropagation()}
@@ -56,7 +75,7 @@ export function CartModal() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={onClose}
+            onClick={closeCart}
             className="text-white hover:bg-white/20 transition-all duration-200 hover:scale-110 hover:rotate-90"
           >
             <X className="w-5 h-5" />
@@ -74,7 +93,7 @@ export function CartModal() {
                 <h3 className="text-xl font-bold text-gray-800 mb-2">Tu carrito está vacío</h3>
                 <p className="text-gray-500 mb-6">¡Agrega productos para comenzar!</p>
                 <Button
-                  onClick={onClose}
+                  onClick={closeCart}
                   className="bg-gradient-to-r from-babalu-primary to-babalu-dark hover:shadow-lg transform transition-all duration-200 hover:scale-105"
                 >
                   Explorar Productos
@@ -104,11 +123,33 @@ export function CartModal() {
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900 truncate mb-1">{item.name}</h3>
+                        
+                        {/* MOSTRAR LÍNEA Y AROMA */}
+                        {(item.linea || item.aroma) && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {item.linea && (
+                              <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                Línea: {item.linea}
+                              </span>
+                            )}
+                            {item.aroma && (
+                              <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                Aroma: {item.aroma}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        
                         <div className="flex items-center gap-2 mb-3">
                           <Tag className="w-3 h-3 text-babalu-primary" />
                           <p className="text-lg font-bold text-babalu-primary">
                             {formatPrice(item.price)}
                           </p>
+                        </div>
+
+                        {/* MOSTRAR STOCK DISPONIBLE */}
+                        <div className="text-xs text-gray-500 mb-2">
+                          Stock disponible: {item.stockIndividual}
                         </div>
 
                         {/* Quantity Controls */}
@@ -117,7 +158,7 @@ export function CartModal() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                               className="w-8 h-8 p-0 hover:bg-babalu-primary/10 hover:text-babalu-primary transition-all duration-200"
                               disabled={item.quantity <= 1}
                             >
@@ -131,7 +172,7 @@ export function CartModal() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                               className="w-8 h-8 p-0 hover:bg-babalu-primary/10 hover:text-babalu-primary transition-all duration-200"
                             >
                               <Plus className="w-3 h-3" />
@@ -148,7 +189,7 @@ export function CartModal() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onRemoveItem(item.id)}
+                        onClick={() => handleRemoveItem(item.id)}
                         className="absolute top-2 right-2 w-8 h-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transform transition-all duration-200 hover:scale-110 opacity-0 group-hover:opacity-100"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -178,7 +219,7 @@ export function CartModal() {
                   <Button
                     type="button"
                     className="w-full bg-gradient-to-r from-babalu-primary to-babalu-dark hover:shadow-xl transform transition-all duration-300 hover:scale-[1.02] text-white font-semibold py-6"
-                    onClick={onViewFullCart}
+                    onClick={handleViewFullCart}
                   >
                     Ver Carrito Completo
                   </Button>
@@ -187,7 +228,7 @@ export function CartModal() {
                     type="button"
                     variant="ghost"
                     className="w-full text-gray-600 hover:bg-gray-100 transition-all duration-200"
-                    onClick={onClearCart}
+                    onClick={handleClearCart}
                   >
                     Vaciar Carrito
                   </Button>

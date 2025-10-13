@@ -3,14 +3,15 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "auth.config";
 import { prisma } from "lib/prisma";
 
-// AGREGA ESTA LÍNEA - Indica que este archivo es para Server Components/API routes
 export const dynamic = 'force-dynamic'
 
 export async function verifyAdminRole() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || !session.user?.id) {
+    console.log("verifyAdminRole - session:", session); // DEBUG
+
+    if (!session || !session.user) {
       return {
         isAdmin: false,
         error: "No hay sesión activa",
@@ -18,15 +19,12 @@ export async function verifyAdminRole() {
       };
     }
 
-    const userId = parseInt(session.user.id);
-    if (isNaN(userId)) {
-      return {
-        isAdmin: false,
-        error: "ID de usuario inválido",
-        status: 400,
-      };
-    }
+    // ✅ Usar session.user.id directamente (ya es number según tu configuración)
+    const userId = session.user.id;
 
+    console.log("verifyAdminRole - userId:", userId, "rol:", session.user.rol); // DEBUG
+
+    // Verificar si el usuario existe en la base de datos
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { rol: true },
@@ -40,7 +38,12 @@ export async function verifyAdminRole() {
       };
     }
 
-    if (user.rol !== "admin") {
+    console.log("verifyAdminRole - user from DB:", user); // DEBUG
+
+    // ✅ Verificar rol tanto en la sesión como en la base de datos
+    const isAdmin = user.rol === "admin" || session.user.rol === "admin";
+    
+    if (!isAdmin) {
       return {
         isAdmin: false,
         error: "Acceso denegado. Se requieren privilegios de administrador",
@@ -66,7 +69,7 @@ export async function requireAuth() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || !session.user?.id) {
+    if (!session || !session.user) {
       return {
         isAuthenticated: false,
         error: "No hay sesión activa",
@@ -74,18 +77,9 @@ export async function requireAuth() {
       };
     }
 
-    const userId = parseInt(session.user.id);
-    if (isNaN(userId)) {
-      return {
-        isAuthenticated: false,
-        error: "ID de usuario inválido",
-        status: 400,
-      };
-    }
-
     return {
       isAuthenticated: true,
-      userId: userId,
+      userId: session.user.id,
       session: session,
     };
   } catch (error) {

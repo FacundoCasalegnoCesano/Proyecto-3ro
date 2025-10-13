@@ -132,6 +132,7 @@ export function ProductCard({
         price: priceNumber,
         quantity: 1,
         image: product.image || product.src || "/placeholder.svg",
+        stockIndividual: 0
       });
     }
   };

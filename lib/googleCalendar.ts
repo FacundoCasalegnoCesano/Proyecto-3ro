@@ -45,10 +45,8 @@ export async function testCalendarConnection(): Promise<boolean> {
     console.log("✅ Calendario accesible:", response.data.summary);
     return true;
   } catch (error) {
-    // ← TypeScript infiere el tipo automáticamente
     console.error("❌ Error conectando al calendario:", error);
 
-    // Usar type assertion solo cuando sea necesario
     const err = error as {
       code?: string | number;
       response?: { status?: number };
@@ -65,5 +63,111 @@ export async function testCalendarConnection(): Promise<boolean> {
     }
 
     return false;
+  }
+}
+
+// NUEVA FUNCIÓN: Verificar disponibilidad de horario
+export async function checkTimeSlotAvailability(
+  startDateTime: Date,
+  endDateTime: Date
+): Promise<{ available: boolean; conflictingEvents?: calendar_v3.Schema$Event[] }> {
+  try {
+    const calendar = getGoogleCalendarClient();
+
+    console.log(`🔍 Verificando disponibilidad: ${startDateTime.toISOString()} - ${endDateTime.toISOString()}`);
+
+    const response = await calendar.events.list({
+      calendarId: process.env.GOOGLE_CALENDAR_ID!,
+      timeMin: startDateTime.toISOString(),
+      timeMax: endDateTime.toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+    });
+
+    const events = response.data.items || [];
+    
+    // Filtrar eventos que se solapan con el horario solicitado
+    const conflictingEvents = events.filter(event => {
+      const eventStart = new Date(event.start?.dateTime || event.start?.date || '');
+      const eventEnd = new Date(event.end?.dateTime || event.end?.date || '');
+      
+      // Verificar si hay solapamiento
+      return (
+        (startDateTime < eventEnd && endDateTime > eventStart) &&
+        event.status !== 'cancelled' // Ignorar eventos cancelados
+      );
+    });
+
+    const available = conflictingEvents.length === 0;
+
+    console.log(`📊 Resultado disponibilidad: ${available ? 'DISPONIBLE' : 'OCUPADO'}`);
+    console.log(`📈 Eventos conflictivos: ${conflictingEvents.length}`);
+
+    return {
+      available,
+      conflictingEvents: available ? undefined : conflictingEvents
+    };
+  } catch (error) {
+    console.error('❌ Error verificando disponibilidad:', error);
+    throw new Error(`Error verificando disponibilidad: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// NUEVA FUNCIÓN: Obtener horarios disponibles para una fecha específica
+export async function getAvailableTimeSlots(date: string): Promise<string[]> {
+  try {
+    const calendar = getGoogleCalendarClient();
+    const horariosDisponibles = [
+      "09:00", "10:00", "11:00", "12:00", 
+      "14:00", "15:00", "16:00", "17:00", "18:00"
+    ];
+
+    // Obtener eventos del día
+    const startOfDay = new Date(`${date}T00:00:00`);
+    const endOfDay = new Date(`${date}T23:59:59`);
+
+    const response = await calendar.events.list({
+      calendarId: process.env.GOOGLE_CALENDAR_ID!,
+      timeMin: startOfDay.toISOString(),
+      timeMax: endOfDay.toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+    });
+
+    const events = response.data.items || [];
+    
+    // Obtener horarios ocupados
+    const occupiedSlots = new Set<string>();
+    
+    events.forEach(event => {
+      if (event.status === 'cancelled') return;
+      
+      const eventStart = new Date(event.start?.dateTime || event.start?.date || '');
+      // ✅ Remover eventEnd ya que no se usa
+      // const eventEnd = new Date(event.end?.dateTime || event.end?.date || '');
+      
+      // Convertir a hora local Argentina
+      const startHour = eventStart.getHours().toString().padStart(2, '0');
+      const startMinute = eventStart.getMinutes().toString().padStart(2, '0');
+      const timeSlot = `${startHour}:${startMinute}`;
+      
+      occupiedSlots.add(timeSlot);
+    });
+
+    console.log(`📅 Horarios ocupados para ${date}:`, Array.from(occupiedSlots));
+
+    // Filtrar horarios disponibles
+    const availableSlots = horariosDisponibles.filter(slot => !occupiedSlots.has(slot));
+    
+    console.log(`✅ Horarios disponibles para ${date}:`, availableSlots);
+    
+    return availableSlots;
+  } catch (error) {
+    console.error('❌ Error obteniendo horarios disponibles:', error);
+    // En caso de error, retornar todos los horarios como disponibles
+    return [
+      "09:00", "10:00", "11:00", "12:00", 
+      "14:00", "15:00", "16:00", "17:00", "18:00"
+    ];
   }
 }

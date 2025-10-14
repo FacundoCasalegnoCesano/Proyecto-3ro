@@ -1052,10 +1052,14 @@ export async function GET(request: NextRequest) {
         return "disponible";
       };
 
+      // CORREGIDO: price ahora es número, formattedPrice mantiene el formato string
+      const priceNumber = parseFloat(producto.precio) || 0;
+      
       const formattedProduct = {
         id: producto.id,
         name: producto.nombre,
-        price: `$${producto.precio}`,
+        price: priceNumber, // ← NÚMERO para el carrito
+        formattedPrice: `$${producto.precio}`, // ← STRING formateado para display
         image: producto.imgUrl,
         category: producto.category || "Sin categoría",
         marca: producto.marca || "",
@@ -1186,26 +1190,32 @@ export async function GET(request: NextRequest) {
       return "disponible";
     };
 
-    const formattedProducts = productos.map((producto) => ({
-      id: producto.id,
-      name: producto.nombre,
-      price: `$${producto.precio}`,
-      image: producto.imgUrl,
-      category: producto.category || "Sin categoría",
-      marca: producto.marca || "",
-      aroma: producto.aroma || "",
-      linea: producto.Linea || "",
-      tamaño: producto.tamaño || "",
-      color: producto.color || "",
-      tipo: producto.tipo || "",
-      piedra: producto.tipoPiedra || "",
-      cantidad: producto.cantidad || "",
-      stock: producto.stock,
-      status: calculateStatus(producto.stock),
-      shipping: producto.envios?.empresa?.nombre || "Envío Gratis",
-      src: producto.imgUrl,
-      description: producto.descripcion,
-    }));
+    // CORREGIDO: price ahora es número, formattedPrice mantiene el formato string
+    const formattedProducts = productos.map((producto) => {
+      const priceNumber = parseFloat(producto.precio) || 0;
+      
+      return {
+        id: producto.id,
+        name: producto.nombre,
+        price: priceNumber, // ← NÚMERO para el carrito
+        formattedPrice: `$${producto.precio}`, // ← STRING formateado para display
+        image: producto.imgUrl,
+        category: producto.category || "Sin categoría",
+        marca: producto.marca || "",
+        aroma: producto.aroma || "",
+        linea: producto.Linea || "",
+        tamaño: producto.tamaño || "",
+        color: producto.color || "",
+        tipo: producto.tipo || "",
+        piedra: producto.tipoPiedra || "",
+        cantidad: producto.cantidad || "",
+        stock: producto.stock,
+        status: calculateStatus(producto.stock),
+        shipping: producto.envios?.empresa?.nombre || "Envío Gratis",
+        src: producto.imgUrl,
+        description: producto.descripcion,
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -1468,10 +1478,14 @@ export async function PATCH(request: NextRequest) {
       return "disponible";
     };
 
+    // CORREGIDO: price ahora es número, formattedPrice mantiene el formato string
+    const priceNumber = parseFloat(productoActualizado.precio) || 0;
+    
     const formattedProduct = {
       id: productoActualizado.id,
       name: productoActualizado.nombre,
-      price: `${productoActualizado.precio}`,
+      price: priceNumber, // ← NÚMERO para el carrito
+      formattedPrice: `${productoActualizado.precio}`, // ← STRING formateado para display
       image: productoActualizado.imgUrl,
       category: productoActualizado.category || "Sin categoría",
       marca: productoActualizado.marca || "",

@@ -164,7 +164,7 @@ export function ProductsSidebar({
   };
 
   return (
-    <div className="bg-babalu-primary rounded-lg p-4 text-black">
+    <div className="bg-gray border-2 border-babalu-primary/100 rounded-lg p-4 text-black">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Categorías</h2>
       </div>
@@ -179,7 +179,7 @@ export function ProductsSidebar({
         <div key={group.id} className="mb-4">
           <button
             onClick={() => toggleCategoryGroup(group.name)}
-            className="flex items-center justify-between w-full text-left font-semibold mb-2 hover:text-orange-200 transition-colors"
+            className="flex items-center justify-between w-full text-left font-semibold mb-2 hover:text-babalu-primary transition-colors"
             disabled={isLoading}
           >
             <span>{group.name}</span>
@@ -196,7 +196,7 @@ export function ProductsSidebar({
                 <button
                   key={subcategory.name}
                   onClick={() => handleSubcategoryClick(subcategory.name)}
-                  className={`flex items-center space-x-2 text-sm hover:text-orange-200 transition-colors w-full text-left p-2 rounded ${
+                  className={`flex items-center space-x-2 text-sm hover:text-babalu-primary transition-colors w-full text-left p-2 rounded ${
                     currentSelectedCategory === subcategory.name
                       ? "bg-white/20 font-medium border-l-4 border-orange-500"
                       : "border-l-4 border-transparent"

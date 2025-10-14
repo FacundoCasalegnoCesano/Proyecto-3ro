@@ -1,42 +1,10 @@
 // auth.config.ts
-import type { NextAuthOptions, DefaultSession } from "next-auth";
+import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const dynamic = 'force-dynamic'
-
-// Extender la interfaz de usuario de NextAuth para incluir tus campos personalizados + rol
-declare module "next-auth" {
-  interface User {
-    id: string;
-    nombre: string;
-    apellido: string;
-    fechaNac: Date;
-    rol: string; // Nuevo campo
-  }
-  
-  interface Session {
-    user: {
-      id: string;
-      nombre: string;
-      apellido: string;
-      email: string;
-      fechaNac: Date;
-      rol: string; // Nuevo campo
-    } & DefaultSession["user"];
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    nombre: string;
-    apellido: string;
-    fechaNac: Date;
-    rol: string; // Nuevo campo
-  }
-}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -52,7 +20,6 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Email y contraseña son requeridos");
           }
 
-          // Buscar usuario en la base de datos incluyendo el rol
           const user = await prisma.user.findUnique({
             where: { email: credentials.email },
             select: {
@@ -62,7 +29,7 @@ export const authOptions: NextAuthOptions = {
               nombre: true,
               apellido: true,
               fechaNac: true,
-              rol: true, // Incluir el rol
+              rol: true,
             }
           });
 
@@ -74,7 +41,6 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Error de configuración del usuario");
           }
 
-          // Verificar contraseña
           const isPasswordValid = await bcrypt.compare(
             credentials.password,
             user.password
@@ -84,14 +50,13 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Credenciales inválidas");
           }
 
-          // Retornar usuario con todos los campos necesarios incluyendo rol
           return {
-            id: user.id.toString(),
+            id: user.id,
             email: user.email,
             nombre: user.nombre,
             apellido: user.apellido,
             fechaNac: user.fechaNac,
-            rol: user.rol, // Incluir el rol
+            rol: user.rol,
           };
         } catch (error) {
           console.error("Error en authorize:", error);
@@ -102,39 +67,45 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 días
+    maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
     async jwt({ token, user }) {
-      // Solo agregar datos del usuario en el primer login
       if (user) {
         console.log("JWT Callback - Usuario logueado:", { 
           id: user.id, 
           email: user.email, 
           rol: user.rol 
         });
-        token.id = user.id;
+        
+        // ✅ Asegurar que el id sea number usando Number()
+        token.id = Number(user.id);
         token.nombre = user.nombre;
         token.apellido = user.apellido;
         token.fechaNac = user.fechaNac;
-        token.rol = user.rol; // Incluir el rol en el token
+        token.rol = user.rol;
+      } else if (token.id) {
+        // ✅ También asegurar en actualizaciones subsiguientes
+        token.id = Number(token.id);
       }
+      
       return token;
     },
     async session({ session, token }) {
       if (token) {
         console.log("Session Callback - Token ID:", token.id, "Rol:", token.rol);
-        // Campos personalizados
-        session.user.id = token.id;
-        session.user.nombre = token.nombre as string;
-        session.user.apellido = token.apellido as string;
-        session.user.fechaNac = token.fechaNac as Date;
-        session.user.email = token.email as string;
-        session.user.rol = token.rol as string; // Incluir el rol en la sesión
         
-        // Campos estándar de NextAuth (opcional)
-        session.user.name = `${token.nombre} ${token.apellido}`.trim();
-        session.user.image = null;
+        // ✅ Asegurar que el id sea number en la sesión también
+        const userId = Number(token.id);
+        
+        session.user = {
+          id: userId,
+          nombre: token.nombre as string,
+          apellido: token.apellido as string,
+          fechaNac: token.fechaNac as Date,
+          email: token.email as string,
+          rol: token.rol as string,
+        };
       }
       return session;
     }
@@ -143,7 +114,6 @@ export const authOptions: NextAuthOptions = {
     signIn: "/iniciar-sesion",
     error: "/auth/error",
   },
-  // Agregar configuración de cookies y secret
   secret: process.env.NEXTAUTH_SECRET,
   cookies: {
     sessionToken: {
@@ -155,7 +125,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        maxAge: 30 * 24 * 60 * 60, // 30 días
+        maxAge: 30 * 24 * 60 * 60,
       },
     },
   },

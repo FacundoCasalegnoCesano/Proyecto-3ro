@@ -54,6 +54,8 @@ export function RecommendedProducts() {
       name: product.name,
       price: priceNumber,
       image: product.image,
+      quantity: 0,
+      stockIndividual: 0
     });
   };
 

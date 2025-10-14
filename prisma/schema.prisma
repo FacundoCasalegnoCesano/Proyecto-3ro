@@ -26,8 +26,30 @@ model Products {
   cantidad      String? @db.VarChar(100)
   stock         Int     @default(0)
   envios        deliver @relation(fields: [empresaEnvios], references: [id], onDelete: Cascade)
+  cartItems   Cart[]   // Nueva relación con Cart
   @@index([empresaEnvios, category])
   @@map("products")
+}
+
+model Cart {
+  id        Int      @id @default(autoincrement())
+  user_id   String?  // Para usuarios autenticados (email o ID)
+  session_id String? // Para usuarios no autenticados
+  product_id Int
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relaciones
+  product Products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  
+  @@map("cart")
+  
+  // Índices para mejor performance
+  @@index([user_id])
+  @@index([session_id])
+  @@index([product_id])
+  @@index([user_id, session_id])
 }
 
 // Nueva tabla para gestionar marcas por categoría
@@ -110,4 +132,58 @@ enum ReservaEstado {
   CONFIRMADA
   CANCELADA
   COMPLETADA
+}
+
+model Order {
+  id        Int         @id @default(autoincrement())
+  userId    String
+  subtotal  Float
+  shippingCost Float
+  tax       Float
+  total     Float
+  paymentMethod String
+  shippingAddress String // JSON stringified
+  shippingMethod String  // JSON stringified
+  status    String      @default("pending") // pending, completed, cancelled
+  orderDate DateTime    @default(now())
+  items     OrderItem[]
+  
+  @@map("orders")
+}
+
+model OrderItem {
+  id           Int     @id @default(autoincrement())
+  orderId      Int
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    Int
+  quantity     Int
+  price        Float
+  productName  String
+  productImage String
+  
+  @@map("order_items")
+}
+
+
+model BrandContact {
+  id          String   @id @default(cuid())
+  brandName   String
+  email       String
+  phone       String?
+  website     String?
+  productType String
+  message     String
+  status      BrandContactStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("brand_contacts")
+}
+
+enum BrandContactStatus {
+  PENDING
+  REVIEWED
+  CONTACTED
+  APPROVED
+  REJECTED
 }

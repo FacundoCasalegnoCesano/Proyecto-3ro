@@ -15,6 +15,10 @@ export function Header() {
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
 
+  // ✅ DEBUG: Ver qué hay en la sesión
+  console.log("Header - session:", session);
+  console.log("Header - session.user:", session?.user);
+
   // Mostrar loading mientras se verifica la sesión
   if (status === "loading") {
     return (
@@ -117,9 +121,10 @@ export function Header() {
             {isLoggedIn ? (
               <UserDropdown
                 user={{
-                  firstName: session.user.nombre || "Usuario",
-                  lastName: session.user.apellido || "",
+                  nombre: session.user.nombre || "Usuario",
+                  apellido: session.user.apellido || "", // ✅ Cambiado de lastName a apellido
                   email: session.user.email || "",
+                  rol: session.user.rol || "user", // ✅ Agregar el rol
                 }}
                 onLogout={() => signOut({ callbackUrl: "/" })}
               />

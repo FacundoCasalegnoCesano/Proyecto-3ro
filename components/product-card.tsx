@@ -7,6 +7,7 @@ import { ShoppingCart } from "lucide-react";
 import { useCart } from "../contexts/cart-context";
 import { Product } from "app/types/product";
 import { useRouter } from "next/navigation";
+import { parsePrice, formatPrice } from "../utils/price-utils";
 
 // En product-card.tsx, reemplaza la interfaz ProductMetadata con:
 interface ProductMetadata {
@@ -26,6 +27,7 @@ interface ProductMetadata {
     tieneCategoria: boolean;
   };
 }
+
 interface ProductCardProps {
   product: Product & { metadata?: ProductMetadata };
   marcaSeleccionada?: string;
@@ -54,7 +56,7 @@ export function ProductCard({
 
   // Función auxiliar para convertir cualquier valor a string seguro
   const safeString = (value: string | boolean | undefined | null): string => {
-    if (typeof value === "boolean") return value ? "true" : "false"; // Convertir boolean a string
+    if (typeof value === "boolean") return value ? "true" : "false";
     if (!value || typeof value !== "string") return "";
     return value.trim();
   };
@@ -70,9 +72,9 @@ export function ProductCard({
       lineaStr !== "sin línea" &&
       lineaStr !== "sin_linea" &&
       lineaStr !== "sin" &&
-      lineaStr !== "false" && // Excluir el string "false" de booleanos convertidos
+      lineaStr !== "false" &&
       lineaStr !== "true"
-    ); // Excluir el string "true" de booleanos convertidos
+    );
   };
 
   // Función para verificar si tiene marca específica (siempre devuelve boolean)
@@ -85,21 +87,16 @@ export function ProductCard({
       marcaStr !== "sin-marca" &&
       marcaStr !== "sin marca" &&
       marcaStr !== "sin_marca" &&
-      marcaStr !== "false" && // Excluir el string "false" de booleanos convertidos
+      marcaStr !== "false" &&
       marcaStr !== "true"
-    ); // Excluir el string "true" de booleanos convertidos
+    );
   };
 
   // Función para verificar si un producto es individual (tiene pocas características pero es vendible)
   const esProductoIndividual = (product: Product): boolean => {
-    // Verificar si tiene categoría
     const tieneCategoria = safeString(product.category) !== "";
-
-    // Verificar si NO tiene marca ni línea específicas (o sea, es individual)
     const noTieneMarca = !tieneMarcaEspecifica(product.marca);
     const noTieneLinea = !tieneLineaEspecifica(product.linea);
-
-    // Verificar si tiene características adicionales que lo hacen vendible individualmente
     const tieneCaracteristicas = [
       safeString(product.tamaño) !== "",
       safeString(product.cantidad) !== "",
@@ -108,7 +105,6 @@ export function ProductCard({
       safeString(product.piedra) !== "",
     ].some(Boolean);
 
-    // Es individual si tiene categoría, no tiene marca/línea específicas, pero tiene otras características
     return (
       tieneCategoria && noTieneMarca && noTieneLinea && tieneCaracteristicas
     );
@@ -118,12 +114,15 @@ export function ProductCard({
     // Permitir agregar al carrito si NO es un producto agrupado O si es un producto individual
     if (esProductoAgrupado && !esProductoIndividual(product)) return;
 
-    // Convertir precio string a número de forma segura
-    let priceNumber = 0;
-    if (product.price && typeof product.price === "string") {
-      const cleanedPrice = product.price.replace("$", "").replace(",", "");
-      priceNumber = Number.parseFloat(cleanedPrice) || 0;
-    }
+    // Usar la función parsePrice para convertir de forma segura
+    const priceNumber = parsePrice(product.price);
+    
+    console.log('Agregando al carrito:', {
+      id: product.id,
+      name: product.name,
+      price: priceNumber,
+      priceOriginal: product.price
+    });
 
     // Solo agregar si el precio es válido
     if (priceNumber > 0) {
@@ -131,16 +130,16 @@ export function ProductCard({
         id: product.id,
         name: product.name,
         price: priceNumber,
+        quantity: 1,
         image: product.image || product.src || "/placeholder.svg",
+        stockIndividual: 0
       });
     }
   };
 
   const handleCardClick = () => {
-    // Construir URL con los parámetros de marca y línea
     const params = new URLSearchParams();
 
-    // Solo pasar marca si tiene marca específica
     const marca =
       typeof marcaSeleccionada === "string" &&
       tieneMarcaEspecifica(marcaSeleccionada)
@@ -149,7 +148,6 @@ export function ProductCard({
         ? safeString(product.marca)
         : "";
 
-    // Solo pasar línea si tiene línea específica
     const linea =
       typeof lineaSeleccionada === "string" &&
       tieneLineaEspecifica(lineaSeleccionada)
@@ -186,7 +184,6 @@ export function ProductCard({
 
   // Función para obtener el texto de línea de forma segura (solo si tiene línea específica)
   const getLineaText = (): string | undefined => {
-    // Primero intentar con lineaSeleccionada, luego con product.linea
     const linea =
       typeof lineaSeleccionada === "string"
         ? lineaSeleccionada
@@ -206,12 +203,18 @@ export function ProductCard({
     return "/placeholder.svg?height=200&width=200";
   };
 
-  // Función para obtener el precio formateado
+  // Función para obtener el precio formateado para display
   const getFormattedPrice = (): string => {
     if (!product.price) return "";
-    if (typeof product.price === "string") return product.price;
-    if (typeof product.price === "number") return `$${product.price}`;
-    return "";
+    
+    // Si ya está formateado como "$1.000,00", usarlo directamente
+    if (typeof product.price === "string" && product.price.includes('$')) {
+      return product.price;
+    }
+    
+    // Si es un número o string numérico, formatearlo
+    const priceNumber = parsePrice(product.price);
+    return formatPrice(priceNumber);
   };
 
   // Función para obtener información del grupo (solo para productos agrupados)
@@ -234,9 +237,7 @@ export function ProductCard({
   const limpiarYCapitalizarNombre = (nombre: string | undefined): string => {
     if (!nombre || typeof nombre !== "string") return "Producto sin nombre";
 
-    // Eliminar "- Sin" del final del nombre
     const nombreLimpio = nombre.replace(/\s*-\s*sin\s*$/i, "").trim();
-
     return capitalizarPalabras(nombreLimpio);
   };
 

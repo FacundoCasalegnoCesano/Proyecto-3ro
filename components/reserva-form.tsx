@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useMemo } from "react"; // ← Agregado useMemo
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "./ui/button";
 import {
   ArrowLeft,
@@ -15,6 +15,7 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  XCircle,
 } from "lucide-react";
 import { GoogleCalendarIntegration } from "./google-calendar-integration";
 
@@ -73,8 +74,10 @@ export function ReservaForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [successMessage, setSuccessMessage] = useState("");
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [slotAvailability, setSlotAvailability] = useState<{[key: string]: boolean}>({});
 
-  // CORREGIDO: usar useMemo para memoizar el array de servicios
   const servicios: ServicioOption[] = useMemo(
     () => [
       {
@@ -115,7 +118,7 @@ export function ReservaForm() {
       },
     ],
     []
-  ); // ← Array de dependencias vacío para que solo se cree una vez
+  );
 
   const horariosDisponibles = [
     "09:00",
@@ -136,7 +139,82 @@ export function ReservaForm() {
     if (servicioParam && servicios.find((s) => s.id === servicioParam)) {
       setFormData((prev) => ({ ...prev, servicio: servicioParam }));
     }
-  }, [servicios]); // ← Ahora servicios es memoizado y estable
+  }, [servicios]);
+
+  // Cargar horarios disponibles cuando se selecciona una fecha
+  useEffect(() => {
+    if (formData.fecha && formData.servicio) {
+      loadAvailableSlots(formData.fecha);
+    }
+  }, [formData.fecha, formData.servicio]);
+
+  // Cargar horarios disponibles desde la API
+  const loadAvailableSlots = async (fecha: string) => {
+    try {
+      setCheckingAvailability(true);
+      const response = await fetch(`/api/check-availability?fecha=${fecha}`);
+      const result = await response.json();
+
+      if (result.success) {
+        setAvailableSlots(result.availableSlots);
+        
+        // Actualizar disponibilidad de cada slot
+        const availabilityMap: {[key: string]: boolean} = {};
+        horariosDisponibles.forEach(slot => {
+          availabilityMap[slot] = result.availableSlots.includes(slot);
+        });
+        setSlotAvailability(availabilityMap);
+      } else {
+        console.error("Error cargando horarios disponibles:", result.error);
+        // En caso de error, mostrar todos como disponibles
+        setAvailableSlots(horariosDisponibles);
+      }
+    } catch (error) {
+      console.error("Error cargando horarios disponibles:", error);
+      setAvailableSlots(horariosDisponibles);
+    } finally {
+      setCheckingAvailability(false);
+    }
+  };
+
+  // Verificar disponibilidad antes de enviar
+  const checkAvailabilityBeforeSubmit = async (): Promise<boolean> => {
+    if (!formData.fecha || !formData.hora || !formData.servicio) {
+      return false;
+    }
+
+    try {
+      const response = await fetch('/api/check-availability', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fecha: formData.fecha,
+          hora: formData.hora,
+          servicioId: formData.servicio
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.available) {
+        return true;
+      } else {
+        setErrors({
+          general: `El horario seleccionado no está disponible. Por favor selecciona otro horario.`
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Error verificando disponibilidad:', error);
+      // En caso de error, permitir el envío pero mostrar advertencia
+      setErrors({
+        general: `No se pudo verificar la disponibilidad. Por favor intenta nuevamente.`
+      });
+      return false;
+    }
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -162,7 +240,7 @@ export function ReservaForm() {
   };
 
   const handleDateSelect = (fecha: string) => {
-    setFormData((prev) => ({ ...prev, fecha }));
+    setFormData((prev) => ({ ...prev, fecha, hora: "" })); // Reset hora al cambiar fecha
     if (errors.fecha) {
       setErrors((prev) => ({ ...prev, fecha: undefined }));
     }
@@ -214,6 +292,12 @@ export function ReservaForm() {
     e.preventDefault();
 
     if (!validateForm()) {
+      return;
+    }
+
+    // Verificar disponibilidad antes de proceder
+    const isAvailable = await checkAvailabilityBeforeSubmit();
+    if (!isAvailable) {
       return;
     }
 
@@ -448,23 +532,58 @@ export function ReservaForm() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Horarios disponibles
+                  {checkingAvailability && (
+                    <span className="ml-2 text-xs text-blue-600">
+                      <Loader2 className="w-3 h-3 inline animate-spin mr-1" />
+                      Verificando disponibilidad...
+                    </span>
+                  )}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {horariosDisponibles.map((hora) => (
-                    <button
-                      key={hora}
-                      type="button"
-                      onClick={() => handleHoraSelect(hora)}
-                      className={`p-2 text-sm rounded-md border transition-all ${
-                        formData.hora === hora
-                          ? "bg-babalu-primary text-white border-babalu-primary"
-                          : "bg-white text-gray-700 border-gray-300 hover:border-babalu-primary hover:bg-babalu-primary/5"
-                      }`}
-                    >
-                      {hora}
-                    </button>
-                  ))}
+                  {horariosDisponibles.map((hora) => {
+                    const isAvailable = slotAvailability[hora] !== false; // true o undefined
+                    const isSelected = formData.hora === hora;
+                    
+                    return (
+                      <button
+                        key={hora}
+                        type="button"
+                        onClick={() => isAvailable && handleHoraSelect(hora)}
+                        disabled={!isAvailable}
+                        className={`p-2 text-sm rounded-md border transition-all relative ${
+                          isSelected
+                            ? "bg-babalu-primary text-white border-babalu-primary"
+                            : isAvailable
+                            ? "bg-white text-gray-700 border-gray-300 hover:border-babalu-primary hover:bg-babalu-primary/5"
+                            : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                        }`}
+                        title={!isAvailable ? "Horario no disponible" : ""}
+                      >
+                        {hora}
+                        {!isAvailable && (
+                          <XCircle className="w-3 h-3 absolute -top-1 -right-1 text-red-500" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
+                
+                {/* Leyenda de disponibilidad */}
+                <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-babalu-primary rounded"></div>
+                    <span>Seleccionado</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-white border border-gray-300 rounded"></div>
+                    <span>Disponible</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-gray-100 border border-gray-200 rounded"></div>
+                    <span>Ocupado</span>
+                  </div>
+                </div>
+                
                 {errors.hora && (
                   <p className="mt-1 text-sm text-red-600">{errors.hora}</p>
                 )}
@@ -657,6 +776,9 @@ export function ReservaForm() {
             <li>
               • Para consultas urgentes, puedes contactarnos directamente por
               WhatsApp
+            </li>
+            <li>
+              • Los horarios mostrados se actualizan en tiempo real según disponibilidad
             </li>
           </ul>
         </div>

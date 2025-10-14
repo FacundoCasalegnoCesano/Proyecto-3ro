@@ -35,6 +35,18 @@ interface BrandRequest {
   status: UIBrandStatus
 }
 
+interface BrandContact {
+  id: string
+  brandName: string
+  email: string
+  phone: string | null
+  website: string | null
+  productType: string
+  message: string
+  status: string
+  createdAt: string
+}
+
 interface MarcasListaProps {
   requests?: BrandRequest[]
   onUpdateStatus?: (requestId: string, status: UIBrandStatus) => void
@@ -71,7 +83,7 @@ const mapStatusToDB = (status: UIBrandStatus): string => {
   }
 }
 
-const transformBrandContactToRequest = (contact: any): BrandRequest => ({
+const transformBrandContactToRequest = (contact: BrandContact): BrandRequest => ({
   id: contact.id,
   brandName: contact.brandName,
   email: contact.email,
@@ -96,26 +108,7 @@ export function MarcasLista({ requests = [], onUpdateStatus = () => {}, onContac
   const isFetchingRef = useRef(false)
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  // ✅ Cargar datos iniciales SOLO UNA VEZ
-  useEffect(() => {
-    if (requests.length === 0 && !isFetchingRef.current) {
-      fetchBrandContacts()
-    } else if (requests.length > 0) {
-      setBrandRequests(requests)
-    }
-  }, []) // ⚠️ Array vacío - solo se ejecuta al montar
-
-  // ✅ Actualización automática cada 30 segundos
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!isFetchingRef.current) {
-        fetchBrandContacts(true)
-      }
-    }, 30000)
-
-    return () => clearInterval(interval)
-  }, [])
-
+  // ✅ Memoizar fetchBrandContacts para evitar dependencias cíclicas
   const fetchBrandContacts = useCallback(async (silent = false) => {
     // Prevenir múltiples llamadas simultáneas
     if (isFetchingRef.current) {
@@ -156,8 +149,8 @@ export function MarcasLista({ requests = [], onUpdateStatus = () => {}, onContac
       } else {
         console.error('Error fetching brand contacts')
       }
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') {
         console.log('Fetch cancelado')
       } else {
         console.error('Error fetching brand contacts:', error)
@@ -167,7 +160,27 @@ export function MarcasLista({ requests = [], onUpdateStatus = () => {}, onContac
       setIsRefreshing(false)
       isFetchingRef.current = false
     }
-  }, [])
+  }, []) // ✅ Dependencias vacías ya que no usa variables externas
+
+  // ✅ Cargar datos iniciales SOLO UNA VEZ
+  useEffect(() => {
+    if (requests.length === 0 && !isFetchingRef.current) {
+      fetchBrandContacts()
+    } else if (requests.length > 0) {
+      setBrandRequests(requests)
+    }
+  }, [requests, fetchBrandContacts]) // ✅ Agregar fetchBrandContacts como dependencia
+
+  // ✅ Actualización automática cada 30 segundos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!isFetchingRef.current) {
+        fetchBrandContacts(true)
+      }
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [fetchBrandContacts]) // ✅ Agregar fetchBrandContacts como dependencia
 
   const handleUpdateStatus = useCallback(async (requestId: string, newStatus: UIBrandStatus) => {
     try {

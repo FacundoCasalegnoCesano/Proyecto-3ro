@@ -39,7 +39,6 @@ export class AdvancedShippingService {
     originZipCode: string,
     destinationZipCode: string,
     weight: number,
-    volume: number
   ): Promise<ShippingQuote[]> {
     // Simular delay de red
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));

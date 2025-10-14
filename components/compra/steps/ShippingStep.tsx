@@ -1,10 +1,10 @@
-// compra/steps/ShippingStep.tsx
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "../../ui/button"
 import { MapPin, Truck, Clock, Check, Loader2 } from "lucide-react"
 import { PaymentData, FormErrors, SetErrorsFunction } from "../CompraWizard"
+import type { CartItem } from "app/types/cart"
 
 // Interface para las opciones de envío (corregida)
 interface ShippingOption {
@@ -30,7 +30,7 @@ interface ShippingStepProps {
   updateFormData: (data: Partial<PaymentData>) => void
   errors: FormErrors
   setErrors: SetErrorsFunction
-  cartItems: any[]
+  cartItems: CartItem[]
   subtotal: number
   onNext: () => void
   onBack: () => void
@@ -38,7 +38,7 @@ interface ShippingStepProps {
 
 // Servicio simulado integrado (segunda opción avanzada)
 class AdvancedShippingService {
-  private zones: Zone[] = [ // CORREGIDO: tipo Zone[]
+  private zones: Zone[] = [
     {
       name: 'CABA',
       zipCodes: ['1001', '1002', '1003', '1004', '1005', '1006', '1007', '1008', '1009', '1010'],
@@ -74,8 +74,7 @@ class AdvancedShippingService {
   async getAllQuotes(
     originZipCode: string,
     destinationZipCode: string,
-    weight: number,
-    volume: number
+    weight: number
   ): Promise<ShippingOption[]> {
     // Simular delay de red
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
@@ -143,14 +142,13 @@ class AdvancedShippingService {
     return /^\d{4,8}$/.test(zipCode);
   }
 
-  private findZone(zipCode: string): Zone { // CORREGIDO: tipo Zone
+  private findZone(zipCode: string): Zone {
     return this.zones.find(zone => 
       zone.zipCodes.includes(zipCode) || 
       zone.zipCodes.some(prefix => zipCode.startsWith(prefix))
     ) || this.zones[this.zones.length - 1];
   }
 
-  // CORREGIDO: tipos específicos para origin y destination
   private calculatePrice(
     carrier: "andreani" | "correo-argentino", 
     origin: Zone, 
@@ -164,7 +162,6 @@ class AdvancedShippingService {
     return Math.round((basePrice + weightMultiplier) * distancePenalty);
   }
 
-  // CORREGIDO: tipos específicos para origin y destination
   private calculateDeliveryDays(
     carrier: "andreani" | "correo-argentino", 
     origin: Zone, 
@@ -176,7 +173,6 @@ class AdvancedShippingService {
     return Math.round(baseDays * distancePenalty);
   }
 
-  // CORREGIDO: tipos específicos para origin y destination
   private calculateDistancePenalty(origin: Zone, destination: Zone): number {
     if (origin.name === destination.name) return 1.0;
     if (origin.name.includes('CABA') && destination.name.includes('GBA')) return 1.2;
@@ -210,8 +206,7 @@ export function ShippingStep({
   updateFormData, 
   errors, 
   setErrors, 
-  cartItems, 
-  subtotal,
+  cartItems,
   onNext, 
   onBack 
 }: ShippingStepProps) {
@@ -219,15 +214,10 @@ export function ShippingStep({
   const [calculating, setCalculating] = useState(false)
   const [selectedOption, setSelectedOption] = useState<ShippingOption | null>(null)
 
-  // Calcular peso total del carrito
-  const calculateTotalWeight = (): number => {
-    return cartItems.reduce((total, item) => total + (item.weight || 0.5) * item.quantity, 0);
-  }
-
-  // Calcular volumen total del carrito
-  const calculateTotalVolume = (): number => {
-    return cartItems.reduce((total, item) => total + (item.volume || 1000) * item.quantity, 0);
-  }
+  // Calcular peso total del carrito - movido dentro del componente para usar useCallback
+  const calculateTotalWeight = useCallback((): number => {
+    return cartItems.reduce((total, item) => total + (0.5) * item.quantity, 0);
+  }, [cartItems])
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("es-AR", {
@@ -245,17 +235,17 @@ export function ShippingStep({
     return Object.keys(newErrors).length === 0
   }
 
-  // Función para manejar la selección de envío
-  const handleSelectShipping = (option: ShippingOption) => {
+  // Función para manejar la selección de envío - movida antes de useCallback
+  const handleSelectShipping = useCallback((option: ShippingOption) => {
     setSelectedOption(option)
-    // ACTUALIZAR EN TIEMPO REAL - Esto es lo nuevo
     updateFormData({ 
       shippingOption: option,
       shippingMethod: option.id
     })
-  }
+  }, [updateFormData])
 
-  const calculateShipping = async () => {
+  // Usar useCallback para memoizar la función con todas las dependencias necesarias
+  const calculateShipping = useCallback(async () => {
     if (!formData.codigoPostal || formData.codigoPostal.length < 4) {
       setErrors((prev: FormErrors) => ({ 
         ...prev, 
@@ -267,14 +257,12 @@ export function ShippingStep({
     setCalculating(true)
     try {
       const totalWeight = calculateTotalWeight();
-      const totalVolume = calculateTotalVolume();
 
       // Usar el servicio simulado avanzado
       const quotes = await shippingService.getAllQuotes(
         "1001", // Código postal de origen fijo (tu almacén/ubicación)
         formData.codigoPostal,
-        totalWeight,
-        totalVolume
+        totalWeight
       )
 
       setShippingOptions(quotes)
@@ -284,7 +272,7 @@ export function ShippingStep({
         const cheapestOption = quotes.reduce((prev, current) => 
           prev.price < current.price ? prev : current
         )
-        handleSelectShipping(cheapestOption) // Usar la nueva función
+        handleSelectShipping(cheapestOption)
       }
 
       // Limpiar errores si hay opciones disponibles
@@ -304,14 +292,20 @@ export function ShippingStep({
     } finally {
       setCalculating(false)
     }
-  }
+  }, [
+    formData.codigoPostal, 
+    setErrors, 
+    calculateTotalWeight, 
+    handleSelectShipping, 
+    errors.shipping // Incluido en las dependencias
+  ])
 
   // Calcular envíos automáticamente cuando el componente se monta
   useEffect(() => {
     if (formData.codigoPostal && formData.codigoPostal.length >= 4) {
       calculateShipping()
     }
-  }, []) // Solo al montar el componente
+  }, [formData.codigoPostal, calculateShipping])
 
   const handleNext = () => {
     if (validateForm() && selectedOption) {
@@ -365,7 +359,7 @@ export function ShippingStep({
                         ? "border-babalu-primary bg-blue-50/50"
                         : "border-gray-200 hover:border-babalu-primary/50"
                     }`}
-                    onClick={() => handleSelectShipping(option)} // Usar la nueva función
+                    onClick={() => handleSelectShipping(option)}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">

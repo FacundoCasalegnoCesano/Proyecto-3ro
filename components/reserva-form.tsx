@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "./ui/button";
 import {
   ArrowLeft,
@@ -74,7 +74,6 @@ export function ReservaForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [successMessage, setSuccessMessage] = useState("");
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [slotAvailability, setSlotAvailability] = useState<{[key: string]: boolean}>({});
 
@@ -120,7 +119,8 @@ export function ReservaForm() {
     []
   );
 
-  const horariosDisponibles = [
+  // ✅ Mover horariosDisponibles a useMemo para evitar recreación en cada render
+  const horariosDisponibles = useMemo(() => [
     "09:00",
     "10:00",
     "11:00",
@@ -130,7 +130,7 @@ export function ReservaForm() {
     "16:00",
     "17:00",
     "18:00",
-  ];
+  ], []);
 
   // Pre-seleccionar servicio si viene en la URL
   useEffect(() => {
@@ -141,23 +141,14 @@ export function ReservaForm() {
     }
   }, [servicios]);
 
-  // Cargar horarios disponibles cuando se selecciona una fecha
-  useEffect(() => {
-    if (formData.fecha && formData.servicio) {
-      loadAvailableSlots(formData.fecha);
-    }
-  }, [formData.fecha, formData.servicio]);
-
-  // Cargar horarios disponibles desde la API
-  const loadAvailableSlots = async (fecha: string) => {
+  // ✅ Cargar horarios disponibles desde la API - usando useCallback
+  const loadAvailableSlots = useCallback(async (fecha: string) => {
     try {
       setCheckingAvailability(true);
       const response = await fetch(`/api/check-availability?fecha=${fecha}`);
       const result = await response.json();
 
       if (result.success) {
-        setAvailableSlots(result.availableSlots);
-        
         // Actualizar disponibilidad de cada slot
         const availabilityMap: {[key: string]: boolean} = {};
         horariosDisponibles.forEach(slot => {
@@ -167,18 +158,34 @@ export function ReservaForm() {
       } else {
         console.error("Error cargando horarios disponibles:", result.error);
         // En caso de error, mostrar todos como disponibles
-        setAvailableSlots(horariosDisponibles);
+        const availabilityMap: {[key: string]: boolean} = {};
+        horariosDisponibles.forEach(slot => {
+          availabilityMap[slot] = true;
+        });
+        setSlotAvailability(availabilityMap);
       }
     } catch (error) {
       console.error("Error cargando horarios disponibles:", error);
-      setAvailableSlots(horariosDisponibles);
+      // En caso de error, mostrar todos como disponibles
+      const availabilityMap: {[key: string]: boolean} = {};
+      horariosDisponibles.forEach(slot => {
+        availabilityMap[slot] = true;
+      });
+      setSlotAvailability(availabilityMap);
     } finally {
       setCheckingAvailability(false);
     }
-  };
+  }, [horariosDisponibles]); // ✅ Ahora horariosDisponibles es estable
 
-  // Verificar disponibilidad antes de enviar
-  const checkAvailabilityBeforeSubmit = async (): Promise<boolean> => {
+  // ✅ Cargar horarios disponibles cuando se selecciona una fecha
+  useEffect(() => {
+    if (formData.fecha && formData.servicio) {
+      loadAvailableSlots(formData.fecha);
+    }
+  }, [formData.fecha, formData.servicio, loadAvailableSlots]);
+
+  // ✅ Verificar disponibilidad antes de enviar
+  const checkAvailabilityBeforeSubmit = useCallback(async (): Promise<boolean> => {
     if (!formData.fecha || !formData.hora || !formData.servicio) {
       return false;
     }
@@ -214,7 +221,7 @@ export function ReservaForm() {
       });
       return false;
     }
-  };
+  }, [formData.fecha, formData.hora, formData.servicio]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

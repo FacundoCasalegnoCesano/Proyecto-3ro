@@ -26,7 +26,6 @@ export function PersonalInfoStep({
 }: PersonalInfoStepProps) {
   const [hasSavedAddress, setHasSavedAddress] = useState(false)
   const [showAddressForm, setShowAddressForm] = useState(false)
-  const [isEditingAddress, setIsEditingAddress] = useState(false)
 
   // Verificar si hay dirección guardada
   useEffect(() => {
@@ -118,12 +117,10 @@ export function PersonalInfoStep({
 
   const useSavedAddress = () => {
     setShowAddressForm(false)
-    setIsEditingAddress(false)
   }
 
   const editAddress = () => {
     setShowAddressForm(true)
-    setIsEditingAddress(true)
   }
 
   return (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient, BrandContactStatus } from '@prisma/client'
 import nodemailer from 'nodemailer'
+import type { BrandContact } from 'app/types/brand-contact'
 
 const prisma = new PrismaClient()
 
@@ -21,7 +22,7 @@ interface EmailResults {
   errors: string[]
 }
 
-async function sendBrandContactEmails(brandContact: any): Promise<EmailResults> {
+async function sendBrandContactEmails(brandContact: BrandContact): Promise<EmailResults> {
   try {
     // 1. Email al ADMINISTRADOR
     const adminEmail = {
@@ -220,7 +221,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Enviar emails en segundo plano
-    sendBrandContactEmails(brandContact)
+    sendBrandContactEmails(brandContact as BrandContact)
       .then(results => {
         console.log('Resultados del envío de emails:', results)
       })

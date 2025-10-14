@@ -1,8 +1,80 @@
 // app/api/orders/process/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from "../../auth/[...nextauth]/route"
+import { authOptions } from 'auth.config'
 import { prisma } from "lib/prisma"
+import type { CartItem } from 'app/types/cart'
+
+// Interfaces específicas para la API de órdenes
+interface PaymentData {
+  calle?: string
+  ciudad?: string
+  provincia?: string
+  codigoPostal?: string
+  pais?: string
+  shippingOption?: ShippingMethod
+  paymentMethod?: string
+}
+
+interface ShippingMethod {
+  name: string
+  carrier: string
+  service: string
+  price: number
+  deliveryDays: number
+  estimatedDate: string
+}
+
+interface ShippingAddress {
+  calle: string
+  ciudad: string
+  provincia: string
+  codigoPostal: string
+  pais: string
+}
+
+// Interface para los items que se envían a la base de datos
+interface OrderCartItem {
+  id: number
+  name: string
+  price: number
+  quantity: number
+  image?: string
+}
+
+interface OrderData {
+  userId: string  // String para coincidir con el schema de Prisma
+  paymentData: PaymentData
+  cartItems: OrderCartItem[]
+  subtotal: number
+  shippingCost: number
+  tax: number
+  total: number
+  shippingAddress: ShippingAddress
+  shippingMethod: ShippingMethod
+}
+
+interface StockCheckResult {
+  available: boolean
+  outOfStockItems: Array<{
+    id: number
+    name: string
+    requested: number
+    available: number
+  }>
+}
+
+interface StockUpdateResult {
+  success: boolean
+  error?: unknown
+}
+
+interface ProcessOrderRequest {
+  paymentData: PaymentData
+  cartItems: CartItem[]
+  subtotal: number
+  shippingCost: number
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,14 +82,14 @@ export async function POST(request: NextRequest) {
     
     const session = await getServerSession(authOptions)
     
-    if (!session?.user) {
+    if (!session?.user?.email) {
       return NextResponse.json(
         { success: false, error: 'No autorizado' },
         { status: 401 }
       )
     }
 
-    const body = await request.json()
+    const body: ProcessOrderRequest = await request.json()
     console.log('📦 Datos recibidos:', JSON.stringify(body, null, 2))
 
     const { paymentData, cartItems, subtotal, shippingCost } = body
@@ -39,7 +111,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Preparar datos de envío con valores por defecto
-    const shippingAddress = {
+    const shippingAddress: ShippingAddress = {
       calle: paymentData.calle || "No especificada",
       ciudad: paymentData.ciudad || "No especificada",
       provincia: paymentData.provincia || "No especificada", 
@@ -47,7 +119,7 @@ export async function POST(request: NextRequest) {
       pais: paymentData.pais || "Argentina"
     }
 
-    const shippingMethod = paymentData.shippingOption || {
+    const shippingMethod: ShippingMethod = paymentData.shippingOption || {
       name: "Envío estándar",
       carrier: "Correo Argentino",
       service: "Estándar",
@@ -83,18 +155,31 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('💾 Creando orden en base de datos...')
+    
+    // Usar el email como userId ya que el schema espera String
+    // y session.user.id podría ser number dependiendo del provider
+    const userId = session.user.email // Usar email como identificador único
+
     // Crear la orden en la base de datos
-    const order = await createOrder({
-      userId: session.user.id,
+    const orderData: OrderData = {
+      userId: userId,
       paymentData,
-      cartItems,
+      cartItems: cartItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image
+      })),
       subtotal,
       shippingCost,
       tax: subtotal * 0.21,
       total: subtotal + shippingCost + (subtotal * 0.21),
       shippingAddress,
       shippingMethod
-    })
+    }
+
+    const order = await createOrder(orderData)
 
     console.log('✅ Orden creada exitosamente:', order.id)
 
@@ -124,7 +209,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Función para verificar stock
-async function checkStock(cartItems: any[]) {
+async function checkStock(cartItems: CartItem[]): Promise<StockCheckResult> {
   const outOfStockItems = []
 
   for (const item of cartItems) {
@@ -163,7 +248,7 @@ async function checkStock(cartItems: any[]) {
 }
 
 // Función para actualizar stock
-async function updateProductStock(cartItems: any[]) {
+async function updateProductStock(cartItems: CartItem[]): Promise<StockUpdateResult> {
   try {
     for (const item of cartItems) {
       console.log(`🔄 Actualizando stock: Producto ${item.id} - reduciendo ${item.quantity} unidades`)
@@ -188,7 +273,7 @@ async function updateProductStock(cartItems: any[]) {
 }
 
 // Función para crear orden en la base de datos
-async function createOrder(orderData: any) {
+async function createOrder(orderData: OrderData) {
   try {
     console.log('💾 Creando orden principal...')
     console.log('📫 Datos de envío:', {

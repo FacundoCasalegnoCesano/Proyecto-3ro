@@ -28,7 +28,7 @@ export function LoginWelcomeModal() {
   useEffect(() => {
     // Solo mostrar si está autenticado y tenemos datos del usuario
     if (status === "authenticated" && session?.user) {
-      const sessionId = session.user.id || session.user.email || "default";
+      const sessionId = String(session.user.id || session.user.email || "default");
 
       // Solo mostrar si no hemos mostrado el modal para esta sesión
       if (hasShownForSession !== sessionId) {

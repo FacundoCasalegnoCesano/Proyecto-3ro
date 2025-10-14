@@ -3,15 +3,17 @@
 
 import { useState } from "react"
 import { Button } from "../../ui/button"
-import { CreditCard, Wallet, CheckCircle, AlertCircle, Lock, ChevronDown } from "lucide-react"
+import { CreditCard, Wallet, AlertCircle, Lock} from "lucide-react"
 import { PaymentData, FormErrors, SetErrorsFunction } from "../CompraWizard"
+import Image from "next/image"
+import type { CartItem } from "app/types/cart"
 
 interface PaymentStepProps {
   formData: PaymentData
   updateFormData: (data: Partial<PaymentData>) => void
   errors: FormErrors
   setErrors: SetErrorsFunction
-  cartItems: any[]
+  cartItems: CartItem[]
   subtotal: number
   isLoading: boolean
   onSubmit: (data: PaymentData) => void
@@ -23,8 +25,6 @@ export function PaymentStep({
   updateFormData,
   errors,
   setErrors,
-  cartItems,
-  subtotal,
   isLoading,
   onSubmit,
   onBack
@@ -39,13 +39,6 @@ export function PaymentStep({
     email: ""
   })
   const [detectedCardType, setDetectedCardType] = useState("")
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("es-AR", {
-      style: "currency",
-      currency: "ARS",
-    }).format(price)
-  }
 
   // Validaciones
   const validateCardNumber = (number: string): boolean => {
@@ -247,11 +240,11 @@ export function PaymentStep({
               </div>
               <div className="flex items-center space-x-2">
                 {/* Logos de tarjetas */}
-                <img src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg" alt="Visa" className="h-6" />
-                <img src="https://http2.mlstatic.com/storage/logos-api-admin/b2c93a40-f3be-11eb-9984-b7076edb0bb7-m.svg" alt="Mastercard" className="h-6" />
-                <img src="https://http2.mlstatic.com/storage/logos-api-admin/ce454480-445f-11eb-bf78-3b1ee7bf744c-m.svg" alt="Amex" className="h-6" />
-                <img src="https://http2.mlstatic.com/storage/logos-api-admin/9eb30e40-caf8-11eb-9bf7-b5a25c0d6ec3-m.svg" alt="Naranja" className="h-6" />
-                <img src="https://http2.mlstatic.com/storage/logos-api-admin/312238e0-571b-11e8-823a-758d95db88db-m.svg" alt="Cabal" className="h-6" />
+                <Image src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg" alt="Visa" width={24} height={24} />
+                <Image src="https://http2.mlstatic.com/storage/logos-api-admin/b2c93a40-f3be-11eb-9984-b7076edb0bb7-m.svg" alt="Mastercard" width={24} height={24} />
+                <Image src="https://http2.mlstatic.com/storage/logos-api-admin/ce454480-445f-11eb-bf78-3b1ee7bf744c-m.svg" alt="Amex" width={24} height={24} />
+                <Image src="https://http2.mlstatic.com/storage/logos-api-admin/9eb30e40-caf8-11eb-9bf7-b5a25c0d6ec3-m.svg" alt="Naranja" width={24} height={24} />
+                <Image src="https://http2.mlstatic.com/storage/logos-api-admin/312238e0-571b-11e8-823a-758d95db88db-m.svg" alt="Cabal" width={24} height={24} />
               </div>
             </div>
           </div>
@@ -276,16 +269,16 @@ export function PaymentStep({
                     maxLength={19}
                   />
                   {detectedCardType === "visa" && (
-                    <img src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg" alt="Visa" className="absolute right-3 top-2.5 h-5" />
+                    <Image src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg" alt="Visa" width={20} height={20} className="absolute right-3 top-2.5" />
                   )}
                   {detectedCardType === "mastercard" && (
-                    <img src="https://http2.mlstatic.com/storage/logos-api-admin/b2c93a40-f3be-11eb-9984-b7076edb0bb7-m.svg" alt="Mastercard" className="absolute right-3 top-2.5 h-5" />
+                    <Image src="https://http2.mlstatic.com/storage/logos-api-admin/b2c93a40-f3be-11eb-9984-b7076edb0bb7-m.svg" alt="Mastercard" width={20} height={20} className="absolute right-3 top-2.5" />
                   )}
                   {detectedCardType === "amex" && (
-                    <img src="https://http2.mlstatic.com/storage/logos-api-admin/ce454480-445f-11eb-bf78-3b1ee7bf744c-m.svg" alt="Amex" className="absolute right-3 top-2.5 h-5" />
+                    <Image src="https://http2.mlstatic.com/storage/logos-api-admin/ce454480-445f-11eb-bf78-3b1ee7bf744c-m.svg" alt="Amex" width={20} height={20} className="absolute right-3 top-2.5" />
                   )}
                   {detectedCardType === "naranja" && (
-                    <img src="https://http2.mlstatic.com/storage/logos-api-admin/9eb30e40-caf8-11eb-9bf7-b5a25c0d6ec3-m.svg" alt="Naranja" className="absolute right-3 top-2.5 h-5" />
+                    <Image src="https://http2.mlstatic.com/storage/logos-api-admin/9eb30e40-caf8-11eb-9bf7-b5a25c0d6ec3-m.svg" alt="Naranja" width={20} height={20} className="absolute right-3 top-2.5" />
                   )}
                 </div>
                 {errors.number && (
@@ -454,16 +447,16 @@ export function PaymentStep({
                     maxLength={19}
                   />
                   {detectedCardType === "visa" && (
-                    <img src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg" alt="Visa" className="absolute right-3 top-2.5 h-5" />
+                    <Image src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg" alt="Visa" width={20} height={20} className="absolute right-3 top-2.5" />
                   )}
                   {detectedCardType === "mastercard" && (
-                    <img src="https://http2.mlstatic.com/storage/logos-api-admin/b2c93a40-f3be-11eb-9984-b7076edb0bb7-m.svg" alt="Mastercard" className="absolute right-3 top-2.5 h-5" />
+                    <Image src="https://http2.mlstatic.com/storage/logos-api-admin/b2c93a40-f3be-11eb-9984-b7076edb0bb7-m.svg" alt="Mastercard" width={20} height={20} className="absolute right-3 top-2.5" />
                   )}
                   {detectedCardType === "amex" && (
-                    <img src="https://http2.mlstatic.com/storage/logos-api-admin/ce454480-445f-11eb-bf78-3b1ee7bf744c-m.svg" alt="Amex" className="absolute right-3 top-2.5 h-5" />
+                    <Image src="https://http2.mlstatic.com/storage/logos-api-admin/ce454480-445f-11eb-bf78-3b1ee7bf744c-m.svg" alt="Amex" width={20} height={20} className="absolute right-3 top-2.5" />
                   )}
                   {detectedCardType === "naranja" && (
-                    <img src="https://http2.mlstatic.com/storage/logos-api-admin/9eb30e40-caf8-11eb-9bf7-b5a25c0d6ec3-m.svg" alt="Naranja" className="absolute right-3 top-2.5 h-5" />
+                    <Image src="https://http2.mlstatic.com/storage/logos-api-admin/9eb30e40-caf8-11eb-9bf7-b5a25c0d6ec3-m.svg" alt="Naranja" width={20} height={20} className="absolute right-3 top-2.5" />
                   )}
                 </div>
                 {errors.number && (

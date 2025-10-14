@@ -143,7 +143,8 @@ export async function getAvailableTimeSlots(date: string): Promise<string[]> {
       if (event.status === 'cancelled') return;
       
       const eventStart = new Date(event.start?.dateTime || event.start?.date || '');
-      const eventEnd = new Date(event.end?.dateTime || event.end?.date || '');
+      // ✅ Remover eventEnd ya que no se usa
+      // const eventEnd = new Date(event.end?.dateTime || event.end?.date || '');
       
       // Convertir a hora local Argentina
       const startHour = eventStart.getHours().toString().padStart(2, '0');

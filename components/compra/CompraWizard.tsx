@@ -7,9 +7,11 @@ import { ShippingStep } from "./steps/ShippingStep"
 import { PaymentStep } from "./steps/PaymentStep"
 import { useCart } from "../../contexts/cart-context"
 import { useSession } from "next-auth/react"
-import { CheckCircle, Package, Truck, CreditCard, Calendar, MapPin, Loader2 } from "lucide-react"
+import { CheckCircle, Package, Truck, CreditCard, Calendar, Loader2 } from "lucide-react"
 import { ResumenCompra } from "../resumen-compra"
 import { toast } from "sonner"
+import Image from "next/image"
+import type { CartItem } from "app/types/cart"
 
 // Tipo genérico para errores
 export interface FormErrors {
@@ -60,14 +62,72 @@ interface StepProps {
   updateFormData: (data: Partial<PaymentData>) => void
   errors: FormErrors
   setErrors: SetErrorsFunction
-  cartItems: any[]
+  cartItems: CartItem[]
   subtotal: number
   isLoading: boolean
 }
 
+interface StockCheckItem {
+  id: number
+  name: string
+  requested: number
+  available: number
+}
+
+interface StockCheckResult {
+  available: boolean
+  outOfStockItems: StockCheckItem[]
+}
+
+interface OrderItem {
+  id: number
+  name: string
+  price: number
+  quantity: number
+  image: string
+}
+
+interface OrderResponse {
+  success: boolean
+  order?: {
+    orderNumber: string
+    items: OrderItem[]
+    subtotal: number
+    shippingCost: number
+    tax: number
+    total: number
+    shippingAddress: {
+      calle: string
+      ciudad: string
+      provincia: string
+      codigoPostal: string
+    }
+    shippingMethod: {
+      name: string
+      carrier: string
+      service: string
+      price: number
+      deliveryDays: number
+      estimatedDate: string
+    }
+    paymentMethod: string
+    createdAt: string
+  }
+  error?: string
+  outOfStockItems?: StockCheckItem[]
+}
+
+interface UserSession {
+  user?: {
+    nombre?: string
+    apellido?: string
+    email?: string
+  }
+}
+
 export function CompraWizard() {
-  const { data: session, status } = useSession()
-  const { state, getTotalPrice, getTotalItems } = useCart()
+  const { data: session, status } = useSession() as { data: UserSession | null; status: string }
+  const { state, getTotalPrice } = useCart()
 
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<PaymentData>({
@@ -94,7 +154,7 @@ export function CompraWizard() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [orderSuccess, setOrderSuccess] = useState(false)
   const [loadingUserData, setLoadingUserData] = useState(true)
-  const [orderData, setOrderData] = useState<any>(null)
+  const [orderData, setOrderData] = useState<OrderResponse['order'] | null>(null)
 
   // Cargar datos del usuario al montar el componente
   useEffect(() => {
@@ -159,7 +219,7 @@ export function CompraWizard() {
   }, [session])
 
 
-  const checkCurrentStock = async (cartItems: any[]) => {
+  const checkCurrentStock = async (cartItems: CartItem[]): Promise<StockCheckResult> => {
     try {
       const stockPromises = cartItems.map(async (item) => {
         const response = await fetch(`/api/agregarProd?id=${item.id}`)
@@ -236,7 +296,7 @@ export function CompraWizard() {
       // Cerrar toast de carga
       toast.dismiss(loadingToast)
       
-      if (orderResponse.success) {
+      if (orderResponse.success && orderResponse.order) {
         // Mostrar toast de éxito
         toast.success("¡Compra realizada!", {
           description: `Tu orden #${orderResponse.order.orderNumber} ha sido procesada exitosamente`,
@@ -255,7 +315,7 @@ export function CompraWizard() {
       } else {
         // Manejar error de stock insuficiente del servidor
         if (orderResponse.outOfStockItems) {
-          const errorMessage = `Stock insuficiente durante el procesamiento: ${orderResponse.outOfStockItems.map((item: any) => 
+          const errorMessage = `Stock insuficiente durante el procesamiento: ${orderResponse.outOfStockItems.map((item) => 
             `${item.name} (solicitado: ${item.requested}, disponible: ${item.available})`
           ).join(', ')}`
           
@@ -270,7 +330,7 @@ export function CompraWizard() {
           setErrors({ general: orderResponse.error || "Error al procesar el pago. Intenta nuevamente." })
         }
       }
-    } catch (error) {
+    } catch {
       toast.error("Error inesperado", {
         description: "Ocurrió un error al procesar tu compra."
       })
@@ -281,7 +341,7 @@ export function CompraWizard() {
   }
 
   // Función para procesar la orden y actualizar stock
-  const processOrder = async (paymentData: PaymentData, cartItems: any[]) => {
+  const processOrder = async (paymentData: PaymentData, cartItems: CartItem[]): Promise<OrderResponse> => {
     try {
       console.log('🔄 Enviando orden al servidor...', {
         paymentData: {
@@ -335,7 +395,7 @@ export function CompraWizard() {
         body: JSON.stringify(requestData),
       })
 
-      const result = await response.json()
+      const result: OrderResponse = await response.json()
       
       if (!response.ok) {
         console.error('❌ Error del servidor:', result)
@@ -496,14 +556,15 @@ export function CompraWizard() {
                 Productos en tu pedido
               </h3>
               <div className="space-y-4">
-                {orderData.items.map((item: any) => (
+                {orderData.items.map((item) => (
                   <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                        <img
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 relative">
+                        <Image
                           src={item.image || "/placeholder.svg"}
                           alt={item.name}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
                         />
                       </div>
                       <div>

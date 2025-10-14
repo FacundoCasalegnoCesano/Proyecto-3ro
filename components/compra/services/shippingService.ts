@@ -1,4 +1,6 @@
 // components/compra/services/shippingService.ts
+import type { CartItem } from "app/types/cart"
+
 export interface ShippingQuote {
   id: string
   carrier: "andreani" | "correo-argentino"
@@ -9,11 +11,23 @@ export interface ShippingQuote {
   service: string
 }
 
+interface ShippingData {
+  codigoPostal: string
+  provincia: string
+  ciudad: string
+  calle: string
+}
+
+interface CartItemWithShipping extends CartItem {
+  peso?: number
+  volumen?: number
+}
+
 export class ShippingService {
   private andreaniApiKey = process.env.NEXT_PUBLIC_ANDREANI_API_KEY
   private correoApiUrl = process.env.NEXT_PUBLIC_CORREO_API_URL
 
-  async getAndreaniQuote(codigoPostal: string, peso: number, volumen: number): Promise<ShippingQuote[]> {
+  async getAndreaniQuote(codigoPostal: string, peso: number): Promise<ShippingQuote[]> {
     try {
       // Implementación real con Andreani API
       // Por ahora simulamos datos
@@ -65,29 +79,19 @@ export class ShippingService {
     }
   }
 
-  async getAllQuotes(shippingData: {
-    codigoPostal: string
-    provincia: string
-    ciudad: string
-    calle: string
-  }, cartItems: any[]): Promise<ShippingQuote[]> {
+  async getAllQuotes(shippingData: ShippingData, cartItems: CartItemWithShipping[]): Promise<ShippingQuote[]> {
     const peso = this.calculateTotalWeight(cartItems)
-    const volumen = this.calculateTotalVolume(cartItems)
 
     const quotes = await Promise.all([
-      this.getAndreaniQuote(shippingData.codigoPostal, peso, volumen),
+      this.getAndreaniQuote(shippingData.codigoPostal, peso),
       this.getCorreoArgentinoQuote(shippingData.codigoPostal, peso)
     ])
 
     return quotes.flat().sort((a, b) => a.price - b.price)
   }
 
-  private calculateTotalWeight(cartItems: any[]): number {
+  private calculateTotalWeight(cartItems: CartItemWithShipping[]): number {
     return cartItems.reduce((total, item) => total + (item.peso || 0.5) * item.quantity, 0)
-  }
-
-  private calculateTotalVolume(cartItems: any[]): number {
-    return cartItems.reduce((total, item) => total + (item.volumen || 1000) * item.quantity, 0)
   }
 
   private calculateEstimatedDate(deliveryDays: number): string {

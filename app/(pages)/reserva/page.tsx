@@ -1,6 +1,6 @@
-import { Header } from "components/header"
-import { ReservaPageContent } from "components/sections/reserva-page-content"
-import { PageLayout } from "components/layout/page-layout"
+import { Header } from "components/header";
+import { ReservaPageContent } from "components/sections/reserva-page-content";
+import { PageLayout } from "components/layout/page-layout";
 
 export default function ReservaPage() {
   return (
@@ -8,5 +8,5 @@ export default function ReservaPage() {
       <Header />
       <ReservaPageContent />
     </PageLayout>
-  )
+  );
 }

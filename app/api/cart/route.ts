@@ -7,28 +7,27 @@ const getCartIdentifier = async (request: NextRequest) => {
   // Para usuarios autenticados
   const session = await getServerSession();
   if (session?.user?.email) {
-    return { type: 'user', identifier: session.user.email };
+    return { type: "user", identifier: session.user.email };
   }
-  
+
   // Para usuarios no autenticados, usar session_id de cookies
-  const sessionId = request.cookies.get('session_id')?.value;
+  const sessionId = request.cookies.get("session_id")?.value;
   if (sessionId) {
-    return { type: 'session', identifier: sessionId };
+    return { type: "session", identifier: sessionId };
   }
-  
+
   // Crear nueva session_id si no existe
   const newSessionId = Math.random().toString(36).substring(2);
-  return { type: 'session', identifier: newSessionId };
+  return { type: "session", identifier: newSessionId };
 };
 
 export async function GET(request: NextRequest) {
   try {
     const { type, identifier } = await getCartIdentifier(request);
-    
+
     const cartItems = await prisma.cart.findMany({
-      where: type === 'user' 
-        ? { user_id: identifier }
-        : { session_id: identifier },
+      where:
+        type === "user" ? { user_id: identifier } : { session_id: identifier },
       include: {
         product: {
           select: {
@@ -36,45 +35,44 @@ export async function GET(request: NextRequest) {
             nombre: true,
             precio: true,
             imgUrl: true,
-            stock: true
-          }
-        }
-      }
+            stock: true,
+          },
+        },
+      },
     });
 
     // Formatear los items para el frontend
-    const formattedItems = cartItems.map(item => ({
+    const formattedItems = cartItems.map((item) => ({
       id: item.product.id,
       name: item.product.nombre,
       price: parseFloat(item.product.precio),
       image: item.product.imgUrl,
       quantity: item.quantity,
-      stock: item.product.stock
+      stock: item.product.stock,
     }));
 
     const response = NextResponse.json({
       success: true,
-      data: formattedItems
+      data: formattedItems,
     });
 
     // Si es una nueva sesión, establecer la cookie
-    if (type === 'session') {
-      response.cookies.set('session_id', identifier, {
+    if (type === "session") {
+      response.cookies.set("session_id", identifier, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7 // 1 semana
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7, // 1 semana
       });
     }
 
     return response;
-
   } catch (error) {
     console.error("❌ Error al obtener carrito:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Error interno del servidor"
+        error: "Error interno del servidor",
       },
       { status: 500 }
     );
@@ -95,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar si el producto existe
     const product = await prisma.products.findUnique({
-      where: { id: parseInt(productId) }
+      where: { id: parseInt(productId) },
     });
 
     if (!product) {
@@ -108,9 +106,11 @@ export async function POST(request: NextRequest) {
     // Buscar item existente en el carrito
     const existingItem = await prisma.cart.findFirst({
       where: {
-        ...(type === 'user' ? { user_id: identifier } : { session_id: identifier }),
-        product_id: parseInt(productId)
-      }
+        ...(type === "user"
+          ? { user_id: identifier }
+          : { session_id: identifier }),
+        product_id: parseInt(productId),
+      },
     });
 
     let cartItem;
@@ -119,8 +119,8 @@ export async function POST(request: NextRequest) {
       // Actualizar cantidad
       cartItem = await prisma.cart.update({
         where: { id: existingItem.id },
-        data: { 
-          quantity: existingItem.quantity + parseInt(quantity)
+        data: {
+          quantity: existingItem.quantity + parseInt(quantity),
         },
         include: {
           product: {
@@ -129,18 +129,20 @@ export async function POST(request: NextRequest) {
               nombre: true,
               precio: true,
               imgUrl: true,
-              stock: true
-            }
-          }
-        }
+              stock: true,
+            },
+          },
+        },
       });
     } else {
       // Crear nuevo item
       cartItem = await prisma.cart.create({
         data: {
-          ...(type === 'user' ? { user_id: identifier } : { session_id: identifier }),
+          ...(type === "user"
+            ? { user_id: identifier }
+            : { session_id: identifier }),
           product_id: parseInt(productId),
-          quantity: parseInt(quantity)
+          quantity: parseInt(quantity),
         },
         include: {
           product: {
@@ -149,10 +151,10 @@ export async function POST(request: NextRequest) {
               nombre: true,
               precio: true,
               imgUrl: true,
-              stock: true
-            }
-          }
-        }
+              stock: true,
+            },
+          },
+        },
       });
     }
 
@@ -162,32 +164,31 @@ export async function POST(request: NextRequest) {
       price: parseFloat(cartItem.product.precio),
       image: cartItem.product.imgUrl,
       quantity: cartItem.quantity,
-      stock: cartItem.product.stock
+      stock: cartItem.product.stock,
     };
 
     const response = NextResponse.json({
       success: true,
-      data: formattedItem
+      data: formattedItem,
     });
 
     // Establecer cookie si es nueva sesión
-    if (type === 'session') {
-      response.cookies.set('session_id', identifier, {
+    if (type === "session") {
+      response.cookies.set("session_id", identifier, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7,
       });
     }
 
     return response;
-
   } catch (error) {
     console.error("❌ Error al agregar al carrito:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Error interno del servidor"
+        error: "Error interno del servidor",
       },
       { status: 500 }
     );
@@ -209,9 +210,11 @@ export async function PUT(request: NextRequest) {
     // Buscar item existente
     const existingItem = await prisma.cart.findFirst({
       where: {
-        ...(type === 'user' ? { user_id: identifier } : { session_id: identifier }),
-        product_id: parseInt(productId)
-      }
+        ...(type === "user"
+          ? { user_id: identifier }
+          : { session_id: identifier }),
+        product_id: parseInt(productId),
+      },
     });
 
     if (!existingItem) {
@@ -224,13 +227,13 @@ export async function PUT(request: NextRequest) {
     if (parseInt(quantity) <= 0) {
       // Eliminar item si la cantidad es 0 o menor
       await prisma.cart.delete({
-        where: { id: existingItem.id }
+        where: { id: existingItem.id },
       });
 
       return NextResponse.json({
         success: true,
         data: null,
-        message: "Item eliminado del carrito"
+        message: "Item eliminado del carrito",
       });
     }
 
@@ -245,10 +248,10 @@ export async function PUT(request: NextRequest) {
             nombre: true,
             precio: true,
             imgUrl: true,
-            stock: true
-          }
-        }
-      }
+            stock: true,
+          },
+        },
+      },
     });
 
     const formattedItem = {
@@ -257,20 +260,19 @@ export async function PUT(request: NextRequest) {
       price: parseFloat(updatedItem.product.precio),
       image: updatedItem.product.imgUrl,
       quantity: updatedItem.quantity,
-      stock: updatedItem.product.stock
+      stock: updatedItem.product.stock,
     };
 
     return NextResponse.json({
       success: true,
-      data: formattedItem
+      data: formattedItem,
     });
-
   } catch (error) {
     console.error("❌ Error al actualizar carrito:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Error interno del servidor"
+        error: "Error interno del servidor",
       },
       { status: 500 }
     );
@@ -281,7 +283,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const { type, identifier } = await getCartIdentifier(request);
     const { searchParams } = new URL(request.url);
-    const productId = searchParams.get('productId');
+    const productId = searchParams.get("productId");
 
     if (!productId) {
       return NextResponse.json(
@@ -293,9 +295,11 @@ export async function DELETE(request: NextRequest) {
     // Buscar item existente
     const existingItem = await prisma.cart.findFirst({
       where: {
-        ...(type === 'user' ? { user_id: identifier } : { session_id: identifier }),
-        product_id: parseInt(productId)
-      }
+        ...(type === "user"
+          ? { user_id: identifier }
+          : { session_id: identifier }),
+        product_id: parseInt(productId),
+      },
     });
 
     if (!existingItem) {
@@ -306,20 +310,19 @@ export async function DELETE(request: NextRequest) {
     }
 
     await prisma.cart.delete({
-      where: { id: existingItem.id }
+      where: { id: existingItem.id },
     });
 
     return NextResponse.json({
       success: true,
-      message: "Item eliminado del carrito"
+      message: "Item eliminado del carrito",
     });
-
   } catch (error) {
     console.error("❌ Error al eliminar del carrito:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Error interno del servidor"
+        error: "Error interno del servidor",
       },
       { status: 500 }
     );

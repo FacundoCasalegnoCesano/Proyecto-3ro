@@ -1,30 +1,30 @@
 // sections/compra-page-content.tsx
-"use client"
+"use client";
 
-import { CompraWizard } from "components/compra/CompraWizard"
-import { useCart } from "../../contexts/cart-context"
-import { useAuthStatus } from "app/hooks/useAuthStatus"
-import { useEffect } from "react"
+import { CompraWizard } from "components/compra/CompraWizard";
+import { useCart } from "../../contexts/cart-context";
+import { useAuthStatus } from "app/hooks/useAuthStatus";
+import { useEffect } from "react";
 
 export function CompraPageContent() {
-  const { getTotalItems } = useCart()
-  const { isLoggedIn, isLoading: authLoading } = useAuthStatus()
+  const { getTotalItems } = useCart();
+  const { isLoggedIn, isLoading: authLoading } = useAuthStatus();
 
   // Redirigir si el carrito está vacío
   useEffect(() => {
     if (getTotalItems() === 0) {
-      alert("Tu carrito está vacío. Serás redirigido a la tienda.")
-      window.location.href = "/productos"
+      alert("Tu carrito está vacío. Serás redirigido a la tienda.");
+      window.location.href = "/productos";
     }
-  }, [getTotalItems])
+  }, [getTotalItems]);
 
   // Redirigir si no está logueado
   useEffect(() => {
     if (!authLoading && isLoggedIn() === false) {
-      alert("Debes iniciar sesión para realizar una compra.")
-      window.location.href = "/iniciar-sesion"
+      alert("Debes iniciar sesión para realizar una compra.");
+      window.location.href = "/iniciar-sesion";
     }
-  }, [isLoggedIn, authLoading])
+  }, [isLoggedIn, authLoading]);
 
   if (getTotalItems() === 0 || authLoading || isLoggedIn() === false) {
     return (
@@ -34,7 +34,7 @@ export function CompraPageContent() {
           <p className="text-gray-600">Verificando información...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -43,12 +43,14 @@ export function CompraPageContent() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Finalizar Compra</h1>
-          <p className="mt-2 text-sm text-gray-600">Completa tu información para procesar el pago de forma segura</p>
+          <p className="mt-2 text-sm text-gray-600">
+            Completa tu información para procesar el pago de forma segura
+          </p>
         </div>
 
         {/* CompraWizard ahora maneja su propio layout con ResumenCompra */}
         <CompraWizard />
       </div>
     </div>
-  )
+  );
 }

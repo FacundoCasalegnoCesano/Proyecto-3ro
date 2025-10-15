@@ -1,10 +1,10 @@
 // components/cart-modal.tsx
-"use client"
+"use client";
 
-import { Button } from "../components/ui/button"
-import { X, Plus, Minus, Trash2, ShoppingBag, Tag } from "lucide-react"
-import Image from "next/image"
-import { useCart } from "contexts/cart-context"
+import { Button } from "../components/ui/button";
+import { X, Plus, Minus, Trash2, ShoppingBag, Tag } from "lucide-react";
+import Image from "next/image";
+import { useCart } from "contexts/cart-context";
 
 export function CartModal() {
   const {
@@ -15,41 +15,44 @@ export function CartModal() {
     closeCart,
     getTotalPrice,
     getTotalItems,
-  } = useCart()
+  } = useCart();
 
-  const { isOpen, items } = state
-  const totalPrice = getTotalPrice()
-  const totalItems = getTotalItems()
+  const { isOpen, items } = state;
+  const totalPrice = getTotalPrice();
+  const totalItems = getTotalItems();
 
   const formatPrice = (price: number) => {
-    const validPrice = Number(price) || 0
+    const validPrice = Number(price) || 0;
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
       currency: "ARS",
-    }).format(validPrice)
-  }
+    }).format(validPrice);
+  };
 
   const handleUpdateQuantity = (id: number, quantity: number) => {
-    updateQuantity(id, quantity)
-  }
+    updateQuantity(id, quantity);
+  };
 
   const handleRemoveItem = (id: number) => {
-    removeItem(id)
-  }
+    removeItem(id);
+  };
 
   const handleClearCart = () => {
-    clearCart()
-  }
+    clearCart();
+  };
 
   const handleViewFullCart = () => {
-    closeCart()
-    window.location.href = "/carrito"
-  }
+    closeCart();
+    window.location.href = "/carrito";
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm flex justify-end" onClick={closeCart}>
+    <div
+      className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm flex justify-end"
+      onClick={closeCart}
+    >
       <div
         className="bg-gradient-to-b from-white to-gray-50 w-full max-w-md h-full shadow-2xl transform transition-transform duration-300 ease-in-out"
         onClick={(e) => e.stopPropagation()}
@@ -90,8 +93,12 @@ export function CartModal() {
                 <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                   <ShoppingBag className="w-12 h-12 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Tu carrito está vacío</h3>
-                <p className="text-gray-500 mb-6">¡Agrega productos para comenzar!</p>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">
+                  Tu carrito está vacío
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  ¡Agrega productos para comenzar!
+                </p>
                 <Button
                   onClick={closeCart}
                   className="bg-gradient-to-r from-babalu-primary to-babalu-dark hover:shadow-lg transform transition-all duration-200 hover:scale-105"
@@ -112,18 +119,20 @@ export function CartModal() {
                     <div className="flex gap-4">
                       {/* Image */}
                       <div className="relative w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
-                        <Image 
-                          src={item.image || "/placeholder.svg"} 
-                          alt={item.name} 
-                          fill 
-                          className="object-cover" 
+                        <Image
+                          src={item.image || "/placeholder.svg"}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
                         />
                       </div>
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 truncate mb-1">{item.name}</h3>
-                        
+                        <h3 className="font-semibold text-gray-900 truncate mb-1">
+                          {item.name}
+                        </h3>
+
                         {/* MOSTRAR LÍNEA Y AROMA */}
                         {(item.linea || item.aroma) && (
                           <div className="flex flex-wrap gap-1 mb-2">
@@ -139,7 +148,7 @@ export function CartModal() {
                             )}
                           </div>
                         )}
-                        
+
                         <div className="flex items-center gap-2 mb-3">
                           <Tag className="w-3 h-3 text-babalu-primary" />
                           <p className="text-lg font-bold text-babalu-primary">
@@ -158,7 +167,9 @@ export function CartModal() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                              onClick={() =>
+                                handleUpdateQuantity(item.id, item.quantity - 1)
+                              }
                               className="w-8 h-8 p-0 hover:bg-babalu-primary/10 hover:text-babalu-primary transition-all duration-200"
                               disabled={item.quantity <= 1}
                             >
@@ -172,7 +183,9 @@ export function CartModal() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                              onClick={() =>
+                                handleUpdateQuantity(item.id, item.quantity + 1)
+                              }
                               className="w-8 h-8 p-0 hover:bg-babalu-primary/10 hover:text-babalu-primary transition-all duration-200"
                             >
                               <Plus className="w-3 h-3" />
@@ -205,7 +218,9 @@ export function CartModal() {
                 <div className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
                   <div>
                     <p className="text-sm text-gray-600">Total a pagar</p>
-                    <p className="text-xs text-gray-500">{totalItems} productos</p>
+                    <p className="text-xs text-gray-500">
+                      {totalItems} productos
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-babalu-primary">
@@ -247,5 +262,5 @@ export function CartModal() {
         </div>
       </div>
     </div>
-  )
+  );
 }

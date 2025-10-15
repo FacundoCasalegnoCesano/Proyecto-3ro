@@ -3,7 +3,7 @@ import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
 // AGREGA ESTA LÍNEA
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 interface CreateUserData {
   nombre: string;

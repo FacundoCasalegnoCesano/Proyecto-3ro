@@ -5,8 +5,7 @@ import type React from "react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
-import { useAuth } from "../app/hooks/useAuth";
-import { LoginWelcomeModal } from "./login-welcome-modal";
+import { useAuth } from "app/hooks/useAuth"; // Ajusta la ruta según tu estructura
 
 export function LoginForm() {
   const [formData, setFormData] = useState({
@@ -19,7 +18,20 @@ export function LoginForm() {
     password?: string;
   }>({});
 
-  const { handleLogin, isLoading, error: authError } = useAuth();
+  const {
+    handleLogin,
+    isLoading,
+    error: authError,
+    clearError,
+  } = useAuth({
+    onSuccess: () => {
+      // Redirección manejada automáticamente en el hook
+      console.log("Login exitoso - redireccionando...");
+    },
+    onError: (error) => {
+      console.log("Error en login:", error);
+    },
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -28,11 +40,17 @@ export function LoginForm() {
       [name]: value,
     }));
 
+    // Limpiar errores al escribir
     if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({
         ...prev,
         [name]: undefined,
       }));
+    }
+
+    // Limpiar error de autenticación
+    if (authError) {
+      clearError();
     }
   };
 
@@ -59,6 +77,11 @@ export function LoginForm() {
     e.preventDefault();
 
     if (!validateForm()) {
+      // Mostrar toast de error de validación si hay errores
+      if (Object.keys(errors).length > 0) {
+        // Los errores de validación ya se muestran en los campos
+        // No es necesario un toast adicional aquí
+      }
       return;
     }
 
@@ -67,19 +90,9 @@ export function LoginForm() {
 
   return (
     <>
-      {/* Modal de bienvenida como componente separado */}
-      <LoginWelcomeModal />
-
       {/* Formulario de login */}
       <div className="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200">
         <form className="space-y-6" onSubmit={handleSubmit}>
-          {/* Error de autenticación */}
-          {authError && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-              {authError}
-            </div>
-          )}
-
           {/* Campo de email */}
           <div>
             <label

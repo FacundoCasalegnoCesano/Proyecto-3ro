@@ -1,18 +1,18 @@
 // hooks/useCartModal.ts
-"use client"
+"use client";
 
-import { useCart } from "contexts/cart-context"
+import { useCart } from "contexts/cart-context";
 
 export function useCartModal() {
-  const { 
-    state, 
-    toggleCart, 
-    updateQuantity, 
-    removeItem, 
-    clearCart, 
-    getTotalPrice, 
-    getTotalItems 
-  } = useCart()
+  const {
+    state,
+    toggleCart,
+    updateQuantity,
+    removeItem,
+    clearCart,
+    getTotalPrice,
+    getTotalItems,
+  } = useCart();
 
   return {
     isOpen: state.isOpen,
@@ -25,7 +25,7 @@ export function useCartModal() {
     onClearCart: clearCart,
     onViewFullCart: () => {
       // Navegar a la página del carrito completo
-      window.location.href = "/carrito"
-    }
-  }
+      window.location.href = "/carrito";
+    },
+  };
 }

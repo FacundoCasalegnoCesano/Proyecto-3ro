@@ -1,14 +1,14 @@
 // app/providers/SessionProvider.tsx
-"use client"
+"use client";
 
-import { SessionProvider } from "next-auth/react"
-import { CartProvider } from "contexts/cart-context"
-import { CartModal } from "components/cart-modal"
-import { ReactNode } from "react"
-import { Toaster } from "sonner"
+import { SessionProvider } from "next-auth/react";
+import { CartProvider } from "contexts/cart-context";
+import { CartModal } from "components/cart-modal";
+import { ReactNode } from "react";
+import { Toaster } from "sonner";
 
 interface ProvidersProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function Providers({ children }: ProvidersProps) {
@@ -17,7 +17,7 @@ export function Providers({ children }: ProvidersProps) {
       <CartProvider>
         {children}
         <CartModal />
-        <Toaster 
+        <Toaster
           position="top-right"
           expand={false}
           richColors
@@ -26,5 +26,5 @@ export function Providers({ children }: ProvidersProps) {
         />
       </CartProvider>
     </SessionProvider>
-  )
+  );
 }

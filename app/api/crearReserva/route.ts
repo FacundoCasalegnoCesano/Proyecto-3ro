@@ -5,7 +5,7 @@ import { checkTimeSlotAvailability } from "../../../lib/googleCalendar";
 import { PrismaClient, ReservaEstado } from "@prisma/client";
 import nodemailer from "nodemailer";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 const prisma = new PrismaClient();
 
@@ -475,7 +475,6 @@ function validateReservaData(reservaData: ReservaData): string | null {
   return null;
 }
 
-
 // GET endpoint
 export async function GET() {
   return NextResponse.json({
@@ -486,7 +485,6 @@ export async function GET() {
     },
   });
 }
-
 
 // POST endpoint principal
 export async function POST(request: NextRequest) {
@@ -533,44 +531,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
-const validationError = validateReservaData(reservaData);
-if (validationError) {
-  return NextResponse.json(
-    {
-      error: validationError,
-      success: false,
-    },
-    { status: 400 }
-  );
-}
+    const validationError = validateReservaData(reservaData);
+    if (validationError) {
+      return NextResponse.json(
+        {
+          error: validationError,
+          success: false,
+        },
+        { status: 400 }
+      );
+    }
 
-// ✅ VERIFICACIÓN DE DISPONIBILIDAD (USANDO LAS VARIABLES QUE YA EXISTEN MÁS ABAJO)
-const startDateTime = new Date(`${reservaData.fecha}T${reservaData.hora}:00`);
-const durationMinutes = getDurationInMinutes(reservaData.servicio.duration);
-const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000);
-
-// Verificar disponibilidad antes de proceder
-try {
-  const availability = await checkTimeSlotAvailability(startDateTime, endDateTime);
-  
-  if (!availability.available) {
-    console.log(`❌ Horario no disponible para ${reservaData.fecha} ${reservaData.hora}`);
-    
-    return NextResponse.json(
-      {
-        success: false,
-        error: "El horario seleccionado ya no está disponible. Por favor selecciona otro horario.",
-        details: "Time slot not available"
-      },
-      { status: 409 } // Conflict
+    // ✅ VERIFICACIÓN DE DISPONIBILIDAD (USANDO LAS VARIABLES QUE YA EXISTEN MÁS ABAJO)
+    const startDateTime = new Date(
+      `${reservaData.fecha}T${reservaData.hora}:00`
     );
-  }
-  
-  console.log(`✅ Horario disponible confirmado para ${reservaData.fecha} ${reservaData.hora}`);
-} catch (error) {
-  console.error("❌ Error verificando disponibilidad:", error);
-  console.log("⚠️ Continuando con reserva a pesar de error en verificación");
-}
+    const durationMinutes = getDurationInMinutes(reservaData.servicio.duration);
+    const endDateTime = new Date(
+      startDateTime.getTime() + durationMinutes * 60000
+    );
+
+    // Verificar disponibilidad antes de proceder
+    try {
+      const availability = await checkTimeSlotAvailability(
+        startDateTime,
+        endDateTime
+      );
+
+      if (!availability.available) {
+        console.log(
+          `❌ Horario no disponible para ${reservaData.fecha} ${reservaData.hora}`
+        );
+
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "El horario seleccionado ya no está disponible. Por favor selecciona otro horario.",
+            details: "Time slot not available",
+          },
+          { status: 409 } // Conflict
+        );
+      }
+
+      console.log(
+        `✅ Horario disponible confirmado para ${reservaData.fecha} ${reservaData.hora}`
+      );
+    } catch (error) {
+      console.error("❌ Error verificando disponibilidad:", error);
+      console.log(
+        "⚠️ Continuando con reserva a pesar de error en verificación"
+      );
+    }
 
     const reservaId = generateReservaId();
 

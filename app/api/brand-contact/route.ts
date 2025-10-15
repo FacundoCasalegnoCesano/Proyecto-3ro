@@ -1,28 +1,30 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient, BrandContactStatus } from '@prisma/client'
-import nodemailer from 'nodemailer'
-import type { BrandContact } from 'app/types/brand-contact'
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient, BrandContactStatus } from "@prisma/client";
+import nodemailer from "nodemailer";
+import type { BrandContact } from "app/types/brand-contact";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 // Configurar el transporter de Nodemailer
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
+  port: parseInt(process.env.SMTP_PORT || "587"),
   secure: false,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD,
   },
-})
+});
 
 interface EmailResults {
-  adminEmailSent: boolean
-  brandEmailSent: boolean
-  errors: string[]
+  adminEmailSent: boolean;
+  brandEmailSent: boolean;
+  errors: string[];
 }
 
-async function sendBrandContactEmails(brandContact: BrandContact): Promise<EmailResults> {
+async function sendBrandContactEmails(
+  brandContact: BrandContact
+): Promise<EmailResults> {
   try {
     // 1. Email al ADMINISTRADOR
     const adminEmail = {
@@ -51,33 +53,50 @@ async function sendBrandContactEmails(brandContact: BrandContact): Promise<Email
                 </div>
                 <div class="content">
                     <div class="field">
-                        <span class="label">Marca:</span> ${brandContact.brandName}
+                        <span class="label">Marca:</span> ${
+                          brandContact.brandName
+                        }
                     </div>
                     <div class="field">
-                        <span class="label">Email de contacto:</span> ${brandContact.email}
+                        <span class="label">Email de contacto:</span> ${
+                          brandContact.email
+                        }
                     </div>
                     <div class="field">
-                        <span class="label">Teléfono:</span> ${brandContact.phone || 'No proporcionado'}
+                        <span class="label">Teléfono:</span> ${
+                          brandContact.phone || "No proporcionado"
+                        }
                     </div>
                     <div class="field">
-                        <span class="label">Sitio web:</span> ${brandContact.website ? `<a href="${brandContact.website}" target="_blank">${brandContact.website}</a>` : 'No proporcionado'}
+                        <span class="label">Sitio web:</span> ${
+                          brandContact.website
+                            ? `<a href="${brandContact.website}" target="_blank">${brandContact.website}</a>`
+                            : "No proporcionado"
+                        }
                     </div>
                     <div class="field">
-                        <span class="label">Tipo de productos:</span> ${brandContact.productType}
+                        <span class="label">Tipo de productos:</span> ${
+                          brandContact.productType
+                        }
                     </div>
                     <div class="field">
                         <span class="label">Mensaje:</span>
-                        <div class="message-box">${brandContact.message.replace(/\n/g, '<br>')}</div>
+                        <div class="message-box">${brandContact.message.replace(
+                          /\n/g,
+                          "<br>"
+                        )}</div>
                     </div>
                     <div class="field">
-                        <span class="label">Fecha de envío:</span> ${new Date(brandContact.createdAt).toLocaleDateString('es-ES')}
+                        <span class="label">Fecha de envío:</span> ${new Date(
+                          brandContact.createdAt
+                        ).toLocaleDateString("es-ES")}
                     </div>
                 </div>
             </div>
         </body>
         </html>
-      `
-    }
+      `,
+    };
 
     // 2. Email de CONFIRMACIÓN a la MARCA
     const brandEmail = {
@@ -111,7 +130,9 @@ async function sendBrandContactEmails(brandContact: BrandContact): Promise<Email
                         • Marca: ${brandContact.brandName}<br>
                         • Email: ${brandContact.email}<br>
                         • Tipo de productos: ${brandContact.productType}<br>
-                        • Fecha de envío: ${new Date().toLocaleDateString('es-ES')}
+                        • Fecha de envío: ${new Date().toLocaleDateString(
+                          "es-ES"
+                        )}
                     </div>
 
                     <div class="next-steps">
@@ -139,73 +160,72 @@ async function sendBrandContactEmails(brandContact: BrandContact): Promise<Email
             </div>
         </body>
         </html>
-      `
-    }
+      `,
+    };
 
     // Enviar ambos emails
     const [adminResult, brandResult] = await Promise.allSettled([
       transporter.sendMail(adminEmail),
-      transporter.sendMail(brandEmail)
-    ])
+      transporter.sendMail(brandEmail),
+    ]);
 
     const results: EmailResults = {
-      adminEmailSent: adminResult.status === 'fulfilled',
-      brandEmailSent: brandResult.status === 'fulfilled',
-      errors: []
+      adminEmailSent: adminResult.status === "fulfilled",
+      brandEmailSent: brandResult.status === "fulfilled",
+      errors: [],
+    };
+
+    if (adminResult.status === "rejected") {
+      console.error("Error enviando email al admin:", adminResult.reason);
+      results.errors.push("Error enviando notificación al administrador");
     }
 
-    if (adminResult.status === 'rejected') {
-      console.error('Error enviando email al admin:', adminResult.reason)
-      results.errors.push('Error enviando notificación al administrador')
+    if (brandResult.status === "rejected") {
+      console.error("Error enviando email a la marca:", brandResult.reason);
+      results.errors.push("Error enviando email de confirmación a la marca");
     }
 
-    if (brandResult.status === 'rejected') {
-      console.error('Error enviando email a la marca:', brandResult.reason)
-      results.errors.push('Error enviando email de confirmación a la marca')
-    }
-
-    return results
-
+    return results;
   } catch (error) {
-    console.error('Error en el servicio de emails:', error)
+    console.error("Error en el servicio de emails:", error);
     return {
       adminEmailSent: false,
       brandEmailSent: false,
-      errors: ['Error general en el servicio de emails']
-    }
+      errors: ["Error general en el servicio de emails"],
+    };
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body = await request.json();
 
     // Validar campos requeridos
-    const requiredFields = ['brandName', 'email', 'productType', 'message']
-    const missingFields = requiredFields.filter(field => !body[field])
+    const requiredFields = ["brandName", "email", "productType", "message"];
+    const missingFields = requiredFields.filter((field) => !body[field]);
 
     if (missingFields.length > 0) {
       return NextResponse.json(
-        { 
-          error: 'Campos requeridos faltantes', 
-          missingFields 
+        {
+          error: "Campos requeridos faltantes",
+          missingFields,
         },
         { status: 400 }
-      )
+      );
     }
 
     // Validar formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(body.email)) {
       return NextResponse.json(
-        { error: 'Formato de email inválido' },
+        { error: "Formato de email inválido" },
         { status: 400 }
-      )
+      );
     }
 
     // Validar formato de website si se proporciona
-    if (body.website && !body.website.startsWith('http')) {
-      body.website = `https://${body.website}`
+    if (body.website && !body.website.startsWith("http")) {
+      body.website = `https://${body.website}`;
     }
 
     // Crear el registro en la base de datos
@@ -218,67 +238,69 @@ export async function POST(request: NextRequest) {
         productType: body.productType,
         message: body.message,
       },
-    })
+    });
 
     // Enviar emails en segundo plano
     sendBrandContactEmails(brandContact as BrandContact)
-      .then(results => {
-        console.log('Resultados del envío de emails:', results)
+      .then((results) => {
+        console.log("Resultados del envío de emails:", results);
       })
-      .catch(error => {
-        console.error('Error en el envío de emails:', error)
-      })
+      .catch((error) => {
+        console.error("Error en el envío de emails:", error);
+      });
 
     return NextResponse.json(
-      { 
-        message: 'Solicitud recibida correctamente. Te enviaremos un email de confirmación.', 
-        data: brandContact 
+      {
+        message:
+          "Solicitud recibida correctamente. Te enviaremos un email de confirmación.",
+        data: brandContact,
       },
       { status: 201 }
-    )
-
+    );
   } catch (error) {
-    console.error('Error al procesar la solicitud:', error)
+    console.error("Error al procesar la solicitud:", error);
 
     if (error instanceof Error) {
-      if (error.message.includes('Unique constraint')) {
+      if (error.message.includes("Unique constraint")) {
         return NextResponse.json(
-          { error: 'Ya existe una solicitud con este email' },
+          { error: "Ya existe una solicitud con este email" },
           { status: 409 }
-        )
+        );
       }
     }
 
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: "Error interno del servidor" },
       { status: 500 }
-    )
+    );
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status') as BrandContactStatus | null
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status") as BrandContactStatus | null;
 
     // Crear el where condition de manera type-safe
-    const where = status ? { 
-      status: status as BrandContactStatus 
-    } : {}
+    const where = status
+      ? {
+          status: status as BrandContactStatus,
+        }
+      : {};
 
     const brandContacts = await prisma.brandContact.findMany({
       where,
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
-    })
+    });
 
-    return NextResponse.json({ data: brandContacts })
+    return NextResponse.json({ data: brandContacts });
   } catch (error) {
-    console.error('Error al obtener las solicitudes:', error)
+    console.error("Error al obtener las solicitudes:", error);
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: "Error interno del servidor" },
       { status: 500 }
-    )
+    );
   }
 }

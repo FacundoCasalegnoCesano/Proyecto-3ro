@@ -116,12 +116,12 @@ export function ProductCard({
 
     // Usar la función parsePrice para convertir de forma segura
     const priceNumber = parsePrice(product.price);
-    
-    console.log('Agregando al carrito:', {
+
+    console.log("Agregando al carrito:", {
       id: product.id,
       name: product.name,
       price: priceNumber,
-      priceOriginal: product.price
+      priceOriginal: product.price,
     });
 
     // Solo agregar si el precio es válido
@@ -132,7 +132,7 @@ export function ProductCard({
         price: priceNumber,
         quantity: 1,
         image: product.image || product.src || "/placeholder.svg",
-        stockIndividual: 0
+        stockIndividual: 0,
       });
     }
   };
@@ -206,12 +206,12 @@ export function ProductCard({
   // Función para obtener el precio formateado para display
   const getFormattedPrice = (): string => {
     if (!product.price) return "";
-    
+
     // Si ya está formateado como "$1.000,00", usarlo directamente
-    if (typeof product.price === "string" && product.price.includes('$')) {
+    if (typeof product.price === "string" && product.price.includes("$")) {
       return product.price;
     }
-    
+
     // Si es un número o string numérico, formatearlo
     const priceNumber = parsePrice(product.price);
     return formatPrice(priceNumber);

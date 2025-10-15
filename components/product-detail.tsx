@@ -447,7 +447,7 @@ export function ProductDetail({
           price: priceNumber,
           image: product.image || product.src || "/placeholder.svg",
           quantity: 0,
-          stockIndividual: 0
+          stockIndividual: 0,
         });
       }
     }
@@ -468,11 +468,13 @@ export function ProductDetail({
     for (let i = 0; i < quantity; i++) {
       addItem({
         id: parseInt(variant.id),
-        name: `${product.name}${variant.linea ? ` - Línea ${variant.linea}` : ""} - ${variant.name}`,
+        name: `${product.name}${
+          variant.linea ? ` - Línea ${variant.linea}` : ""
+        } - ${variant.name}`,
         price: variant.price,
         image: product.image || "/placeholder.svg",
         quantity: 0,
-        stockIndividual: 0
+        stockIndividual: 0,
       });
     }
   };

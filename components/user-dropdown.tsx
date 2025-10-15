@@ -2,7 +2,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { User, Settings, LogOut, ChevronDown, Briefcase, ShoppingBag } from "lucide-react";
+import {
+  User,
+  Settings,
+  LogOut,
+  ChevronDown,
+  Briefcase,
+  ShoppingBag,
+} from "lucide-react";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -104,7 +111,8 @@ export function UserDropdown({ user, onLogout }: UserDropdownProps) {
                   {user.nombre} {user.apellido}
                 </p>
                 <p className="text-xs text-gray-500">{user.email}</p>
-                <p className="text-xs text-gray-400">Rol: {user.rol}</p> {/* ✅ DEBUG */}
+                <p className="text-xs text-gray-400">Rol: {user.rol}</p>{" "}
+                {/* ✅ DEBUG */}
               </div>
             </div>
           </div>
@@ -139,7 +147,7 @@ export function UserDropdown({ user, onLogout }: UserDropdownProps) {
                 </button>
               </>
             )}
-            
+
             <button
               onClick={handleLogout}
               className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"

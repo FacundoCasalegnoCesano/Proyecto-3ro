@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "auth.config";
 import { prisma } from "lib/prisma";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export async function verifyAdminRole() {
   try {
@@ -42,7 +42,7 @@ export async function verifyAdminRole() {
 
     // ✅ Verificar rol tanto en la sesión como en la base de datos
     const isAdmin = user.rol === "admin" || session.user.rol === "admin";
-    
+
     if (!isAdmin) {
       return {
         isAdmin: false,

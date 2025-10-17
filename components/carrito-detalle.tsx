@@ -1,23 +1,31 @@
 // components/carrito-detalle.tsx
-"use client"
+"use client";
 
-import { Button } from "./ui/button"
-import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, Tag, Package } from "lucide-react"
-import Image from "next/image"
-import { CartItem } from "app/types/cart"
+import { Button } from "./ui/button";
+import {
+  Plus,
+  Minus,
+  Trash2,
+  ShoppingBag,
+  ArrowLeft,
+  Tag,
+  Package,
+} from "lucide-react";
+import Image from "next/image";
+import { CartItem } from "app/types/cart";
 
 interface CarritoDetalleProps {
-  items?: CartItem[]
-  totalItems?: number
-  subtotal?: number
-  iva?: number
-  envio?: number
-  total?: number
-  onUpdateQuantity?: (id: number, quantity: number) => void
-  onRemoveItem?: (id: number) => void
-  onClearCart?: () => void
-  onBack?: () => void
-  onProceedToCheckout?: () => void
+  items?: CartItem[];
+  totalItems?: number;
+  subtotal?: number;
+  iva?: number;
+  envio?: number;
+  total?: number;
+  onUpdateQuantity?: (id: number, quantity: number) => void;
+  onRemoveItem?: (id: number) => void;
+  onClearCart?: () => void;
+  onBack?: () => void;
+  onProceedToCheckout?: () => void;
 }
 
 export function CarritoDetalle({
@@ -37,8 +45,8 @@ export function CarritoDetalle({
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
       currency: "ARS",
-    }).format(price)
-  }
+    }).format(price);
+  };
 
   // Si no hay items, mostrar estado vacío
   if (items.length === 0) {
@@ -47,7 +55,11 @@ export function CarritoDetalle({
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Header */}
           <div className="mb-8">
-            <Button variant="ghost" onClick={onBack} className="mb-4 hover:bg-gray-100 transition-all duration-200">
+            <Button
+              variant="ghost"
+              onClick={onBack}
+              className="mb-4 hover:bg-gray-100 transition-all duration-200"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver
             </Button>
@@ -62,8 +74,12 @@ export function CarritoDetalle({
             <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <ShoppingBag className="w-16 h-16 text-gray-400" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">No hay productos en tu carrito</h2>
-            <p className="text-gray-600 mb-8">Agrega algunos productos para comenzar</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              No hay productos en tu carrito
+            </h2>
+            <p className="text-gray-600 mb-8">
+              Agrega algunos productos para comenzar
+            </p>
             <Button
               onClick={onBack}
               className="bg-gradient-to-r from-babalu-primary to-babalu-dark hover:shadow-lg transform transition-all duration-200 hover:scale-105"
@@ -73,7 +89,7 @@ export function CarritoDetalle({
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -81,7 +97,11 @@ export function CarritoDetalle({
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
-          <Button variant="ghost" onClick={onBack} className="mb-4 hover:bg-gray-100 transition-all duration-200">
+          <Button
+            variant="ghost"
+            onClick={onBack}
+            className="mb-4 hover:bg-gray-100 transition-all duration-200"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver
           </Button>
@@ -90,7 +110,8 @@ export function CarritoDetalle({
             <h1 className="text-4xl font-bold text-gray-900">Mi Carrito</h1>
           </div>
           <p className="text-gray-600">
-            {totalItems} {totalItems === 1 ? "producto" : "productos"} en tu carrito
+            {totalItems} {totalItems === 1 ? "producto" : "productos"} en tu
+            carrito
           </p>
         </div>
 
@@ -108,7 +129,7 @@ export function CarritoDetalle({
                   {totalItems} {totalItems === 1 ? "item" : "items"}
                 </span>
               </div>
-              
+
               <div className="space-y-4">
                 {items.map((item) => (
                   <div
@@ -118,11 +139,11 @@ export function CarritoDetalle({
                     <div className="flex gap-4">
                       {/* Image - Más pequeña */}
                       <div className="relative w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
-                        <Image 
-                          src={item.image || "/placeholder.svg"} 
-                          alt={item.name} 
-                          fill 
-                          className="object-cover" 
+                        <Image
+                          src={item.image || "/placeholder.svg"}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
                         />
                       </div>
 
@@ -130,8 +151,10 @@ export function CarritoDetalle({
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">{item.name}</h3>
-                            
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">
+                              {item.name}
+                            </h3>
+
                             {/* MOSTRAR LÍNEA Y AROMA */}
                             {(item.linea || item.aroma) && (
                               <div className="flex flex-wrap gap-1 mb-2">
@@ -147,13 +170,15 @@ export function CarritoDetalle({
                                 )}
                               </div>
                             )}
-                            
+
                             <div className="flex items-center gap-2">
                               <Tag className="w-3 h-3 text-babalu-primary" />
-                              <p className="text-xl font-bold text-babalu-primary">{formatPrice(item.price)}</p>
+                              <p className="text-xl font-bold text-babalu-primary">
+                                {formatPrice(item.price)}
+                              </p>
                               <span className="text-xs text-gray-500">c/u</span>
                             </div>
-                            
+
                             {/* MOSTRAR STOCK DISPONIBLE */}
                             <div className="text-xs text-gray-500 mt-1">
                               Stock disponible: {item.stockIndividual}
@@ -172,24 +197,32 @@ export function CarritoDetalle({
                         {/* Quantity and Subtotal */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <span className="text-xs text-gray-600 font-medium">Cantidad:</span>
+                            <span className="text-xs text-gray-600 font-medium">
+                              Cantidad:
+                            </span>
                             <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden">
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                                onClick={() =>
+                                  onUpdateQuantity(item.id, item.quantity - 1)
+                                }
                                 className="w-8 h-8 p-0 hover:bg-babalu-primary/10 hover:text-babalu-primary transition-all duration-200"
                                 disabled={item.quantity <= 1}
                               >
                                 <Minus className="w-3 h-3" />
                               </Button>
 
-                              <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
+                              <span className="w-8 text-center font-bold text-sm">
+                                {item.quantity}
+                              </span>
 
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                                onClick={() =>
+                                  onUpdateQuantity(item.id, item.quantity + 1)
+                                }
                                 className="w-8 h-8 p-0 hover:bg-babalu-primary/10 hover:text-babalu-primary transition-all duration-200"
                               >
                                 <Plus className="w-3 h-3" />
@@ -198,8 +231,12 @@ export function CarritoDetalle({
                           </div>
 
                           <div className="text-right">
-                            <p className="text-xs text-gray-600 mb-1">Subtotal</p>
-                            <p className="text-lg font-bold text-gray-900">{formatPrice(item.price * item.quantity)}</p>
+                            <p className="text-xs text-gray-600 mb-1">
+                              Subtotal
+                            </p>
+                            <p className="text-lg font-bold text-gray-900">
+                              {formatPrice(item.price * item.quantity)}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -232,41 +269,55 @@ export function CarritoDetalle({
 
               <div className="space-y-4 py-4 border-y border-gray-200">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Subtotal ({totalItems} productos)</span>
-                  <span className="font-semibold text-gray-900">{formatPrice(subtotal)}</span>
+                  <span className="text-gray-600">
+                    Subtotal ({totalItems} productos)
+                  </span>
+                  <span className="font-semibold text-gray-900">
+                    {formatPrice(subtotal)}
+                  </span>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">IVA (21%)</span>
-                  <span className="font-semibold text-gray-900">{formatPrice(iva)}</span>
+                  <span className="font-semibold text-gray-900">
+                    {formatPrice(iva)}
+                  </span>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Envío</span>
                   <span className="font-semibold text-gray-900">
-                    {envio === 0 ? <span className="text-green-600 font-bold">¡GRATIS!</span> : formatPrice(envio)}
+                    {envio === 0 ? (
+                      <span className="text-green-600 font-bold">¡GRATIS!</span>
+                    ) : (
+                      formatPrice(envio)
+                    )}
                   </span>
                 </div>
               </div>
 
               <div className="flex justify-between items-center py-4">
                 <span className="text-xl font-bold text-gray-900">Total</span>
-                <span className="text-3xl font-bold text-babalu-primary">{formatPrice(total)}</span>
+                <span className="text-3xl font-bold text-babalu-primary">
+                  {formatPrice(total)}
+                </span>
               </div>
 
               {/* Free Shipping Alert */}
               {envio > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-800">
-                    <span className="font-semibold">¡Estás cerca!</span> Agrega {formatPrice(5000 - subtotal)} más para
-                    obtener envío gratis
+                    <span className="font-semibold">¡Estás cerca!</span> Agrega{" "}
+                    {formatPrice(5000 - subtotal)} más para obtener envío gratis
                   </p>
                 </div>
               )}
 
               {envio === 0 && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-sm text-green-800 font-semibold">✓ Envío gratis en este pedido</p>
+                  <p className="text-sm text-green-800 font-semibold">
+                    ✓ Envío gratis en este pedido
+                  </p>
                 </div>
               )}
 
@@ -303,5 +354,5 @@ export function CarritoDetalle({
         </div>
       </div>
     </div>
-  )
+  );
 }

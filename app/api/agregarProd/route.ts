@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "lib/prisma";
 import { Prisma } from "@prisma/client";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
@@ -1054,7 +1054,7 @@ export async function GET(request: NextRequest) {
 
       // CORREGIDO: price ahora es número, formattedPrice mantiene el formato string
       const priceNumber = parseFloat(producto.precio) || 0;
-      
+
       const formattedProduct = {
         id: producto.id,
         name: producto.nombre,
@@ -1193,7 +1193,7 @@ export async function GET(request: NextRequest) {
     // CORREGIDO: price ahora es número, formattedPrice mantiene el formato string
     const formattedProducts = productos.map((producto) => {
       const priceNumber = parseFloat(producto.precio) || 0;
-      
+
       return {
         id: producto.id,
         name: producto.nombre,
@@ -1480,7 +1480,7 @@ export async function PATCH(request: NextRequest) {
 
     // CORREGIDO: price ahora es número, formattedPrice mantiene el formato string
     const priceNumber = parseFloat(productoActualizado.precio) || 0;
-    
+
     const formattedProduct = {
       id: productoActualizado.id,
       name: productoActualizado.nombre,

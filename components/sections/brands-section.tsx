@@ -1,26 +1,29 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Image from "next/image"
-import { ExternalLink } from "lucide-react"
-import { BrandContactModal, type BrandContactFormData } from "../../components/brand-contact-modal"
+import { useState } from "react";
+import Image from "next/image";
+import { ExternalLink } from "lucide-react";
+import {
+  BrandContactModal,
+  type BrandContactFormData,
+} from "../../components/brand-contact-modal";
 
 interface Brand {
-  id: number
-  name: string
-  logo: string
-  url: string
-  alt: string
+  id: number;
+  name: string;
+  logo: string;
+  url: string;
+  alt: string;
 }
 
 interface BrandsSectionProps {
-  brands?: Brand[]
-  onContactSubmit?: (formData: BrandContactFormData) => void | Promise<void>
+  brands?: Brand[];
+  onContactSubmit?: (formData: BrandContactFormData) => void | Promise<void>;
 }
 
 export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Marcas de ejemplo - tú puedes pasar tu propio array
   const defaultBrands: Brand[] = [
@@ -66,30 +69,33 @@ export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
       url: "https://example.com/marca6",
       alt: "Logo Marca 6",
     },
-  ]
+  ];
 
-  const displayBrands = brands || defaultBrands
+  const displayBrands = brands || defaultBrands;
 
   const handleContactSubmit = async (formData: BrandContactFormData) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     // Aquí el usuario implementará su lógica
     if (onContactSubmit) {
-      await onContactSubmit(formData)
+      await onContactSubmit(formData);
     }
 
-    setIsSubmitting(false)
-    setIsModalOpen(false)
-  }
+    setIsSubmitting(false);
+    setIsModalOpen(false);
+  };
 
   return (
     <>
       <section className="w-full py-12 md:py-16 bg-gray-50">
         <div className="container px-4 md:px-6">
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Marcas con las que Trabajamos</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+              Marcas con las que Trabajamos
+            </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Colaboramos con las mejores marcas del mercado para ofrecerte productos de calidad
+              Colaboramos con las mejores marcas del mercado para ofrecerte
+              productos de calidad
             </p>
           </div>
 
@@ -143,5 +149,5 @@ export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
         isSubmitting={isSubmitting}
       />
     </>
-  )
+  );
 }

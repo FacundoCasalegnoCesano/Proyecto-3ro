@@ -1,78 +1,85 @@
 // compra/steps/PersonalInfoStep.tsx
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "../../ui/button"
-import { User, MapPin, Save, Edit2, Mail, Phone } from "lucide-react"
-import { PaymentData, FormErrors } from "../CompraWizard"
+import { useState, useEffect } from "react";
+import { Button } from "../../ui/button";
+import { User, MapPin, Save, Edit2, Mail, Phone } from "lucide-react";
+import { PaymentData, FormErrors } from "../CompraWizard";
 
 // Definir el tipo para setErrors que acepte funciones
-type SetErrorsFunction = (errors: FormErrors | ((prev: FormErrors) => FormErrors)) => void
+type SetErrorsFunction = (
+  errors: FormErrors | ((prev: FormErrors) => FormErrors)
+) => void;
 
 interface PersonalInfoStepProps {
-  formData: PaymentData
-  updateFormData: (data: Partial<PaymentData>) => void
-  errors: FormErrors
-  setErrors: SetErrorsFunction
-  onNext: () => void
+  formData: PaymentData;
+  updateFormData: (data: Partial<PaymentData>) => void;
+  errors: FormErrors;
+  setErrors: SetErrorsFunction;
+  onNext: () => void;
 }
 
-export function PersonalInfoStep({ 
-  formData, 
-  updateFormData, 
-  errors, 
-  setErrors, 
-  onNext 
+export function PersonalInfoStep({
+  formData,
+  updateFormData,
+  errors,
+  setErrors,
+  onNext,
 }: PersonalInfoStepProps) {
-  const [hasSavedAddress, setHasSavedAddress] = useState(false)
-  const [showAddressForm, setShowAddressForm] = useState(false)
+  const [hasSavedAddress, setHasSavedAddress] = useState(false);
+  const [showAddressForm, setShowAddressForm] = useState(false);
 
   // Verificar si hay dirección guardada
   useEffect(() => {
-    const hasAddress = formData.calle && 
-                      formData.ciudad && 
-                      formData.provincia && 
-                      formData.codigoPostal
-    
-    setHasSavedAddress(!!hasAddress)
-    
+    const hasAddress =
+      formData.calle &&
+      formData.ciudad &&
+      formData.provincia &&
+      formData.codigoPostal;
+
+    setHasSavedAddress(!!hasAddress);
+
     // Mostrar formulario de dirección si no hay datos guardados
     if (!hasAddress) {
-      setShowAddressForm(true)
+      setShowAddressForm(true);
     }
-  }, [formData])
+  }, [formData]);
 
   const validateForm = () => {
-    const newErrors: FormErrors = {}
+    const newErrors: FormErrors = {};
 
     // Validar información personal
-    if (!formData.nombre.trim()) newErrors.nombre = "El nombre es requerido"
-    if (!formData.apellido.trim()) newErrors.apellido = "El apellido es requerido"
-    if (!formData.email.trim()) newErrors.email = "El email es requerido"
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email inválido"
-    if (!formData.phone.trim()) newErrors.phone = "El teléfono es requerido"
+    if (!formData.nombre.trim()) newErrors.nombre = "El nombre es requerido";
+    if (!formData.apellido.trim())
+      newErrors.apellido = "El apellido es requerido";
+    if (!formData.email.trim()) newErrors.email = "El email es requerido";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
+      newErrors.email = "Email inválido";
+    if (!formData.phone.trim()) newErrors.phone = "El teléfono es requerido";
 
     // Validar dirección solo si se muestra el formulario o no hay datos guardados
     if (showAddressForm || !hasSavedAddress) {
-      if (!formData.calle.trim()) newErrors.calle = "La dirección es requerida"
-      if (!formData.ciudad.trim()) newErrors.ciudad = "La ciudad es requerida"
-      if (!formData.provincia.trim()) newErrors.provincia = "La provincia es requerida"
-      if (!formData.codigoPostal.trim()) newErrors.codigoPostal = "El código postal es requerido"
+      if (!formData.calle.trim()) newErrors.calle = "La dirección es requerida";
+      if (!formData.ciudad.trim()) newErrors.ciudad = "La ciudad es requerida";
+      if (!formData.provincia.trim())
+        newErrors.provincia = "La provincia es requerida";
+      if (!formData.codigoPostal.trim())
+        newErrors.codigoPostal = "El código postal es requerido";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleNext = () => {
     if (validateForm()) {
       // Si el usuario quiere guardar la información
       if (formData.saveInfo) {
-        saveUserAddress()
+        saveUserAddress();
       }
-      onNext()
+      onNext();
     }
-  }
+  };
 
   const saveUserAddress = async () => {
     try {
@@ -89,51 +96,55 @@ export function PersonalInfoStep({
           codigoPostal: formData.codigoPostal.trim(),
           pais: formData.pais,
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error("Error al guardar la dirección")
+        throw new Error("Error al guardar la dirección");
       }
 
-      console.log("Dirección guardada exitosamente")
+      console.log("Dirección guardada exitosamente");
     } catch (error) {
-      console.error("Error guardando dirección:", error)
+      console.error("Error guardando dirección:", error);
     }
-  }
+  };
 
   // SOLUCIÓN CORREGIDA - Usando el tipo SetErrorsFunction
   const handleInputChange = (field: string, value: string) => {
-    updateFormData({ [field]: value })
-    
+    updateFormData({ [field]: value });
+
     // Limpiar error específico si existe
     if (errors[field]) {
       setErrors((prev: FormErrors) => {
-        const newErrors = { ...prev }
-        delete newErrors[field]
-        return newErrors
-      })
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
-  }
+  };
 
   const useSavedAddress = () => {
-    setShowAddressForm(false)
-  }
+    setShowAddressForm(false);
+  };
 
   const editAddress = () => {
-    setShowAddressForm(true)
-  }
+    setShowAddressForm(true);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-2 mb-6">
         <User className="w-5 h-5 text-babalu-primary" />
-        <h3 className="text-lg font-semibold text-gray-900">Información Personal</h3>
+        <h3 className="text-lg font-semibold text-gray-900">
+          Información Personal
+        </h3>
       </div>
 
       {/* Información Básica */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Nombre *
+          </label>
           <input
             type="text"
             value={formData.nombre}
@@ -143,11 +154,15 @@ export function PersonalInfoStep({
             }`}
             placeholder="Tu nombre"
           />
-          {errors.nombre && <p className="mt-1 text-sm text-red-600">{errors.nombre}</p>}
+          {errors.nombre && (
+            <p className="mt-1 text-sm text-red-600">{errors.nombre}</p>
+          )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Apellido *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Apellido *
+          </label>
           <input
             type="text"
             value={formData.apellido}
@@ -157,7 +172,9 @@ export function PersonalInfoStep({
             }`}
             placeholder="Tu apellido"
           />
-          {errors.apellido && <p className="mt-1 text-sm text-red-600">{errors.apellido}</p>}
+          {errors.apellido && (
+            <p className="mt-1 text-sm text-red-600">{errors.apellido}</p>
+          )}
         </div>
 
         <div>
@@ -174,7 +191,9 @@ export function PersonalInfoStep({
             }`}
             placeholder="tu@email.com"
           />
-          {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+          )}
         </div>
 
         <div>
@@ -191,7 +210,9 @@ export function PersonalInfoStep({
             }`}
             placeholder="+54 11 1234-5678"
           />
-          {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+          {errors.phone && (
+            <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+          )}
         </div>
       </div>
 
@@ -200,9 +221,11 @@ export function PersonalInfoStep({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
             <MapPin className="w-5 h-5 text-babalu-primary" />
-            <h4 className="text-md font-semibold text-gray-900">Dirección de Envío</h4>
+            <h4 className="text-md font-semibold text-gray-900">
+              Dirección de Envío
+            </h4>
           </div>
-          
+
           {hasSavedAddress && !showAddressForm && (
             <Button
               type="button"
@@ -228,7 +251,10 @@ export function PersonalInfoStep({
                 </div>
                 <div className="text-sm text-green-700 space-y-1">
                   <p>{formData.calle}</p>
-                  <p>{formData.ciudad}, {formData.provincia} - {formData.codigoPostal}</p>
+                  <p>
+                    {formData.ciudad}, {formData.provincia} -{" "}
+                    {formData.codigoPostal}
+                  </p>
                   <p>{formData.pais}</p>
                 </div>
               </div>
@@ -241,7 +267,9 @@ export function PersonalInfoStep({
           <div className="space-y-4 bg-blue-50/30 rounded-lg p-4 border border-blue-100">
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Dirección *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Dirección *
+                </label>
                 <input
                   type="text"
                   value={formData.calle}
@@ -251,57 +279,83 @@ export function PersonalInfoStep({
                   }`}
                   placeholder="Calle y número"
                 />
-                {errors.calle && <p className="mt-1 text-sm text-red-600">{errors.calle}</p>}
+                {errors.calle && (
+                  <p className="mt-1 text-sm text-red-600">{errors.calle}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Ciudad *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ciudad *
+                  </label>
                   <input
                     type="text"
                     value={formData.ciudad}
-                    onChange={(e) => handleInputChange("ciudad", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("ciudad", e.target.value)
+                    }
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
                       errors.ciudad ? "border-red-300" : "border-gray-300"
                     }`}
                     placeholder="Ciudad"
                   />
-                  {errors.ciudad && <p className="mt-1 text-sm text-red-600">{errors.ciudad}</p>}
+                  {errors.ciudad && (
+                    <p className="mt-1 text-sm text-red-600">{errors.ciudad}</p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Provincia *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Provincia *
+                  </label>
                   <input
                     type="text"
                     value={formData.provincia}
-                    onChange={(e) => handleInputChange("provincia", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("provincia", e.target.value)
+                    }
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
                       errors.provincia ? "border-red-300" : "border-gray-300"
                     }`}
                     placeholder="Provincia"
                   />
-                  {errors.provincia && <p className="mt-1 text-sm text-red-600">{errors.provincia}</p>}
+                  {errors.provincia && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.provincia}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Código Postal *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Código Postal *
+                  </label>
                   <input
                     type="text"
                     value={formData.codigoPostal}
-                    onChange={(e) => handleInputChange("codigoPostal", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("codigoPostal", e.target.value)
+                    }
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
                       errors.codigoPostal ? "border-red-300" : "border-gray-300"
                     }`}
                     placeholder="1234"
                     maxLength={8}
                   />
-                  {errors.codigoPostal && <p className="mt-1 text-sm text-red-600">{errors.codigoPostal}</p>}
+                  {errors.codigoPostal && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.codigoPostal}
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">País</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    País
+                  </label>
                   <select
                     value={formData.pais}
                     onChange={(e) => handleInputChange("pais", e.target.value)}
@@ -364,5 +418,5 @@ export function PersonalInfoStep({
         </Button>
       </div>
     </div>
-  )
+  );
 }

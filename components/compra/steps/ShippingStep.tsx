@@ -1,74 +1,118 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { Button } from "../../ui/button"
-import { MapPin, Truck, Clock, Check, Loader2 } from "lucide-react"
-import { PaymentData, FormErrors, SetErrorsFunction } from "../CompraWizard"
-import type { CartItem } from "app/types/cart"
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "../../ui/button";
+import { MapPin, Truck, Clock, Check, Loader2 } from "lucide-react";
+import { PaymentData, FormErrors, SetErrorsFunction } from "../CompraWizard";
+import type { CartItem } from "app/types/cart";
 
 // Interface para las opciones de envío (corregida)
 interface ShippingOption {
-  id: string
-  carrier: "andreani" | "correo-argentino"
-  name: string
-  price: number
-  deliveryDays: number
-  estimatedDate: string
-  service: string
+  id: string;
+  carrier: "andreani" | "correo-argentino";
+  name: string;
+  price: number;
+  deliveryDays: number;
+  estimatedDate: string;
+  service: string;
 }
 
 // Interface para las zonas
 interface Zone {
-  name: string
-  zipCodes: string[]
-  basePrice: number
-  deliveryDays: number
+  name: string;
+  zipCodes: string[];
+  basePrice: number;
+  deliveryDays: number;
 }
 
 interface ShippingStepProps {
-  formData: PaymentData
-  updateFormData: (data: Partial<PaymentData>) => void
-  errors: FormErrors
-  setErrors: SetErrorsFunction
-  cartItems: CartItem[]
-  subtotal: number
-  onNext: () => void
-  onBack: () => void
+  formData: PaymentData;
+  updateFormData: (data: Partial<PaymentData>) => void;
+  errors: FormErrors;
+  setErrors: SetErrorsFunction;
+  cartItems: CartItem[];
+  subtotal: number;
+  onNext: () => void;
+  onBack: () => void;
 }
 
 // Servicio simulado integrado (segunda opción avanzada)
 class AdvancedShippingService {
   private zones: Zone[] = [
     {
-      name: 'CABA',
-      zipCodes: ['1001', '1002', '1003', '1004', '1005', '1006', '1007', '1008', '1009', '1010'],
+      name: "CABA",
+      zipCodes: [
+        "1001",
+        "1002",
+        "1003",
+        "1004",
+        "1005",
+        "1006",
+        "1007",
+        "1008",
+        "1009",
+        "1010",
+      ],
       basePrice: 1500,
-      deliveryDays: 3
+      deliveryDays: 3,
     },
     {
-      name: 'GBA Norte',
-      zipCodes: ['1600', '1601', '1602', '1603', '1604', '1605', '1606', '1607', '1608', '1609'],
+      name: "GBA Norte",
+      zipCodes: [
+        "1600",
+        "1601",
+        "1602",
+        "1603",
+        "1604",
+        "1605",
+        "1606",
+        "1607",
+        "1608",
+        "1609",
+      ],
       basePrice: 1800,
-      deliveryDays: 4
+      deliveryDays: 4,
     },
     {
-      name: 'GBA Sur',
-      zipCodes: ['1800', '1801', '1802', '1803', '1804', '1805', '1806', '1807', '1808', '1809'],
+      name: "GBA Sur",
+      zipCodes: [
+        "1800",
+        "1801",
+        "1802",
+        "1803",
+        "1804",
+        "1805",
+        "1806",
+        "1807",
+        "1808",
+        "1809",
+      ],
       basePrice: 1900,
-      deliveryDays: 5
+      deliveryDays: 5,
     },
     {
-      name: 'Interior Bs As',
-      zipCodes: ['6000', '6001', '6002', '6003', '6004', '6005', '6006', '6007', '6008', '6009'],
+      name: "Interior Bs As",
+      zipCodes: [
+        "6000",
+        "6001",
+        "6002",
+        "6003",
+        "6004",
+        "6005",
+        "6006",
+        "6007",
+        "6008",
+        "6009",
+      ],
       basePrice: 2200,
-      deliveryDays: 6
+      deliveryDays: 6,
     },
     {
-      name: 'Resto del País',
+      name: "Resto del País",
       zipCodes: [],
       basePrice: 2800,
-      deliveryDays: 8
-    }
+      deliveryDays: 8,
+    },
   ];
 
   async getAllQuotes(
@@ -76,66 +120,85 @@ class AdvancedShippingService {
     destinationZipCode: string,
     weight: number
   ): Promise<ShippingOption[]> {
-    // Simular delay de red
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-
     // Validar código postal
     if (!this.isValidZipCode(destinationZipCode)) {
-      throw new Error('Código postal inválido');
+      throw new Error("Código postal inválido");
     }
 
     const originZone = this.findZone(originZipCode);
     const destinationZone = this.findZone(destinationZipCode);
 
     // Calcular precios basados en zonas y peso
-    const andreaniPrice = this.calculatePrice('andreani', originZone, destinationZone, weight);
-    const correoPrice = this.calculatePrice('correo-argentino', originZone, destinationZone, weight);
-    
-    const andreaniDays = this.calculateDeliveryDays('andreani', originZone, destinationZone);
-    const correoDays = this.calculateDeliveryDays('correo-argentino', originZone, destinationZone);
+    const andreaniPrice = this.calculatePrice(
+      "andreani",
+      originZone,
+      destinationZone,
+      weight
+    );
+    const correoPrice = this.calculatePrice(
+      "correo-argentino",
+      originZone,
+      destinationZone,
+      weight
+    );
+
+    const andreaniDays = this.calculateDeliveryDays(
+      "andreani",
+      originZone,
+      destinationZone
+    );
+    const correoDays = this.calculateDeliveryDays(
+      "correo-argentino",
+      originZone,
+      destinationZone
+    );
 
     const quotes: ShippingOption[] = [
       {
-        id: 'andreani-standard',
-        carrier: 'andreani',
-        name: 'Andreani Estandar',
+        id: "andreani-standard",
+        carrier: "andreani",
+        name: "Andreani Estandar",
         price: andreaniPrice,
         deliveryDays: andreaniDays,
         estimatedDate: this.calculateEstimatedDate(andreaniDays),
-        service: 'Estandar',
+        service: "Estandar",
       },
       {
-        id: 'andreani-express',
-        carrier: 'andreani',
-        name: 'Andreani Express',
+        id: "andreani-express",
+        carrier: "andreani",
+        name: "Andreani Express",
         price: Math.round(andreaniPrice * 1.5),
         deliveryDays: Math.max(2, Math.round(andreaniDays * 0.5)),
-        estimatedDate: this.calculateEstimatedDate(Math.max(2, Math.round(andreaniDays * 0.5))),
-        service: 'Express',
+        estimatedDate: this.calculateEstimatedDate(
+          Math.max(2, Math.round(andreaniDays * 0.5))
+        ),
+        service: "Express",
       },
       {
-        id: 'correo-argentino-standard',
-        carrier: 'correo-argentino',
-        name: 'Correo Argentino',
+        id: "correo-argentino-standard",
+        carrier: "correo-argentino",
+        name: "Correo Argentino",
         price: correoPrice,
         deliveryDays: correoDays,
         estimatedDate: this.calculateEstimatedDate(correoDays),
-        service: 'Estandar',
+        service: "Estandar",
       },
       {
-        id: 'correo-argentino-prioritario',
-        carrier: 'correo-argentino',
-        name: 'Correo Argentino Prioritario',
+        id: "correo-argentino-prioritario",
+        carrier: "correo-argentino",
+        name: "Correo Argentino Prioritario",
         price: Math.round(correoPrice * 1.4),
         deliveryDays: Math.max(3, Math.round(correoDays * 0.6)),
-        estimatedDate: this.calculateEstimatedDate(Math.max(3, Math.round(correoDays * 0.6))),
-        service: 'Prioritario',
-      }
+        estimatedDate: this.calculateEstimatedDate(
+          Math.max(3, Math.round(correoDays * 0.6))
+        ),
+        service: "Prioritario",
+      },
     ];
 
     return quotes
       .sort((a, b) => a.price - b.price)
-      .filter(quote => quote.price < 10000);
+      .filter((quote) => quote.price < 10000);
   }
 
   private isValidZipCode(zipCode: string): boolean {
@@ -143,118 +206,131 @@ class AdvancedShippingService {
   }
 
   private findZone(zipCode: string): Zone {
-    return this.zones.find(zone => 
-      zone.zipCodes.includes(zipCode) || 
-      zone.zipCodes.some(prefix => zipCode.startsWith(prefix))
-    ) || this.zones[this.zones.length - 1];
+    return (
+      this.zones.find(
+        (zone) =>
+          zone.zipCodes.includes(zipCode) ||
+          zone.zipCodes.some((prefix) => zipCode.startsWith(prefix))
+      ) || this.zones[this.zones.length - 1]
+    );
   }
 
   private calculatePrice(
-    carrier: "andreani" | "correo-argentino", 
-    origin: Zone, 
-    destination: Zone, 
+    carrier: "andreani" | "correo-argentino",
+    origin: Zone,
+    destination: Zone,
     weight: number
   ): number {
-    const basePrice = carrier === 'andreani' ? origin.basePrice * 1.1 : origin.basePrice;
-    const weightMultiplier = weight * (carrier === 'andreani' ? 300 : 250);
+    const basePrice =
+      carrier === "andreani" ? origin.basePrice * 1.1 : origin.basePrice;
+    const weightMultiplier = weight * (carrier === "andreani" ? 300 : 250);
     const distancePenalty = this.calculateDistancePenalty(origin, destination);
-    
+
     return Math.round((basePrice + weightMultiplier) * distancePenalty);
   }
 
   private calculateDeliveryDays(
-    carrier: "andreani" | "correo-argentino", 
-    origin: Zone, 
+    carrier: "andreani" | "correo-argentino",
+    origin: Zone,
     destination: Zone
   ): number {
-    const baseDays = carrier === 'andreani' ? origin.deliveryDays - 1 : origin.deliveryDays;
+    const baseDays =
+      carrier === "andreani" ? origin.deliveryDays - 1 : origin.deliveryDays;
     const distancePenalty = this.calculateDistancePenalty(origin, destination);
-    
+
     return Math.round(baseDays * distancePenalty);
   }
 
   private calculateDistancePenalty(origin: Zone, destination: Zone): number {
     if (origin.name === destination.name) return 1.0;
-    if (origin.name.includes('CABA') && destination.name.includes('GBA')) return 1.2;
-    if (origin.name.includes('GBA') && destination.name.includes('CABA')) return 1.2;
+    if (origin.name.includes("CABA") && destination.name.includes("GBA"))
+      return 1.2;
+    if (origin.name.includes("GBA") && destination.name.includes("CABA"))
+      return 1.2;
     return 1.8;
   }
 
   private calculateEstimatedDate(deliveryDays: number): string {
     const date = new Date();
     let daysAdded = 0;
-    
+
     while (daysAdded < deliveryDays) {
       date.setDate(date.getDate() + 1);
       if (date.getDay() !== 0 && date.getDay() !== 6) {
         daysAdded++;
       }
     }
-    
-    return date.toLocaleDateString('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+
+    return date.toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
   }
 }
 
 const shippingService = new AdvancedShippingService();
 
-export function ShippingStep({ 
-  formData, 
-  updateFormData, 
-  errors, 
-  setErrors, 
+export function ShippingStep({
+  formData,
+  updateFormData,
+  errors,
+  setErrors,
   cartItems,
-  onNext, 
-  onBack 
+  onNext,
+  onBack,
 }: ShippingStepProps) {
-  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([])
-  const [calculating, setCalculating] = useState(false)
-  const [selectedOption, setSelectedOption] = useState<ShippingOption | null>(null)
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
+  const [calculating, setCalculating] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<ShippingOption | null>(
+    null
+  );
 
   // Calcular peso total del carrito - movido dentro del componente para usar useCallback
   const calculateTotalWeight = useCallback((): number => {
-    return cartItems.reduce((total, item) => total + (0.5) * item.quantity, 0);
-  }, [cartItems])
+    return cartItems.reduce((total, item) => total + 0.5 * item.quantity, 0);
+  }, [cartItems]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
       currency: "ARS",
-    }).format(price)
-  }
+    }).format(price);
+  };
 
   const validateForm = () => {
-    const newErrors: FormErrors = {}
+    const newErrors: FormErrors = {};
 
-    if (!selectedOption) newErrors.shipping = "Debes seleccionar un método de envío"
+    if (!selectedOption)
+      newErrors.shipping = "Debes seleccionar un método de envío";
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // Función para manejar la selección de envío - movida antes de useCallback
-  const handleSelectShipping = useCallback((option: ShippingOption) => {
-    setSelectedOption(option)
-    updateFormData({ 
-      shippingOption: option,
-      shippingMethod: option.id
-    })
-  }, [updateFormData])
+  const handleSelectShipping = useCallback(
+    (option: ShippingOption) => {
+      setSelectedOption(option);
+      updateFormData({
+        shippingOption: option,
+        shippingMethod: option.id,
+      });
+    },
+    [updateFormData]
+  );
 
   // Usar useCallback para memoizar la función con todas las dependencias necesarias
   const calculateShipping = useCallback(async () => {
     if (!formData.codigoPostal || formData.codigoPostal.length < 4) {
-      setErrors((prev: FormErrors) => ({ 
-        ...prev, 
-        shipping: "Completa tu código postal para calcular envíos" 
-      }))
-      return
+      setErrors((prev: FormErrors) => ({
+        ...prev,
+        shipping: "Completa tu código postal para calcular envíos",
+      }));
+      return;
     }
 
-    setCalculating(true)
+    setCalculating(true);
     try {
       const totalWeight = calculateTotalWeight();
 
@@ -263,55 +339,56 @@ export function ShippingStep({
         "1001", // Código postal de origen fijo (tu almacén/ubicación)
         formData.codigoPostal,
         totalWeight
-      )
+      );
 
-      setShippingOptions(quotes)
-      
+      setShippingOptions(quotes);
+
       // Seleccionar automáticamente la opción más económica y actualizar en tiempo real
       if (quotes.length > 0) {
-        const cheapestOption = quotes.reduce((prev, current) => 
+        const cheapestOption = quotes.reduce((prev, current) =>
           prev.price < current.price ? prev : current
-        )
-        handleSelectShipping(cheapestOption)
+        );
+        handleSelectShipping(cheapestOption);
       }
 
       // Limpiar errores si hay opciones disponibles
       if (quotes.length > 0 && errors.shipping) {
         setErrors((prev: FormErrors) => {
-          const newErrors = { ...prev }
-          delete newErrors.shipping
-          return newErrors
-        })
+          const newErrors = { ...prev };
+          delete newErrors.shipping;
+          return newErrors;
+        });
       }
     } catch (error) {
-      console.error("Error calculando envíos:", error)
-      setErrors((prev: FormErrors) => ({ 
-        ...prev, 
-        shipping: "Error al calcular opciones de envío. Verifica tu código postal." 
-      }))
+      console.error("Error calculando envíos:", error);
+      setErrors((prev: FormErrors) => ({
+        ...prev,
+        shipping:
+          "Error al calcular opciones de envío. Verifica tu código postal.",
+      }));
     } finally {
-      setCalculating(false)
+      setCalculating(false);
     }
   }, [
-    formData.codigoPostal, 
-    setErrors, 
-    calculateTotalWeight, 
-    handleSelectShipping, 
-    errors.shipping // Incluido en las dependencias
-  ])
+    formData.codigoPostal,
+    setErrors,
+    calculateTotalWeight,
+    handleSelectShipping,
+    errors.shipping, // Incluido en las dependencias
+  ]);
 
   // Calcular envíos automáticamente cuando el componente se monta
   useEffect(() => {
     if (formData.codigoPostal && formData.codigoPostal.length >= 4) {
-      calculateShipping()
+      calculateShipping();
     }
-  }, [formData.codigoPostal, calculateShipping])
+  }, [formData.codigoPostal, calculateShipping]);
 
   const handleNext = () => {
     if (validateForm() && selectedOption) {
-      onNext()
+      onNext();
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -324,11 +401,17 @@ export function ShippingStep({
         {/* Información de Dirección (solo lectura) */}
         <div className="space-y-6">
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h4 className="font-semibold text-gray-900 mb-3">Dirección de Envío</h4>
+            <h4 className="font-semibold text-gray-900 mb-3">
+              Dirección de Envío
+            </h4>
             <div className="text-sm text-gray-700 space-y-1">
               <p className="font-medium">{formData.calle}</p>
-              <p>{formData.ciudad}, {formData.provincia}</p>
-              <p>C.P. {formData.codigoPostal} - {formData.pais}</p>
+              <p>
+                {formData.ciudad}, {formData.provincia}
+              </p>
+              <p>
+                C.P. {formData.codigoPostal} - {formData.pais}
+              </p>
               <p className="text-xs text-gray-500 mt-2">
                 * Esta dirección se usará para el envío de tu pedido
               </p>
@@ -347,7 +430,9 @@ export function ShippingStep({
             {calculating ? (
               <div className="text-center py-6">
                 <Loader2 className="w-6 h-6 animate-spin text-babalu-primary mx-auto mb-2" />
-                <p className="text-sm text-gray-600">Calculando opciones de envío...</p>
+                <p className="text-sm text-gray-600">
+                  Calculando opciones de envío...
+                </p>
               </div>
             ) : shippingOptions.length > 0 ? (
               <div className="space-y-3">
@@ -363,23 +448,37 @@ export function ShippingStep({
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                          selectedOption?.id === option.id 
-                            ? "bg-babalu-primary text-white" 
-                            : "bg-gray-100 text-gray-600"
-                        }`}>
-                          {selectedOption?.id === option.id && <Check className="w-3 h-3" />}
+                        <div
+                          className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                            selectedOption?.id === option.id
+                              ? "bg-babalu-primary text-white"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {selectedOption?.id === option.id && (
+                            <Check className="w-3 h-3" />
+                          )}
                         </div>
-                        <span className="font-medium text-gray-900">{option.name}</span>
+                        <span className="font-medium text-gray-900">
+                          {option.name}
+                        </span>
                       </div>
-                      <span className="font-bold text-babalu-primary">{formatPrice(option.price)}</span>
+                      <span className="font-bold text-babalu-primary">
+                        {formatPrice(option.price)}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-600">
                       <Clock className="w-3 h-3" />
-                      <span>{option.deliveryDays} días - Llega: {option.estimatedDate}</span>
+                      <span>
+                        {option.deliveryDays} días - Llega:{" "}
+                        {option.estimatedDate}
+                      </span>
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
-                      {option.carrier === 'andreani' ? '🚚 Andreani' : '📮 Correo Argentino'} • {option.service}
+                      {option.carrier === "andreani"
+                        ? "🚚 Andreani"
+                        : "📮 Correo Argentino"}{" "}
+                      • {option.service}
                     </div>
                   </div>
                 ))}
@@ -388,24 +487,30 @@ export function ShippingStep({
               <div className="text-center py-4">
                 <Truck className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-sm text-gray-600">
-                  {formData.codigoPostal 
+                  {formData.codigoPostal
                     ? "Calculando opciones de envío..."
-                    : "Completa tu dirección para calcular envíos"
-                  }
+                    : "Completa tu dirección para calcular envíos"}
                 </p>
               </div>
             )}
-            {errors.shipping && <p className="text-sm text-red-600 mt-2">{errors.shipping}</p>}
+            {errors.shipping && (
+              <p className="text-sm text-red-600 mt-2">{errors.shipping}</p>
+            )}
           </div>
         </div>
       </div>
 
       {/* Botones de navegación */}
       <div className="flex justify-between pt-6 border-t border-gray-200">
-        <Button type="button" variant="outline" onClick={onBack} className="px-6">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onBack}
+          className="px-6"
+        >
           Anterior
         </Button>
-        <Button 
+        <Button
           onClick={handleNext}
           disabled={!selectedOption || calculating}
           className="bg-babalu-primary hover:bg-babalu-dark text-white px-6"
@@ -414,5 +519,5 @@ export function ShippingStep({
         </Button>
       </div>
     </div>
-  )
+  );
 }

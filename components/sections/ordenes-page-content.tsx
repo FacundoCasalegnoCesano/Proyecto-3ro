@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { OrdenesLista } from "components/ordenes-lista"
+import { OrdenesLista } from "components/ordenes-lista";
 
 export function OrdenesPageContent() {
   return (
@@ -9,5 +9,5 @@ export function OrdenesPageContent() {
         <OrdenesLista />
       </div>
     </div>
-  )
+  );
 }

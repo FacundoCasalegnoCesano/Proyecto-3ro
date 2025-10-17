@@ -1,5 +1,5 @@
-import { CarritoPageContent } from "../../../components/sections/carrito-page-content"
+import { CarritoPageContent } from "../../../components/sections/carrito-page-content";
 
 export default function CarritoPage() {
-  return <CarritoPageContent />
+  return <CarritoPageContent />;
 }

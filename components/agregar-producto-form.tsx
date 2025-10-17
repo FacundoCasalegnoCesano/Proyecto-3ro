@@ -1,3 +1,4 @@
+// components/agregar-producto-form.tsx
 "use client";
 
 import type React from "react";
@@ -23,6 +24,7 @@ import {
   Gem,
 } from "lucide-react";
 import Image from "next/image";
+import { toast } from "sonner"; // ✅ Importar Sonner
 
 interface UploadedImage {
   publicId: string;
@@ -1414,11 +1416,23 @@ export function AgregarProductoForm() {
     e.preventDefault();
 
     if (!validateForm()) {
+      // ✅ Mostrar toast de error de validación
+      if (Object.keys(errors).length > 0) {
+        toast.error("Error en el formulario", {
+          description: "Por favor, corrige los errores marcados",
+          duration: 5000,
+        });
+      }
       return;
     }
 
     setIsLoading(true);
     setErrors({});
+
+    // ✅ Mostrar toast de carga
+    const loadingToast = toast.loading(
+      productoExistente ? "Incrementando stock..." : "Creando producto..."
+    );
 
     try {
       const response = await fetch("/api/agregarProd", {
@@ -1461,7 +1475,20 @@ export function AgregarProductoForm() {
         throw new Error(data.error || "Error al crear el producto");
       }
 
+      // ✅ Cerrar toast de carga y mostrar éxito
+      toast.dismiss(loadingToast);
+
       if (productoExistente) {
+        // ✅ Mostrar toast de éxito para stock incrementado
+        toast.success("¡Stock incrementado exitosamente!", {
+          description: `Se agregaron ${
+            formData.cantidad
+          } unidades al producto existente. Stock total: ${
+            data.data.stockNuevo || data.data.stock
+          } unidades`,
+          duration: 5000,
+        });
+
         setSuccessMessage(
           `¡Stock incrementado exitosamente! Se agregaron ${
             formData.cantidad
@@ -1470,6 +1497,12 @@ export function AgregarProductoForm() {
           } unidades`
         );
       } else {
+        // ✅ Mostrar toast de éxito para producto nuevo
+        toast.success("¡Producto añadido correctamente!", {
+          description: `Se creó un nuevo producto con ${formData.cantidad} unidades de stock inicial.`,
+          duration: 5000,
+        });
+
         setSuccessMessage(
           `¡Producto agregado exitosamente! Se creó un nuevo producto con ${formData.cantidad} unidades de stock inicial.`
         );
@@ -1493,7 +1526,20 @@ export function AgregarProductoForm() {
         setProductoExistente(null);
       }, 3000);
     } catch (error) {
+      // ✅ Cerrar toast de carga y mostrar error
+      toast.dismiss(loadingToast);
+
       console.error("Error:", error);
+
+      // ✅ Mostrar toast de error
+      toast.error("Error al agregar producto", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Error al agregar el producto. Intenta nuevamente.",
+        duration: 5000,
+      });
+
       setErrors({
         general:
           error instanceof Error

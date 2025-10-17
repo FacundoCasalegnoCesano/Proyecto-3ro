@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { MarcasLista } from "components/marcas-lista"
+import { MarcasLista } from "components/marcas-lista";
 
 export function MarcasPageContent() {
   return (
@@ -9,5 +9,5 @@ export function MarcasPageContent() {
         <MarcasLista />
       </div>
     </div>
-  )
+  );
 }

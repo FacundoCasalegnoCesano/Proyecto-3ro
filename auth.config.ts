@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./lib/prisma";
 import bcrypt from "bcryptjs";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -12,7 +12,7 @@ export const authOptions: NextAuthOptions = {
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         try {
@@ -30,7 +30,7 @@ export const authOptions: NextAuthOptions = {
               apellido: true,
               fechaNac: true,
               rol: true,
-            }
+            },
           });
 
           if (!user) {
@@ -62,8 +62,8 @@ export const authOptions: NextAuthOptions = {
           console.error("Error en authorize:", error);
           throw new Error("Error durante la autenticación");
         }
-      }
-    })
+      },
+    }),
   ],
   session: {
     strategy: "jwt",
@@ -72,12 +72,12 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        console.log("JWT Callback - Usuario logueado:", { 
-          id: user.id, 
-          email: user.email, 
-          rol: user.rol 
+        console.log("JWT Callback - Usuario logueado:", {
+          id: user.id,
+          email: user.email,
+          rol: user.rol,
         });
-        
+
         // ✅ Asegurar que el id sea number usando Number()
         token.id = Number(user.id);
         token.nombre = user.nombre;
@@ -88,16 +88,21 @@ export const authOptions: NextAuthOptions = {
         // ✅ También asegurar en actualizaciones subsiguientes
         token.id = Number(token.id);
       }
-      
+
       return token;
     },
     async session({ session, token }) {
       if (token) {
-        console.log("Session Callback - Token ID:", token.id, "Rol:", token.rol);
-        
+        console.log(
+          "Session Callback - Token ID:",
+          token.id,
+          "Rol:",
+          token.rol
+        );
+
         // ✅ Asegurar que el id sea number en la sesión también
         const userId = Number(token.id);
-        
+
         session.user = {
           id: userId,
           nombre: token.nombre as string,
@@ -108,7 +113,7 @@ export const authOptions: NextAuthOptions = {
         };
       }
       return session;
-    }
+    },
   },
   pages: {
     signIn: "/iniciar-sesion",
@@ -117,9 +122,10 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === "production" 
-        ? "__Secure-next-auth.session-token" 
-        : "next-auth.session-token",
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.session-token"
+          : "next-auth.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
@@ -134,7 +140,12 @@ export const authOptions: NextAuthOptions = {
       console.log("Usuario firmando:", user.email, "Rol:", user.rol);
     },
     async session({ session }) {
-      console.log("Sesión activa para:", session.user.email, "Rol:", session.user.rol);
+      console.log(
+        "Sesión activa para:",
+        session.user.email,
+        "Rol:",
+        session.user.rol
+      );
     },
     async signOut({ session }) {
       console.log("Usuario cerrando sesión");

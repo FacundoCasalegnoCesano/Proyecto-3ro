@@ -18,6 +18,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { GoogleCalendarIntegration } from "./google-calendar-integration";
+import { toast } from "sonner"; // ✅ Importar Sonner
 
 interface ServicioOption {
   id: string;
@@ -75,7 +76,9 @@ export function ReservaForm() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [successMessage, setSuccessMessage] = useState("");
   const [checkingAvailability, setCheckingAvailability] = useState(false);
-  const [slotAvailability, setSlotAvailability] = useState<{[key: string]: boolean}>({});
+  const [slotAvailability, setSlotAvailability] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   const servicios: ServicioOption[] = useMemo(
     () => [
@@ -120,17 +123,20 @@ export function ReservaForm() {
   );
 
   // ✅ Mover horariosDisponibles a useMemo para evitar recreación en cada render
-  const horariosDisponibles = useMemo(() => [
-    "09:00",
-    "10:00",
-    "11:00",
-    "12:00",
-    "14:00",
-    "15:00",
-    "16:00",
-    "17:00",
-    "18:00",
-  ], []);
+  const horariosDisponibles = useMemo(
+    () => [
+      "09:00",
+      "10:00",
+      "11:00",
+      "12:00",
+      "14:00",
+      "15:00",
+      "16:00",
+      "17:00",
+      "18:00",
+    ],
+    []
+  );
 
   // Pre-seleccionar servicio si viene en la URL
   useEffect(() => {
@@ -142,40 +148,43 @@ export function ReservaForm() {
   }, [servicios]);
 
   // ✅ Cargar horarios disponibles desde la API - usando useCallback
-  const loadAvailableSlots = useCallback(async (fecha: string) => {
-    try {
-      setCheckingAvailability(true);
-      const response = await fetch(`/api/check-availability?fecha=${fecha}`);
-      const result = await response.json();
+  const loadAvailableSlots = useCallback(
+    async (fecha: string) => {
+      try {
+        setCheckingAvailability(true);
+        const response = await fetch(`/api/check-availability?fecha=${fecha}`);
+        const result = await response.json();
 
-      if (result.success) {
-        // Actualizar disponibilidad de cada slot
-        const availabilityMap: {[key: string]: boolean} = {};
-        horariosDisponibles.forEach(slot => {
-          availabilityMap[slot] = result.availableSlots.includes(slot);
-        });
-        setSlotAvailability(availabilityMap);
-      } else {
-        console.error("Error cargando horarios disponibles:", result.error);
+        if (result.success) {
+          // Actualizar disponibilidad de cada slot
+          const availabilityMap: { [key: string]: boolean } = {};
+          horariosDisponibles.forEach((slot) => {
+            availabilityMap[slot] = result.availableSlots.includes(slot);
+          });
+          setSlotAvailability(availabilityMap);
+        } else {
+          console.error("Error cargando horarios disponibles:", result.error);
+          // En caso de error, mostrar todos como disponibles
+          const availabilityMap: { [key: string]: boolean } = {};
+          horariosDisponibles.forEach((slot) => {
+            availabilityMap[slot] = true;
+          });
+          setSlotAvailability(availabilityMap);
+        }
+      } catch (error) {
+        console.error("Error cargando horarios disponibles:", error);
         // En caso de error, mostrar todos como disponibles
-        const availabilityMap: {[key: string]: boolean} = {};
-        horariosDisponibles.forEach(slot => {
+        const availabilityMap: { [key: string]: boolean } = {};
+        horariosDisponibles.forEach((slot) => {
           availabilityMap[slot] = true;
         });
         setSlotAvailability(availabilityMap);
+      } finally {
+        setCheckingAvailability(false);
       }
-    } catch (error) {
-      console.error("Error cargando horarios disponibles:", error);
-      // En caso de error, mostrar todos como disponibles
-      const availabilityMap: {[key: string]: boolean} = {};
-      horariosDisponibles.forEach(slot => {
-        availabilityMap[slot] = true;
-      });
-      setSlotAvailability(availabilityMap);
-    } finally {
-      setCheckingAvailability(false);
-    }
-  }, [horariosDisponibles]); // ✅ Ahora horariosDisponibles es estable
+    },
+    [horariosDisponibles]
+  ); // ✅ Ahora horariosDisponibles es estable
 
   // ✅ Cargar horarios disponibles cuando se selecciona una fecha
   useEffect(() => {
@@ -185,43 +194,55 @@ export function ReservaForm() {
   }, [formData.fecha, formData.servicio, loadAvailableSlots]);
 
   // ✅ Verificar disponibilidad antes de enviar
-  const checkAvailabilityBeforeSubmit = useCallback(async (): Promise<boolean> => {
-    if (!formData.fecha || !formData.hora || !formData.servicio) {
-      return false;
-    }
+  const checkAvailabilityBeforeSubmit =
+    useCallback(async (): Promise<boolean> => {
+      if (!formData.fecha || !formData.hora || !formData.servicio) {
+        return false;
+      }
 
-    try {
-      const response = await fetch('/api/check-availability', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fecha: formData.fecha,
-          hora: formData.hora,
-          servicioId: formData.servicio
-        }),
-      });
+      try {
+        const response = await fetch("/api/check-availability", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fecha: formData.fecha,
+            hora: formData.hora,
+            servicioId: formData.servicio,
+          }),
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (result.success && result.available) {
-        return true;
-      } else {
+        if (result.success && result.available) {
+          return true;
+        } else {
+          // ✅ Mostrar toast de error de disponibilidad
+          toast.error("Horario no disponible", {
+            description:
+              "El horario seleccionado no está disponible. Por favor selecciona otro horario.",
+            duration: 5000,
+          });
+          setErrors({
+            general: `El horario seleccionado no está disponible. Por favor selecciona otro horario.`,
+          });
+          return false;
+        }
+      } catch (error) {
+        console.error("Error verificando disponibilidad:", error);
+        // ✅ Mostrar toast de error de verificación
+        toast.error("Error de verificación", {
+          description:
+            "No se pudo verificar la disponibilidad. Por favor intenta nuevamente.",
+          duration: 5000,
+        });
         setErrors({
-          general: `El horario seleccionado no está disponible. Por favor selecciona otro horario.`
+          general: `No se pudo verificar la disponibilidad. Por favor intenta nuevamente.`,
         });
         return false;
       }
-    } catch (error) {
-      console.error('Error verificando disponibilidad:', error);
-      // En caso de error, permitir el envío pero mostrar advertencia
-      setErrors({
-        general: `No se pudo verificar la disponibilidad. Por favor intenta nuevamente.`
-      });
-      return false;
-    }
-  }, [formData.fecha, formData.hora, formData.servicio]);
+    }, [formData.fecha, formData.hora, formData.servicio]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -292,6 +313,16 @@ export function ReservaForm() {
     }
 
     setErrors(newErrors);
+
+    // ✅ Mostrar toast de error de validación si hay errores
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Error en el formulario", {
+        description:
+          "Por favor, completa todos los campos requeridos correctamente.",
+        duration: 5000,
+      });
+    }
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -310,6 +341,9 @@ export function ReservaForm() {
 
     setIsLoading(true);
     setErrors({});
+
+    // ✅ Mostrar toast de carga
+    const loadingToast = toast.loading("Procesando tu reserva...");
 
     try {
       const servicioSeleccionado = servicios.find(
@@ -345,6 +379,13 @@ export function ReservaForm() {
         throw new Error(result.error || "Error al crear la reserva");
       }
 
+      // ✅ Cerrar toast de carga y mostrar éxito
+      toast.dismiss(loadingToast);
+      toast.success("¡Reserva confirmada!", {
+        description: `Tu reserva ha sido creada exitosamente. ID: ${result.reservaId}. Te contactaremos pronto para confirmar los detalles.`,
+        duration: 7000,
+      });
+
       console.log("Reserva creada exitosamente:", result);
       setSuccessMessage(
         `¡Reserva confirmada! ID: ${result.reservaId}. Te contactaremos pronto para confirmar los detalles.`
@@ -365,7 +406,20 @@ export function ReservaForm() {
         setSuccessMessage("");
       }, 5000);
     } catch (error) {
+      // ✅ Cerrar toast de carga y mostrar error
+      toast.dismiss(loadingToast);
+
       console.error("Error al enviar reserva:", error);
+
+      // ✅ Mostrar toast de error
+      toast.error("Error al crear reserva", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Error al enviar la reserva. Intenta nuevamente.",
+        duration: 5000,
+      });
+
       setErrors({
         general:
           error instanceof Error
@@ -550,7 +604,7 @@ export function ReservaForm() {
                   {horariosDisponibles.map((hora) => {
                     const isAvailable = slotAvailability[hora] !== false; // true o undefined
                     const isSelected = formData.hora === hora;
-                    
+
                     return (
                       <button
                         key={hora}
@@ -574,7 +628,7 @@ export function ReservaForm() {
                     );
                   })}
                 </div>
-                
+
                 {/* Leyenda de disponibilidad */}
                 <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
                   <div className="flex items-center space-x-1">
@@ -590,7 +644,7 @@ export function ReservaForm() {
                     <span>Ocupado</span>
                   </div>
                 </div>
-                
+
                 {errors.hora && (
                   <p className="mt-1 text-sm text-red-600">{errors.hora}</p>
                 )}
@@ -785,7 +839,8 @@ export function ReservaForm() {
               WhatsApp
             </li>
             <li>
-              • Los horarios mostrados se actualizan en tiempo real según disponibilidad
+              • Los horarios mostrados se actualizan en tiempo real según
+              disponibilidad
             </li>
           </ul>
         </div>

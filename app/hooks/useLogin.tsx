@@ -77,11 +77,19 @@ export function useLogin(options?: UseLoginOptions) {
       }
 
       return false;
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.dismiss(loadingToast);
 
-      const errorMessage =
-        error?.message || "Error desconocido al iniciar sesión";
+      // ✅ Manejo seguro del tipo unknown
+      let errorMessage = "Error desconocido al iniciar sesión";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      } else if (error && typeof error === "object" && "message" in error) {
+        errorMessage = String(error.message);
+      }
 
       toast.error("Error", {
         description: errorMessage,

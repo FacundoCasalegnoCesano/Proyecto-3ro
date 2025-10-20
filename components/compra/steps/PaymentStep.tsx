@@ -25,6 +25,7 @@ export function PaymentStep({
   updateFormData,
   errors,
   setErrors,
+  subtotal,
   isLoading,
   onSubmit,
   onBack,
@@ -151,11 +152,9 @@ export function PaymentStep({
 
     // Limpiar error del campo cuando el usuario escribe
     if (errors[field]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
+      const newErrors = { ...errors };
+      delete newErrors[field];
+      setErrors(newErrors);
     }
   };
 
@@ -204,6 +203,13 @@ export function PaymentStep({
           email: cardData.email,
         }),
       };
+
+      // Si es Mercado Pago, podrías agregar lógica específica aquí
+      if (paymentMethod === "mercado-pago") {
+        console.log("Procesando pago con Mercado Pago...");
+        // Aquí iría la integración con la API de Mercado Pago
+      }
+
       onSubmit(finalData);
     }
   };
@@ -250,31 +256,31 @@ export function PaymentStep({
               <div className="flex items-center space-x-2">
                 {/* Logos de tarjetas */}
                 <Image
-                  src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg"
+                  src="/img/logos-tarjetas/png-transparent-visa-logo-credit-card-visa-debit-card-payment-card-mastercard-visa-blue-text-trademark.webp"
                   alt="Visa"
                   width={24}
                   height={24}
                 />
                 <Image
-                  src="https://http2.mlstatic.com/storage/logos-api-admin/b2c93a40-f3be-11eb-9984-b7076edb0bb7-m.svg"
+                  src="/img/logos-tarjetas/png-clipart-mastercard-logo-credit-card-visa-brand-mastercard-text-label-thumbnail.webp"
                   alt="Mastercard"
                   width={24}
                   height={24}
                 />
                 <Image
-                  src="https://http2.mlstatic.com/storage/logos-api-admin/ce454480-445f-11eb-bf78-3b1ee7bf744c-m.svg"
+                  src="/img/logos-tarjetas/png-transparent-american-express-encapsulated-postscript-logo-business-business-blue-angle-text.webp"
                   alt="Amex"
                   width={24}
                   height={24}
                 />
                 <Image
-                  src="https://http2.mlstatic.com/storage/logos-api-admin/9eb30e40-caf8-11eb-9bf7-b5a25c0d6ec3-m.svg"
+                  src="/img/logos-tarjetas/tarjeta-naranja.webp"
                   alt="Naranja"
                   width={24}
                   height={24}
                 />
                 <Image
-                  src="https://http2.mlstatic.com/storage/logos-api-admin/312238e0-571b-11e8-823a-758d95db88db-m.svg"
+                  src="/img/logos-tarjetas/Nuevo_Logo_cabal.webp"
                   alt="Cabal"
                   width={24}
                   height={24}
@@ -306,7 +312,7 @@ export function PaymentStep({
                   />
                   {detectedCardType === "visa" && (
                     <Image
-                      src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg"
+                      src="/img/logos-tarjetas/png-transparent-visa-logo-credit-card-visa-debit-card-payment-card-mastercard-visa-blue-text-trademark.webp"
                       alt="Visa"
                       width={20}
                       height={20}
@@ -315,7 +321,7 @@ export function PaymentStep({
                   )}
                   {detectedCardType === "mastercard" && (
                     <Image
-                      src="https://http2.mlstatic.com/storage/logos-api-admin/b2c93a40-f3be-11eb-9984-b7076edb0bb7-m.svg"
+                      src="/img/logos-tarjetas/png-clipart-mastercard-logo-credit-card-visa-brand-mastercard-text-label-thumbnail.webp"
                       alt="Mastercard"
                       width={20}
                       height={20}
@@ -324,7 +330,7 @@ export function PaymentStep({
                   )}
                   {detectedCardType === "amex" && (
                     <Image
-                      src="https://http2.mlstatic.com/storage/logos-api-admin/ce454480-445f-11eb-bf78-3b1ee7bf744c-m.svg"
+                      src="/img/logos-tarjetas/png-transparent-american-express-encapsulated-postscript-logo-business-business-blue-angle-text.webp"
                       alt="Amex"
                       width={20}
                       height={20}
@@ -333,8 +339,17 @@ export function PaymentStep({
                   )}
                   {detectedCardType === "naranja" && (
                     <Image
-                      src="https://http2.mlstatic.com/storage/logos-api-admin/9eb30e40-caf8-11eb-9bf7-b5a25c0d6ec3-m.svg"
+                      src="/img/logos-tarjetas/tarjeta-naranja.webp"
                       alt="Naranja"
+                      width={20}
+                      height={20}
+                      className="absolute right-3 top-2.5"
+                    />
+                  )}
+                  {detectedCardType === "cabal" && (
+                    <Image
+                      src="/img/logos-tarjetas/Nuevo_Logo_cabal.webp"
+                      alt="Cabal"
                       width={20}
                       height={20}
                       className="absolute right-3 top-2.5"
@@ -504,6 +519,27 @@ export function PaymentStep({
                   Tarjeta de débito
                 </span>
               </div>
+              <div className="flex items-center space-x-2">
+                {/* Logos de tarjetas */}
+                <Image
+                  src="/img/logos-tarjetas/png-transparent-visa-logo-credit-card-visa-debit-card-payment-card-mastercard-visa-blue-text-trademark.webp"
+                  alt="Visa"
+                  width={24}
+                  height={24}
+                />
+                <Image
+                  src="/img/logos-tarjetas/png-clipart-mastercard-logo-credit-card-visa-brand-mastercard-text-label-thumbnail.webp"
+                  alt="Mastercard"
+                  width={24}
+                  height={24}
+                />
+                <Image
+                  src="/img/logos-tarjetas/Nuevo_Logo_cabal.webp"
+                  alt="Cabal"
+                  width={24}
+                  height={24}
+                />
+              </div>
             </div>
           </div>
 
@@ -530,7 +566,7 @@ export function PaymentStep({
                   />
                   {detectedCardType === "visa" && (
                     <Image
-                      src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg"
+                      src="/img/logos-tarjetas/png-transparent-visa-logo-credit-card-visa-debit-card-payment-card-mastercard-visa-blue-text-trademark.webp"
                       alt="Visa"
                       width={20}
                       height={20}
@@ -539,26 +575,17 @@ export function PaymentStep({
                   )}
                   {detectedCardType === "mastercard" && (
                     <Image
-                      src="https://http2.mlstatic.com/storage/logos-api-admin/b2c93a40-f3be-11eb-9984-b7076edb0bb7-m.svg"
+                      src="/img/logos-tarjetas/png-clipart-mastercard-logo-credit-card-visa-brand-mastercard-text-label-thumbnail.webp"
                       alt="Mastercard"
                       width={20}
                       height={20}
                       className="absolute right-3 top-2.5"
                     />
                   )}
-                  {detectedCardType === "amex" && (
+                  {detectedCardType === "cabal" && (
                     <Image
-                      src="https://http2.mlstatic.com/storage/logos-api-admin/ce454480-445f-11eb-bf78-3b1ee7bf744c-m.svg"
-                      alt="Amex"
-                      width={20}
-                      height={20}
-                      className="absolute right-3 top-2.5"
-                    />
-                  )}
-                  {detectedCardType === "naranja" && (
-                    <Image
-                      src="https://http2.mlstatic.com/storage/logos-api-admin/9eb30e40-caf8-11eb-9bf7-b5a25c0d6ec3-m.svg"
-                      alt="Naranja"
+                      src="/img/logos-tarjetas/Nuevo_Logo_cabal.webp"
+                      alt="Cabal"
                       width={20}
                       height={20}
                       className="absolute right-3 top-2.5"
@@ -704,7 +731,9 @@ export function PaymentStep({
         <div className="bg-white rounded-lg border-2 border-gray-200">
           <div
             className={`p-4 cursor-pointer transition-all ${
-              paymentMethod === "mercado-pago" ? "bg-blue-50" : ""
+              paymentMethod === "mercado-pago"
+                ? "bg-blue-50 border-b-2 border-blue-500"
+                : ""
             }`}
             onClick={() => setPaymentMethod("mercado-pago")}
           >
@@ -726,6 +755,143 @@ export function PaymentStep({
               </div>
             </div>
           </div>
+
+          {/* Contenido de Mercado Pago */}
+          {paymentMethod === "mercado-pago" && (
+            <div className="p-6 space-y-4 border-t border-gray-200">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <Wallet className="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-blue-900 mb-2">
+                      Pago seguro con Mercado Pago
+                    </h4>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li className="flex items-center">
+                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2"></div>
+                        Paga con tarjeta, efectivo o saldo de Mercado Pago
+                      </li>
+                      <li className="flex items-center">
+                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2"></div>
+                        Proceso 100% seguro y encriptado
+                      </li>
+                      <li className="flex items-center">
+                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2"></div>
+                        Recibirás la confirmación inmediatamente
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-600 mb-4">
+                  Serás redirigido a Mercado Pago para completar tu pago de
+                  forma segura
+                </p>
+
+                {/* Información de resumen */}
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Total a pagar:</span>
+                    <span className="font-bold text-lg text-babalu-primary">
+                      {new Intl.NumberFormat("es-AR", {
+                        style: "currency",
+                        currency: "ARS",
+                      }).format(
+                        subtotal + (formData.shippingOption?.price || 0)
+                      )}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2 text-left">
+                    <p>
+                      • Incluye costo de envío:{" "}
+                      {new Intl.NumberFormat("es-AR", {
+                        style: "currency",
+                        currency: "ARS",
+                      }).format(formData.shippingOption?.price || 0)}
+                    </p>
+                    <p>• El IVA ya está incluido en los precios</p>
+                  </div>
+                </div>
+
+                {/* Botón de Mercado Pago */}
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      <Wallet className="w-5 h-5 mr-2" />
+                      Pagar con Mercado Pago
+                    </>
+                  )}
+                </button>
+
+                <p className="text-xs text-gray-500 mt-3">
+                  Al continuar, aceptas los{" "}
+                  <a href="/terminos" className="text-blue-600 hover:underline">
+                    términos y condiciones
+                  </a>{" "}
+                  de Mercado Pago
+                </p>
+              </div>
+
+              {/* Métodos de pago aceptados en Mercado Pago */}
+              <div className="border-t border-gray-200 pt-4">
+                <p className="text-sm font-medium text-gray-700 mb-3">
+                  Métodos de pago aceptados:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <div className="flex items-center bg-white border border-gray-200 rounded px-2 py-1">
+                    <Image
+                      src="/img/logos-tarjetas/png-transparent-visa-logo-credit-card-visa-debit-card-payment-card-mastercard-visa-blue-text-trademark.webp"
+                      alt="Visa"
+                      width={20}
+                      height={20}
+                      className="h-4 w-auto"
+                    />
+                    <span className="text-xs text-gray-600 ml-1">Visa</span>
+                  </div>
+                  <div className="flex items-center bg-white border border-gray-200 rounded px-2 py-1">
+                    <Image
+                      src="/img/logos-tarjetas/png-clipart-mastercard-logo-credit-card-visa-brand-mastercard-text-label-thumbnail.webp"
+                      alt="Mastercard"
+                      width={20}
+                      height={20}
+                      className="h-4 w-auto"
+                    />
+                    <span className="text-xs text-gray-600 ml-1">
+                      Mastercard
+                    </span>
+                  </div>
+                  <div className="flex items-center bg-white border border-gray-200 rounded px-2 py-1">
+                    <Image
+                      src="/img/logos-tarjetas/png-transparent-american-express-encapsulated-postscript-logo-business-business-blue-angle-text.webp"
+                      alt="Amex"
+                      width={20}
+                      height={20}
+                      className="h-4 w-auto"
+                    />
+                    <span className="text-xs text-gray-600 ml-1">Amex</span>
+                  </div>
+                  <div className="flex items-center bg-white border border-gray-200 rounded px-2 py-1">
+                    <span className="text-xs text-gray-600">Efectivo</span>
+                  </div>
+                  <div className="flex items-center bg-white border border-gray-200 rounded px-2 py-1">
+                    <span className="text-xs text-gray-600">Transferencia</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -781,23 +947,27 @@ export function PaymentStep({
         >
           Anterior
         </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className="bg-babalu-primary hover:bg-babalu-dark text-white px-8 py-2.5"
-        >
-          {isLoading ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Procesando...
-            </>
-          ) : (
-            <>
-              <Lock className="w-4 h-4 mr-2" />
-              Finalizar Compra
-            </>
-          )}
-        </Button>
+
+        {/* No mostrar el botón "Finalizar Compra" cuando Mercado Pago está seleccionado */}
+        {paymentMethod !== "mercado-pago" && (
+          <Button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="bg-babalu-primary hover:bg-babalu-dark text-white px-8 py-2.5"
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Procesando...
+              </>
+            ) : (
+              <>
+                <Lock className="w-4 h-4 mr-2" />
+                Finalizar Compra
+              </>
+            )}
+          </Button>
+        )}
       </div>
     </div>
   );

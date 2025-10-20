@@ -202,6 +202,19 @@ export async function POST(request: NextRequest) {
           cantidad: false,
         };
       }
+      // NUEVO: Categoría Cerámica
+      if (cat.includes("ceramica") || cat.includes("cerámica")) {
+        return {
+          marca: false,
+          aroma: false,
+          linea: false,
+          tamaño: true,
+          color: false,
+          tipo: true, // Tipo es requerido para cerámica
+          piedra: false,
+          cantidad: false,
+        };
+      }
       if (cat.includes("accesorios")) {
         return {
           marca: false,
@@ -1052,14 +1065,13 @@ export async function GET(request: NextRequest) {
         return "disponible";
       };
 
-      // CORREGIDO: price ahora es número, formattedPrice mantiene el formato string
       const priceNumber = parseFloat(producto.precio) || 0;
 
       const formattedProduct = {
         id: producto.id,
         name: producto.nombre,
-        price: priceNumber, // ← NÚMERO para el carrito
-        formattedPrice: `$${producto.precio}`, // ← STRING formateado para display
+        price: priceNumber,
+        formattedPrice: `${producto.precio}`,
         image: producto.imgUrl,
         category: producto.category || "Sin categoría",
         marca: producto.marca || "",
@@ -1085,7 +1097,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Obtener lista de productos con filtros - SIN LIMIT POR DEFECTO
+    // Obtener lista de productos con filtros
     console.log("📦 Obteniendo productos con filtros:", {
       category,
       marca,
@@ -1164,7 +1176,6 @@ export async function GET(request: NextRequest) {
       orderBy = { id: "desc" };
     }
 
-    // Solo aplicar limit si se especifica explícitamente
     const take = limit ? parseInt(limit) : undefined;
 
     console.log("🔍 Consulta a la base de datos:", { where, orderBy, take });
@@ -1190,15 +1201,14 @@ export async function GET(request: NextRequest) {
       return "disponible";
     };
 
-    // CORREGIDO: price ahora es número, formattedPrice mantiene el formato string
     const formattedProducts = productos.map((producto) => {
       const priceNumber = parseFloat(producto.precio) || 0;
 
       return {
         id: producto.id,
         name: producto.nombre,
-        price: priceNumber, // ← NÚMERO para el carrito
-        formattedPrice: `$${producto.precio}`, // ← STRING formateado para display
+        price: priceNumber,
+        formattedPrice: `${producto.precio}`,
         image: producto.imgUrl,
         category: producto.category || "Sin categoría",
         marca: producto.marca || "",
@@ -1342,7 +1352,6 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Determinar si se requiere cantidad según la categoría
     const getCamposRequeridos = (category: string) => {
       if (!category) return { cantidad: false };
       const cat = category.toLowerCase();
@@ -1478,14 +1487,13 @@ export async function PATCH(request: NextRequest) {
       return "disponible";
     };
 
-    // CORREGIDO: price ahora es número, formattedPrice mantiene el formato string
     const priceNumber = parseFloat(productoActualizado.precio) || 0;
 
     const formattedProduct = {
       id: productoActualizado.id,
       name: productoActualizado.nombre,
-      price: priceNumber, // ← NÚMERO para el carrito
-      formattedPrice: `${productoActualizado.precio}`, // ← STRING formateado para display
+      price: priceNumber,
+      formattedPrice: `${productoActualizado.precio}`,
       image: productoActualizado.imgUrl,
       category: productoActualizado.category || "Sin categoría",
       marca: productoActualizado.marca || "",

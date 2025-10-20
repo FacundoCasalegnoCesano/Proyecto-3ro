@@ -93,7 +93,13 @@ export function ProductCard({
   };
 
   // Función para verificar si un producto es individual (tiene pocas características pero es vendible)
-  const esProductoIndividual = (product: Product): boolean => {
+  const esProductoIndividualActualizado = (product: Product): boolean => {
+    // Si es una categoría no agrupable, siempre es individual
+    if (esCategoriaNoAgrupable(product)) {
+      return true;
+    }
+
+    // Lógica original para otros productos
     const tieneCategoria = safeString(product.category) !== "";
     const noTieneMarca = !tieneMarcaEspecifica(product.marca);
     const noTieneLinea = !tieneLineaEspecifica(product.linea);
@@ -110,9 +116,32 @@ export function ProductCard({
     );
   };
 
+  const esCategoriaNoAgrupable = (product: Product): boolean => {
+    const categoria = safeString(product.category).toLowerCase();
+
+    const categoriasNoAgrupables = [
+      "ceramica",
+      "cerámica",
+      "vela",
+      "velas",
+      "cascada de humo",
+      "cascadas de humo",
+      "estatua",
+      "estatuas",
+      "lampara de sal",
+      "lamparas de sal",
+      "lámpara de sal",
+      "lámparas de sal",
+      "porta sahumerios",
+      "accesorios",
+      "atrapaluz",
+    ];
+
+    return categoriasNoAgrupables.some((cat) => categoria.includes(cat));
+  };
   const handleAddToCart = () => {
     // Permitir agregar al carrito si NO es un producto agrupado O si es un producto individual
-    if (esProductoAgrupado && !esProductoIndividual(product)) return;
+    if (esProductoAgrupado && !esProductoIndividualActualizado(product)) return;
 
     // Usar la función parsePrice para convertir de forma segura
     const priceNumber = parsePrice(product.price);
@@ -231,7 +260,7 @@ export function ProductCard({
   const productImage = getProductImage();
   const formattedPrice = getFormattedPrice();
   const groupInfo = getGroupInfo();
-  const esIndividual = esProductoIndividual(product);
+  const esIndividual = esProductoIndividualActualizado(product);
 
   // Función para limpiar y capitalizar el nombre del producto
   const limpiarYCapitalizarNombre = (nombre: string | undefined): string => {

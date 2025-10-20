@@ -3,13 +3,8 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "../../ui/button";
-import { User, MapPin, Save, Edit2, Mail, Phone } from "lucide-react";
-import { PaymentData, FormErrors } from "../CompraWizard";
-
-// Definir el tipo para setErrors que acepte funciones
-type SetErrorsFunction = (
-  errors: FormErrors | ((prev: FormErrors) => FormErrors)
-) => void;
+import { User, MapPin, Save, Edit2, Mail, Phone, Loader2 } from "lucide-react";
+import { PaymentData, FormErrors, SetErrorsFunction } from "../CompraWizard";
 
 interface PersonalInfoStepProps {
   formData: PaymentData;
@@ -28,6 +23,7 @@ export function PersonalInfoStep({
 }: PersonalInfoStepProps) {
   const [hasSavedAddress, setHasSavedAddress] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Verificar si hay dirección guardada
   useEffect(() => {
@@ -39,13 +35,12 @@ export function PersonalInfoStep({
 
     setHasSavedAddress(!!hasAddress);
 
-    // Mostrar formulario de dirección si no hay datos guardados
     if (!hasAddress) {
       setShowAddressForm(true);
     }
   }, [formData]);
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
     // Validar información personal
@@ -57,7 +52,7 @@ export function PersonalInfoStep({
       newErrors.email = "Email inválido";
     if (!formData.phone.trim()) newErrors.phone = "El teléfono es requerido";
 
-    // Validar dirección solo si se muestra el formulario o no hay datos guardados
+    // Validar dirección
     if (showAddressForm || !hasSavedAddress) {
       if (!formData.calle.trim()) newErrors.calle = "La dirección es requerida";
       if (!formData.ciudad.trim()) newErrors.ciudad = "La ciudad es requerida";
@@ -71,14 +66,39 @@ export function PersonalInfoStep({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
-    if (validateForm()) {
-      // Si el usuario quiere guardar la información
-      if (formData.saveInfo) {
-        saveUserAddress();
+  const handleNext = async () => {
+    setIsSubmitting(true);
+
+    // Pequeño delay para permitir que la UI se actualice
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const isValid = validateForm();
+
+    if (isValid) {
+      console.log("✅ Formulario válido, procediendo al siguiente paso...");
+
+      // Guardar dirección si está marcada la opción
+      if (formData.saveInfo && (showAddressForm || !hasSavedAddress)) {
+        try {
+          await saveUserAddress();
+        } catch (error) {
+          console.error("Error guardando dirección:", error);
+          // No impedimos el flujo por error al guardar dirección
+        }
       }
+
       onNext();
+    } else {
+      console.log("❌ Errores de validación:", errors);
+      // Scroll al primer error
+      const firstErrorField = Object.keys(errors)[0];
+      if (firstErrorField) {
+        const element = document.querySelector(`[name="${firstErrorField}"]`);
+        element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
     }
+
+    setIsSubmitting(false);
   };
 
   const saveUserAddress = async () => {
@@ -102,28 +122,36 @@ export function PersonalInfoStep({
         throw new Error("Error al guardar la dirección");
       }
 
-      console.log("Dirección guardada exitosamente");
+      console.log("📍 Dirección guardada exitosamente");
     } catch (error) {
       console.error("Error guardando dirección:", error);
+      throw error; // Re-lanzar el error para manejarlo arriba
     }
   };
 
-  // SOLUCIÓN CORREGIDA - Usando el tipo SetErrorsFunction
-  const handleInputChange = (field: string, value: string) => {
+  // Función simplificada para manejar cambios
+  const handleInputChange = (field: keyof PaymentData, value: string) => {
     updateFormData({ [field]: value });
 
     // Limpiar error específico si existe
     if (errors[field]) {
-      setErrors((prev: FormErrors) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
+      const newErrors = { ...errors };
+      delete newErrors[field];
+      setErrors(newErrors);
     }
   };
 
   const useSavedAddress = () => {
     setShowAddressForm(false);
+    // Limpiar errores de dirección al usar dirección guardada
+    const addressErrorFields = ["calle", "ciudad", "provincia", "codigoPostal"];
+    const newErrors = { ...errors };
+
+    addressErrorFields.forEach((field) => {
+      delete newErrors[field as keyof FormErrors];
+    });
+
+    setErrors(newErrors);
   };
 
   const editAddress = () => {
@@ -147,12 +175,14 @@ export function PersonalInfoStep({
           </label>
           <input
             type="text"
+            name="nombre"
             value={formData.nombre}
             onChange={(e) => handleInputChange("nombre", e.target.value)}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
-              errors.nombre ? "border-red-300" : "border-gray-300"
+              errors.nombre ? "border-red-300 bg-red-50" : "border-gray-300"
             }`}
             placeholder="Tu nombre"
+            disabled={isSubmitting}
           />
           {errors.nombre && (
             <p className="mt-1 text-sm text-red-600">{errors.nombre}</p>
@@ -165,12 +195,14 @@ export function PersonalInfoStep({
           </label>
           <input
             type="text"
+            name="apellido"
             value={formData.apellido}
             onChange={(e) => handleInputChange("apellido", e.target.value)}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
-              errors.apellido ? "border-red-300" : "border-gray-300"
+              errors.apellido ? "border-red-300 bg-red-50" : "border-gray-300"
             }`}
             placeholder="Tu apellido"
+            disabled={isSubmitting}
           />
           {errors.apellido && (
             <p className="mt-1 text-sm text-red-600">{errors.apellido}</p>
@@ -184,12 +216,14 @@ export function PersonalInfoStep({
           </label>
           <input
             type="email"
+            name="email"
             value={formData.email}
             onChange={(e) => handleInputChange("email", e.target.value)}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
-              errors.email ? "border-red-300" : "border-gray-300"
+              errors.email ? "border-red-300 bg-red-50" : "border-gray-300"
             }`}
             placeholder="tu@email.com"
+            disabled={isSubmitting}
           />
           {errors.email && (
             <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -203,12 +237,14 @@ export function PersonalInfoStep({
           </label>
           <input
             type="tel"
+            name="phone"
             value={formData.phone}
             onChange={(e) => handleInputChange("phone", e.target.value)}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
-              errors.phone ? "border-red-300" : "border-gray-300"
+              errors.phone ? "border-red-300 bg-red-50" : "border-gray-300"
             }`}
             placeholder="+54 11 1234-5678"
+            disabled={isSubmitting}
           />
           {errors.phone && (
             <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
@@ -233,6 +269,7 @@ export function PersonalInfoStep({
               size="sm"
               onClick={editAddress}
               className="flex items-center gap-2"
+              disabled={isSubmitting}
             >
               <Edit2 className="w-4 h-4" />
               Cambiar Dirección
@@ -272,12 +309,16 @@ export function PersonalInfoStep({
                 </label>
                 <input
                   type="text"
+                  name="calle"
                   value={formData.calle}
                   onChange={(e) => handleInputChange("calle", e.target.value)}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
-                    errors.calle ? "border-red-300" : "border-gray-300"
+                    errors.calle
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300"
                   }`}
                   placeholder="Calle y número"
+                  disabled={isSubmitting}
                 />
                 {errors.calle && (
                   <p className="mt-1 text-sm text-red-600">{errors.calle}</p>
@@ -291,14 +332,18 @@ export function PersonalInfoStep({
                   </label>
                   <input
                     type="text"
+                    name="ciudad"
                     value={formData.ciudad}
                     onChange={(e) =>
                       handleInputChange("ciudad", e.target.value)
                     }
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
-                      errors.ciudad ? "border-red-300" : "border-gray-300"
+                      errors.ciudad
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
                     }`}
                     placeholder="Ciudad"
+                    disabled={isSubmitting}
                   />
                   {errors.ciudad && (
                     <p className="mt-1 text-sm text-red-600">{errors.ciudad}</p>
@@ -311,14 +356,18 @@ export function PersonalInfoStep({
                   </label>
                   <input
                     type="text"
+                    name="provincia"
                     value={formData.provincia}
                     onChange={(e) =>
                       handleInputChange("provincia", e.target.value)
                     }
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
-                      errors.provincia ? "border-red-300" : "border-gray-300"
+                      errors.provincia
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
                     }`}
                     placeholder="Provincia"
+                    disabled={isSubmitting}
                   />
                   {errors.provincia && (
                     <p className="mt-1 text-sm text-red-600">
@@ -335,15 +384,19 @@ export function PersonalInfoStep({
                   </label>
                   <input
                     type="text"
+                    name="codigoPostal"
                     value={formData.codigoPostal}
                     onChange={(e) =>
                       handleInputChange("codigoPostal", e.target.value)
                     }
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
-                      errors.codigoPostal ? "border-red-300" : "border-gray-300"
+                      errors.codigoPostal
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
                     }`}
                     placeholder="1234"
                     maxLength={8}
+                    disabled={isSubmitting}
                   />
                   {errors.codigoPostal && (
                     <p className="mt-1 text-sm text-red-600">
@@ -360,6 +413,7 @@ export function PersonalInfoStep({
                     value={formData.pais}
                     onChange={(e) => handleInputChange("pais", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary bg-white"
+                    disabled={isSubmitting}
                   >
                     <option value="Argentina">Argentina</option>
                     <option value="Chile">Chile</option>
@@ -377,6 +431,7 @@ export function PersonalInfoStep({
                   variant="outline"
                   onClick={useSavedAddress}
                   className="text-sm"
+                  disabled={isSubmitting}
                 >
                   Usar dirección guardada
                 </Button>
@@ -384,6 +439,7 @@ export function PersonalInfoStep({
                   type="button"
                   onClick={() => setShowAddressForm(false)}
                   className="text-sm bg-gray-500 hover:bg-gray-600"
+                  disabled={isSubmitting}
                 >
                   Cancelar
                 </Button>
@@ -401,6 +457,7 @@ export function PersonalInfoStep({
             checked={formData.saveInfo}
             onChange={(e) => updateFormData({ saveInfo: e.target.checked })}
             className="mt-1 text-babalu-primary focus:ring-babalu-primary"
+            disabled={isSubmitting}
           />
           <span className="ml-2 text-sm text-gray-600">
             Guardar mi información de dirección para futuras compras
@@ -412,9 +469,17 @@ export function PersonalInfoStep({
       <div className="flex justify-end pt-4">
         <Button
           onClick={handleNext}
-          className="bg-babalu-primary hover:bg-babalu-dark text-white px-8"
+          disabled={isSubmitting}
+          className="bg-babalu-primary hover:bg-babalu-dark text-white px-8 min-w-32"
         >
-          Continuar a Envío
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              Procesando...
+            </>
+          ) : (
+            "Continuar a Envío"
+          )}
         </Button>
       </div>
     </div>

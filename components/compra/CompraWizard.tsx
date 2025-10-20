@@ -26,9 +26,7 @@ export interface FormErrors {
 }
 
 // Tipo para setErrors que acepte tanto objetos como funciones
-export type SetErrorsFunction = (
-  errors: FormErrors | ((prev: FormErrors) => FormErrors)
-) => void;
+export type SetErrorsFunction = (errors: FormErrors) => void;
 
 export interface PaymentData {
   // Información personal (desde la sesión)

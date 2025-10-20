@@ -19,7 +19,7 @@ interface TimelineEvent {
 }
 
 export function MiCaminoTimeline() {
-  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
+  const [hoveredEvent, setHoveredEvent] = useState<string | null>(null);
 
   const timelineEvents: TimelineEvent[] = [
     {
@@ -165,6 +165,10 @@ export function MiCaminoTimeline() {
     }
   };
 
+  const getEventPosition = (index: number, total: number) => {
+    return (index / (total - 1)) * 100;
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm p-8">
       <div className="text-center mb-12">
@@ -177,101 +181,178 @@ export function MiCaminoTimeline() {
         </p>
       </div>
 
-      <div className="relative">
-        {/* Línea central */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 w-1 bg-babalu-primary h-full rounded-full"></div>
+      {/* Timeline Horizontal */}
+      <div className="relative py-12">
+        {/* Línea horizontal */}
+        <div className="absolute top-1/2 left-0 right-0 h-1 bg-babalu-primary transform -translate-y-1/2 rounded-full"></div>
 
-        {/* Eventos */}
-        <div className="space-y-12">
-          {timelineEvents.map((event, index) => (
-            <div
-              key={event.id}
-              className={`flex items-center ${
-                index % 2 === 0 ? "flex-row" : "flex-row-reverse"
-              }`}
-            >
-              {/* Contenido */}
+        {/* Contenedor de eventos */}
+        <div className="relative">
+          {timelineEvents.map((event, index) => {
+            const position = getEventPosition(index, timelineEvents.length);
+
+            return (
               <div
-                className={`w-5/12 ${
-                  index % 2 === 0 ? "pr-8 text-right" : "pl-8 text-left"
-                }`}
+                key={event.id}
+                className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                style={{ left: `${position}%`, top: "50%" }}
+                onMouseEnter={() => setHoveredEvent(event.id)}
+                onMouseLeave={() => setHoveredEvent(null)}
               >
-                <div
-                  className={`bg-white border-2 border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer ${
-                    selectedEvent === event.id
-                      ? "border-babalu-primary shadow-lg"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    setSelectedEvent(
-                      selectedEvent === event.id ? null : event.id
-                    )
-                  }
-                >
-                  {/* Año destacado */}
-                  <div className="text-2xl font-bold text-babalu-primary mb-2">
-                    {event.year}
+                {/* Punto en la línea */}
+                <div className="relative group">
+                  <div className="w-6 h-6 bg-babalu-primary rounded-full flex items-center justify-center shadow-lg cursor-pointer transform transition-transform duration-300 hover:scale-125">
+                    <event.icon className="w-3 h-3 text-white" />
                   </div>
 
-                  {/* Tipo de evento */}
-                  <div
-                    className={`inline-block px-3 py-1 rounded-full text-xs font-medium border mb-3 ${getTypeColor(
-                      event.type
-                    )}`}
-                  >
-                    {getTypeLabel(event.type)}
+                  {/* Año debajo del punto */}
+                  <div className="absolute top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                    <span className="text-sm font-bold text-babalu-primary bg-white px-2 py-1 rounded">
+                      {event.year}
+                    </span>
+                  </div>
+
+                  {/* Tooltip con información */}
+                  {hoveredEvent === event.id && (
+                    <div
+                      className={`absolute z-50 w-80 bg-white border-2 border-babalu-primary rounded-xl shadow-2xl p-6 transition-all duration-300 ${
+                        position > 50 ? "bottom-full mb-4" : "top-full mt-4"
+                      } ${
+                        position > 50
+                          ? "right-1/2 translate-x-1/2"
+                          : "left-1/2 -translate-x-1/2"
+                      }`}
+                    >
+                      {/* Tipo de evento */}
+                      <div
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium border mb-3 ${getTypeColor(
+                          event.type
+                        )}`}
+                      >
+                        {getTypeLabel(event.type)}
+                      </div>
+
+                      {/* Título */}
+                      <h3 className="text-lg font-bold text-gray-800 mb-2">
+                        {event.title}
+                      </h3>
+
+                      {/* Fecha */}
+                      <div className="flex items-center text-sm text-gray-500 mb-2">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        <span>{event.date}</span>
+                      </div>
+
+                      {/* Ubicación */}
+                      {event.location && (
+                        <div className="flex items-center text-sm text-gray-500 mb-3">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          <span>{event.location}</span>
+                        </div>
+                      )}
+
+                      {/* Descripción */}
+                      <p className="text-gray-600 text-sm leading-relaxed mb-3">
+                        {event.description}
+                      </p>
+
+                      {/* Imagen */}
+                      {event.image && (
+                        <div className="mt-2 rounded-lg overflow-hidden">
+                          <Image
+                            src={event.image || "/placeholder.svg"}
+                            alt={event.title}
+                            width={300}
+                            height={150}
+                            className="w-full h-32 object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Versión móvil - Timeline vertical para dispositivos pequeños */}
+      <div className="lg:hidden mt-8">
+        <div className="relative">
+          {/* Línea vertical */}
+          <div className="absolute left-4 top-0 bottom-0 w-1 bg-babalu-primary rounded-full"></div>
+
+          {/* Eventos móviles */}
+          <div className="space-y-8 ml-12">
+            {timelineEvents.map((event) => (
+              <div
+                key={event.id}
+                className="relative"
+                onMouseEnter={() => setHoveredEvent(event.id)}
+                onMouseLeave={() => setHoveredEvent(null)}
+              >
+                {/* Punto */}
+                <div className="absolute -left-9 top-2 w-6 h-6 bg-babalu-primary rounded-full flex items-center justify-center shadow-lg">
+                  <event.icon className="w-3 h-3 text-white" />
+                </div>
+
+                {/* Contenido */}
+                <div className="bg-white border-2 border-gray-100 rounded-xl p-4 shadow-sm">
+                  {/* Año y tipo */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-lg font-bold text-babalu-primary">
+                      {event.year}
+                    </span>
+                    <div
+                      className={`px-2 py-1 rounded-full text-xs font-medium border ${getTypeColor(
+                        event.type
+                      )}`}
+                    >
+                      {getTypeLabel(event.type)}
+                    </div>
                   </div>
 
                   {/* Título */}
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">
                     {event.title}
                   </h3>
 
-                  {/* Fecha */}
-                  <div className="flex items-center text-sm text-gray-500 mb-3">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    <span>{event.date}</span>
+                  {/* Fecha y ubicación */}
+                  <div className="space-y-1 mb-3">
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      <span>{event.date}</span>
+                    </div>
+                    {event.location && (
+                      <div className="flex items-center text-sm text-gray-500">
+                        <MapPin className="w-4 h-4 mr-1" />
+                        <span>{event.location}</span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Ubicación */}
-                  {event.location && (
-                    <div className="flex items-center text-sm text-gray-500 mb-3">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      <span>{event.location}</span>
-                    </div>
-                  )}
-
                   {/* Descripción */}
-                  <p className="text-gray-600 leading-relaxed">
+                  <p className="text-gray-600 text-sm leading-relaxed">
                     {event.description}
                   </p>
 
-                  {/* Imagen expandible */}
-                  {selectedEvent === event.id && event.image && (
-                    <div className="mt-4 rounded-lg overflow-hidden">
+                  {/* Imagen */}
+                  {event.image && (
+                    <div className="mt-3 rounded-lg overflow-hidden">
                       <Image
                         src={event.image || "/placeholder.svg"}
                         alt={event.title}
                         width={300}
-                        height={200}
-                        className="w-full h-48 object-cover"
+                        height={150}
+                        className="w-full h-32 object-cover"
                       />
                     </div>
                   )}
                 </div>
               </div>
-
-              {/* Punto central con ícono */}
-              <div className="relative z-10">
-                <div className="w-16 h-16 bg-babalu-primary rounded-full flex items-center justify-center shadow-lg">
-                  <event.icon className="w-8 h-8 text-white" />
-                </div>
-              </div>
-
-              {/* Espacio vacío del otro lado */}
-              <div className="w-5/12"></div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 

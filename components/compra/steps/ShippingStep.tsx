@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "../../ui/button";
 import { MapPin, Truck, Clock, Check, Loader2 } from "lucide-react";
 import { PaymentData, FormErrors, SetErrorsFunction } from "../CompraWizard";
@@ -286,7 +286,20 @@ export function ShippingStep({
     null
   );
 
-  // Calcular peso total del carrito - movido dentro del componente para usar useCallback
+  // Usar useRef para trackear si ya se hizo la selección automática inicial
+  const initialAutoSelectDone = useRef(false);
+
+  // Usar useRef para evitar dependencias cambiantes
+  const formDataRef = useRef(formData);
+  const errorsRef = useRef(errors);
+
+  // Actualizar las refs cuando cambien los props
+  useEffect(() => {
+    formDataRef.current = formData;
+    errorsRef.current = errors;
+  }, [formData, errors]);
+
+  // Calcular peso total del carrito
   const calculateTotalWeight = useCallback((): number => {
     return cartItems.reduce((total, item) => total + 0.5 * item.quantity, 0);
   }, [cartItems]);
@@ -308,7 +321,7 @@ export function ShippingStep({
     return Object.keys(newErrors).length === 0;
   };
 
-  // Función para manejar la selección de envío - movida antes de useCallback
+  // Función para manejar la selección de envío
   const handleSelectShipping = useCallback(
     (option: ShippingOption) => {
       setSelectedOption(option);
@@ -316,17 +329,30 @@ export function ShippingStep({
         shippingOption: option,
         shippingMethod: option.id,
       });
+
+      // Limpiar error de shipping si existe
+      if (errorsRef.current.shipping) {
+        const newErrors = { ...errorsRef.current };
+        delete newErrors.shipping;
+        setErrors(newErrors);
+      }
     },
-    [updateFormData]
+    [updateFormData, setErrors]
   );
 
-  // Usar useCallback para memoizar la función con todas las dependencias necesarias
+  // Memoizar calculateShipping sin dependencias problemáticas
   const calculateShipping = useCallback(async () => {
-    if (!formData.codigoPostal || formData.codigoPostal.length < 4) {
-      setErrors((prev: FormErrors) => ({
-        ...prev,
+    const currentFormData = formDataRef.current;
+    const currentErrors = errorsRef.current;
+
+    if (
+      !currentFormData.codigoPostal ||
+      currentFormData.codigoPostal.length < 4
+    ) {
+      setErrors({
+        ...currentErrors,
         shipping: "Completa tu código postal para calcular envíos",
-      }));
+      });
       return;
     }
 
@@ -337,52 +363,66 @@ export function ShippingStep({
       // Usar el servicio simulado avanzado
       const quotes = await shippingService.getAllQuotes(
         "1001", // Código postal de origen fijo (tu almacén/ubicación)
-        formData.codigoPostal,
+        currentFormData.codigoPostal,
         totalWeight
       );
 
       setShippingOptions(quotes);
 
-      // Seleccionar automáticamente la opción más económica y actualizar en tiempo real
-      if (quotes.length > 0) {
+      // SOLO seleccionar automáticamente si es la primera vez y no hay selección previa
+      if (
+        quotes.length > 0 &&
+        !initialAutoSelectDone.current &&
+        !selectedOption
+      ) {
         const cheapestOption = quotes.reduce((prev, current) =>
           prev.price < current.price ? prev : current
         );
         handleSelectShipping(cheapestOption);
+        initialAutoSelectDone.current = true; // Marcar que ya se hizo la selección automática
       }
 
       // Limpiar errores si hay opciones disponibles
-      if (quotes.length > 0 && errors.shipping) {
-        setErrors((prev: FormErrors) => {
-          const newErrors = { ...prev };
-          delete newErrors.shipping;
-          return newErrors;
-        });
+      if (quotes.length > 0 && currentErrors.shipping) {
+        const newErrors = { ...currentErrors };
+        delete newErrors.shipping;
+        setErrors(newErrors);
       }
     } catch (error) {
       console.error("Error calculando envíos:", error);
-      setErrors((prev: FormErrors) => ({
-        ...prev,
+      setErrors({
+        ...currentErrors,
         shipping:
           "Error al calcular opciones de envío. Verifica tu código postal.",
-      }));
+      });
     } finally {
       setCalculating(false);
     }
-  }, [
-    formData.codigoPostal,
-    setErrors,
-    calculateTotalWeight,
-    handleSelectShipping,
-    errors.shipping, // Incluido en las dependencias
-  ]);
+  }, [calculateTotalWeight, handleSelectShipping, setErrors, selectedOption]);
 
-  // Calcular envíos automáticamente cuando el componente se monta
+  // Calcular envíos automáticamente cuando cambia el código postal
   useEffect(() => {
     if (formData.codigoPostal && formData.codigoPostal.length >= 4) {
-      calculateShipping();
+      // Usar un timeout para evitar cálculos demasiado frecuentes
+      const timeoutId = setTimeout(() => {
+        calculateShipping();
+      }, 500); // Debounce de 500ms
+
+      return () => clearTimeout(timeoutId);
     }
   }, [formData.codigoPostal, calculateShipping]);
+
+  // Calcular envíos solo una vez al montar el componente si hay código postal
+  useEffect(() => {
+    if (
+      formData.codigoPostal &&
+      formData.codigoPostal.length >= 4 &&
+      shippingOptions.length === 0
+    ) {
+      calculateShipping();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo se ejecuta una vez al montar
 
   const handleNext = () => {
     if (validateForm() && selectedOption) {
@@ -417,6 +457,28 @@ export function ShippingStep({
               </p>
             </div>
           </div>
+
+          {/* Botón para recalcular envíos */}
+          {formData.codigoPostal && formData.codigoPostal.length >= 4 && (
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={calculateShipping}
+                disabled={calculating}
+                className="text-sm"
+              >
+                {calculating ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                    Calculando...
+                  </>
+                ) : (
+                  "Recalcular Envíos"
+                )}
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Opciones de envío */}
@@ -488,7 +550,7 @@ export function ShippingStep({
                 <Truck className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-sm text-gray-600">
                   {formData.codigoPostal
-                    ? "Calculando opciones de envío..."
+                    ? "No hay opciones de envío disponibles para tu ubicación"
                     : "Completa tu dirección para calcular envíos"}
                 </p>
               </div>

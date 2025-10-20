@@ -45,17 +45,21 @@ export function PersonalInfoStep({
 
     // Validar información personal
     if (!formData.nombre.trim()) newErrors.nombre = "El nombre es requerido";
-    if (!formData.apellido.trim()) newErrors.apellido = "El apellido es requerido";
+    if (!formData.apellido.trim())
+      newErrors.apellido = "El apellido es requerido";
     if (!formData.email.trim()) newErrors.email = "El email es requerido";
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email inválido";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
+      newErrors.email = "Email inválido";
     if (!formData.phone.trim()) newErrors.phone = "El teléfono es requerido";
 
     // Validar dirección
     if (showAddressForm || !hasSavedAddress) {
       if (!formData.calle.trim()) newErrors.calle = "La dirección es requerida";
       if (!formData.ciudad.trim()) newErrors.ciudad = "La ciudad es requerida";
-      if (!formData.provincia.trim()) newErrors.provincia = "La provincia es requerida";
-      if (!formData.codigoPostal.trim()) newErrors.codigoPostal = "El código postal es requerido";
+      if (!formData.provincia.trim())
+        newErrors.provincia = "La provincia es requerida";
+      if (!formData.codigoPostal.trim())
+        newErrors.codigoPostal = "El código postal es requerido";
     }
 
     setErrors(newErrors);
@@ -64,15 +68,15 @@ export function PersonalInfoStep({
 
   const handleNext = async () => {
     setIsSubmitting(true);
-    
+
     // Pequeño delay para permitir que la UI se actualice
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     const isValid = validateForm();
-    
+
     if (isValid) {
       console.log("✅ Formulario válido, procediendo al siguiente paso...");
-      
+
       // Guardar dirección si está marcada la opción
       if (formData.saveInfo && (showAddressForm || !hasSavedAddress)) {
         try {
@@ -82,7 +86,7 @@ export function PersonalInfoStep({
           // No impedimos el flujo por error al guardar dirección
         }
       }
-      
+
       onNext();
     } else {
       console.log("❌ Errores de validación:", errors);
@@ -90,10 +94,10 @@ export function PersonalInfoStep({
       const firstErrorField = Object.keys(errors)[0];
       if (firstErrorField) {
         const element = document.querySelector(`[name="${firstErrorField}"]`);
-        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element?.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     }
-    
+
     setIsSubmitting(false);
   };
 
@@ -128,7 +132,7 @@ export function PersonalInfoStep({
   // Función simplificada para manejar cambios
   const handleInputChange = (field: keyof PaymentData, value: string) => {
     updateFormData({ [field]: value });
-    
+
     // Limpiar error específico si existe
     if (errors[field]) {
       const newErrors = { ...errors };
@@ -140,8 +144,14 @@ export function PersonalInfoStep({
   const useSavedAddress = () => {
     setShowAddressForm(false);
     // Limpiar errores de dirección al usar dirección guardada
-    const { calle, ciudad, provincia, codigoPostal, ...restErrors } = errors;
-    setErrors(restErrors);
+    const addressErrorFields = ["calle", "ciudad", "provincia", "codigoPostal"];
+    const newErrors = { ...errors };
+
+    addressErrorFields.forEach((field) => {
+      delete newErrors[field as keyof FormErrors];
+    });
+
+    setErrors(newErrors);
   };
 
   const editAddress = () => {
@@ -303,7 +313,9 @@ export function PersonalInfoStep({
                   value={formData.calle}
                   onChange={(e) => handleInputChange("calle", e.target.value)}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
-                    errors.calle ? "border-red-300 bg-red-50" : "border-gray-300"
+                    errors.calle
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300"
                   }`}
                   placeholder="Calle y número"
                   disabled={isSubmitting}
@@ -322,9 +334,13 @@ export function PersonalInfoStep({
                     type="text"
                     name="ciudad"
                     value={formData.ciudad}
-                    onChange={(e) => handleInputChange("ciudad", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("ciudad", e.target.value)
+                    }
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
-                      errors.ciudad ? "border-red-300 bg-red-50" : "border-gray-300"
+                      errors.ciudad
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
                     }`}
                     placeholder="Ciudad"
                     disabled={isSubmitting}
@@ -342,15 +358,21 @@ export function PersonalInfoStep({
                     type="text"
                     name="provincia"
                     value={formData.provincia}
-                    onChange={(e) => handleInputChange("provincia", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("provincia", e.target.value)
+                    }
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
-                      errors.provincia ? "border-red-300 bg-red-50" : "border-gray-300"
+                      errors.provincia
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
                     }`}
                     placeholder="Provincia"
                     disabled={isSubmitting}
                   />
                   {errors.provincia && (
-                    <p className="mt-1 text-sm text-red-600">{errors.provincia}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.provincia}
+                    </p>
                   )}
                 </div>
               </div>
@@ -364,16 +386,22 @@ export function PersonalInfoStep({
                     type="text"
                     name="codigoPostal"
                     value={formData.codigoPostal}
-                    onChange={(e) => handleInputChange("codigoPostal", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("codigoPostal", e.target.value)
+                    }
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-babalu-primary ${
-                      errors.codigoPostal ? "border-red-300 bg-red-50" : "border-gray-300"
+                      errors.codigoPostal
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
                     }`}
                     placeholder="1234"
                     maxLength={8}
                     disabled={isSubmitting}
                   />
                   {errors.codigoPostal && (
-                    <p className="mt-1 text-sm text-red-600">{errors.codigoPostal}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.codigoPostal}
+                    </p>
                   )}
                 </div>
 

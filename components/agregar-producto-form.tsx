@@ -325,6 +325,19 @@ export function AgregarProductoForm() {
         cantidad: false,
       };
     }
+    // ✨ NUEVA CATEGORÍA: CERÁMICA
+    if (cat.includes("ceramica") || cat.includes("cerámica")) {
+      return {
+        marca: false,
+        aroma: false,
+        linea: false,
+        tamaño: true,
+        color: false,
+        tipo: true, // Tipo es REQUERIDO para cerámica
+        piedra: false,
+        cantidad: false,
+      };
+    }
     if (cat.includes("accesorios")) {
       return {
         marca: false,
@@ -545,6 +558,16 @@ export function AgregarProductoForm() {
         );
       }
 
+      // ✨ NUEVO: Opciones de tamaño para cerámica
+      if (cat.includes("ceramica") || cat.includes("cerámica")) {
+        nuevosTamaños.push(
+          { value: "pequeño", label: "Pequeño" },
+          { value: "mediano", label: "Mediano" },
+          { value: "grande", label: "Grande" },
+          { value: "extra grande", label: "Extra Grande" }
+        );
+      }
+
       // Opciones de tamaño y color para lámparas de sal
       if (cat.includes("lampara de sal")) {
         nuevosTamaños.push(
@@ -559,6 +582,22 @@ export function AgregarProductoForm() {
           { value: "rosa", label: "Rosa" },
           { value: "naranja", label: "Naranja" },
           { value: "multicolor", label: "Multicolor" }
+        );
+      }
+
+      // ✨ NUEVO: Opciones de tipo para cerámica
+      if (cat.includes("ceramica") || cat.includes("cerámica")) {
+        nuevosTipos.push(
+          { value: "porta sahumerios", label: "Porta Sahumerios" },
+          { value: "porta velas", label: "Porta Velas" },
+          { value: "hornillo", label: "Hornillo" },
+          { value: "quemador de esencias", label: "Quemador de Esencias" },
+          {
+            value: "cascada de humo ceramica",
+            label: "Cascada de Humo Cerámica",
+          },
+          { value: "difusor", label: "Difusor" },
+          { value: "otros", label: "Otros" }
         );
       }
 

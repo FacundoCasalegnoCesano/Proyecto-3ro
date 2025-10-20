@@ -88,6 +88,29 @@ const esProductoIndividual = (product: Product): boolean => {
 
   return tieneCategoria && noTieneMarca && noTieneLinea && tieneCaracteristicas;
 };
+const esCategoriaNoAgrupable = (product: Product): boolean => {
+  const categoria = safeString(product.category).toLowerCase();
+
+  const categoriasNoAgrupables = [
+    "ceramica",
+    "cerámica",
+    "vela",
+    "velas",
+    "cascada de humo",
+    "cascadas de humo",
+    "estatua",
+    "estatuas",
+    "lampara de sal",
+    "lamparas de sal",
+    "lámpara de sal",
+    "lámparas de sal",
+    "porta sahumerios",
+    "accesorios",
+    "atrapaluz",
+  ];
+
+  return categoriasNoAgrupables.some((cat) => categoria.includes(cat));
+};
 
 export function ProductDetail({
   productId,
@@ -211,14 +234,16 @@ export function ProductDetail({
         if (productosValidados.length > 0) {
           // FILTRO CRÍTICO: Si hay línea específica, filtrar solo productos de esa línea
           let productosFiltradosPorLinea = productosValidados;
-          
+
           if (linea && tieneLineaEspecifica(linea)) {
-            productosFiltradosPorLinea = productosValidados.filter((producto: Product) => {
-              const lineaProducto = safeString(producto.linea).toLowerCase();
-              const lineaBuscada = linea.toLowerCase();
-              return lineaProducto === lineaBuscada;
-            });
-            
+            productosFiltradosPorLinea = productosValidados.filter(
+              (producto: Product) => {
+                const lineaProducto = safeString(producto.linea).toLowerCase();
+                const lineaBuscada = linea.toLowerCase();
+                return lineaProducto === lineaBuscada;
+              }
+            );
+
             console.log(
               `🔍 Filtrados por línea "${linea}": ${productosFiltradosPorLinea.length} de ${productosValidados.length} productos`
             );
@@ -286,7 +311,10 @@ export function ProductDetail({
                   safeString(productoRepresentativo.linea) ||
                   linea ||
                   undefined,
-                image: productoRepresentativo.image || productoRepresentativo.src || "/placeholder.svg", // Incluimos la imagen
+                image:
+                  productoRepresentativo.image ||
+                  productoRepresentativo.src ||
+                  "/placeholder.svg", // Incluimos la imagen
               };
 
               console.log("➕ Añadiendo variante:", variante);
@@ -312,7 +340,10 @@ export function ProductDetail({
               stock: currentProduct.stock,
               aroma: safeString(currentProduct.aroma),
               linea: safeString(currentProduct.linea) || undefined,
-              image: currentProduct.image || currentProduct.src || "/placeholder.svg",
+              image:
+                currentProduct.image ||
+                currentProduct.src ||
+                "/placeholder.svg",
             };
 
             const exists = variantes.some(
@@ -379,7 +410,9 @@ export function ProductDetail({
         console.log("✅ Producto cargado:", productData);
         setProduct(productData);
 
-        const esIndividual = esProductoIndividual(productData);
+        const esIndividual =
+          esProductoIndividual(productData) ||
+          esCategoriaNoAgrupable(productData);
         console.log("🔍 ¿Es producto individual?", esIndividual);
 
         const tieneAtributosSuficientes = tieneAlMenosDosAtributos(productData);
@@ -519,7 +552,8 @@ export function ProductDetail({
     );
   }
 
-  const esIndividual = esProductoIndividual(product);
+  const esIndividual =
+    esProductoIndividual(product) || esCategoriaNoAgrupable(product);
   const puedeMostrarAromas = !esIndividual && tieneAlMenosDosAtributos(product);
   const lineaDisplay =
     typeof lineaSeleccionada === "string"

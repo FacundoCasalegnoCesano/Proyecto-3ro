@@ -203,13 +203,13 @@ export function PaymentStep({
           email: cardData.email,
         }),
       };
-      
+
       // Si es Mercado Pago, podrías agregar lógica específica aquí
       if (paymentMethod === "mercado-pago") {
         console.log("Procesando pago con Mercado Pago...");
         // Aquí iría la integración con la API de Mercado Pago
       }
-      
+
       onSubmit(finalData);
     }
   };
@@ -731,7 +731,9 @@ export function PaymentStep({
         <div className="bg-white rounded-lg border-2 border-gray-200">
           <div
             className={`p-4 cursor-pointer transition-all ${
-              paymentMethod === "mercado-pago" ? "bg-blue-50 border-b-2 border-blue-500" : ""
+              paymentMethod === "mercado-pago"
+                ? "bg-blue-50 border-b-2 border-blue-500"
+                : ""
             }`}
             onClick={() => setPaymentMethod("mercado-pago")}
           >
@@ -784,9 +786,10 @@ export function PaymentStep({
 
               <div className="text-center py-4">
                 <p className="text-sm text-gray-600 mb-4">
-                  Serás redirigido a Mercado Pago para completar tu pago de forma segura
+                  Serás redirigido a Mercado Pago para completar tu pago de
+                  forma segura
                 </p>
-                
+
                 {/* Información de resumen */}
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">
                   <div className="flex justify-between items-center text-sm">
@@ -795,14 +798,19 @@ export function PaymentStep({
                       {new Intl.NumberFormat("es-AR", {
                         style: "currency",
                         currency: "ARS",
-                      }).format(subtotal + (formData.shippingOption?.price || 0))}
+                      }).format(
+                        subtotal + (formData.shippingOption?.price || 0)
+                      )}
                     </span>
                   </div>
                   <div className="text-xs text-gray-500 mt-2 text-left">
-                    <p>• Incluye costo de envío: {new Intl.NumberFormat("es-AR", {
-                      style: "currency",
-                      currency: "ARS",
-                    }).format(formData.shippingOption?.price || 0)}</p>
+                    <p>
+                      • Incluye costo de envío:{" "}
+                      {new Intl.NumberFormat("es-AR", {
+                        style: "currency",
+                        currency: "ARS",
+                      }).format(formData.shippingOption?.price || 0)}
+                    </p>
                     <p>• El IVA ya está incluido en los precios</p>
                   </div>
                 </div>
@@ -828,10 +836,10 @@ export function PaymentStep({
                 </button>
 
                 <p className="text-xs text-gray-500 mt-3">
-                  Al continuar, aceptas los{' '}
+                  Al continuar, aceptas los{" "}
                   <a href="/terminos" className="text-blue-600 hover:underline">
                     términos y condiciones
-                  </a>{' '}
+                  </a>{" "}
                   de Mercado Pago
                 </p>
               </div>
@@ -860,7 +868,9 @@ export function PaymentStep({
                       height={20}
                       className="h-4 w-auto"
                     />
-                    <span className="text-xs text-gray-600 ml-1">Mastercard</span>
+                    <span className="text-xs text-gray-600 ml-1">
+                      Mastercard
+                    </span>
                   </div>
                   <div className="flex items-center bg-white border border-gray-200 rounded px-2 py-1">
                     <Image
@@ -937,7 +947,7 @@ export function PaymentStep({
         >
           Anterior
         </Button>
-        
+
         {/* No mostrar el botón "Finalizar Compra" cuando Mercado Pago está seleccionado */}
         {paymentMethod !== "mercado-pago" && (
           <Button

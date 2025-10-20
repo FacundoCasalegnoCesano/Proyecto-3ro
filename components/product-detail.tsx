@@ -14,6 +14,7 @@ interface ProductVariant {
   stock: number;
   aroma: string;
   linea?: string;
+  image?: string; // Añadimos la imagen
 }
 
 interface ProductDetailProps {
@@ -74,14 +75,9 @@ const tieneAlMenosDosAtributos = (product: Product): boolean => {
 
 // Función para verificar si un producto es individual
 const esProductoIndividual = (product: Product): boolean => {
-  // Verificar si tiene categoría
   const tieneCategoria = safeString(product.category) !== "";
-
-  // Verificar si NO tiene marca ni línea específicas (o sea, es individual)
   const noTieneMarca = !tieneMarcaEspecifica(product.marca);
   const noTieneLinea = !tieneLineaEspecifica(product.linea);
-
-  // Verificar si tiene características adicionales que lo hacen vendible individualmente
   const tieneCaracteristicas = [
     safeString(product.tamaño) !== "",
     safeString(product.cantidad) !== "",
@@ -90,7 +86,6 @@ const esProductoIndividual = (product: Product): boolean => {
     safeString(product.piedra) !== "",
   ].some(Boolean);
 
-  // Es individual si tiene categoría, no tiene marca/línea específicas, pero tiene otras características
   return tieneCategoria && noTieneMarca && noTieneLinea && tieneCaracteristicas;
 };
 
@@ -110,7 +105,6 @@ export function ProductDetail({
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
 
-  // SOLUCIÓN: Remover product de las dependencias y usar parámetros
   const fetchVariants = useCallback(
     async (
       category: string,
@@ -125,7 +119,6 @@ export function ProductDetail({
       try {
         console.log("🔍 Iniciando búsqueda de variantes...");
 
-        // Construir múltiples URLs para obtener productos con diferentes combinaciones
         const urls: string[] = [];
 
         if (category && marca) {
@@ -176,7 +169,6 @@ export function ProductDetail({
         const allResults = await Promise.all(allProductsPromises);
         console.log("📦 Respuestas de las consultas:", allResults.length);
 
-        // Combinar todos los productos y eliminar duplicados
         const todosLosProductos: Product[] = [];
         const productosVistos = new Set<number>();
 
@@ -203,7 +195,6 @@ export function ProductDetail({
           return;
         }
 
-        // Filtrar productos que tengan al menos 2 atributos y aroma
         const productosValidados = todosLosProductos.filter(
           (producto: Product) => {
             const tieneAtributosSuficientes =
@@ -218,10 +209,24 @@ export function ProductDetail({
         );
 
         if (productosValidados.length > 0) {
-          // Agrupar productos por aroma
+          // FILTRO CRÍTICO: Si hay línea específica, filtrar solo productos de esa línea
+          let productosFiltradosPorLinea = productosValidados;
+          
+          if (linea && tieneLineaEspecifica(linea)) {
+            productosFiltradosPorLinea = productosValidados.filter((producto: Product) => {
+              const lineaProducto = safeString(producto.linea).toLowerCase();
+              const lineaBuscada = linea.toLowerCase();
+              return lineaProducto === lineaBuscada;
+            });
+            
+            console.log(
+              `🔍 Filtrados por línea "${linea}": ${productosFiltradosPorLinea.length} de ${productosValidados.length} productos`
+            );
+          }
+
           const productosPorAroma: { [aroma: string]: Product[] } = {};
 
-          productosValidados.forEach((producto: Product) => {
+          productosFiltradosPorLinea.forEach((producto: Product) => {
             const aroma = safeString(producto.aroma);
             if (!productosPorAroma[aroma]) {
               productosPorAroma[aroma] = [];
@@ -231,10 +236,10 @@ export function ProductDetail({
 
           console.log(
             "🌺 Aromas únicos encontrados:",
-            Object.keys(productosPorAroma)
+            Object.keys(productosPorAroma),
+            linea ? `(línea: ${linea})` : "(todas las líneas)"
           );
 
-          // Crear variantes para cada aroma
           const variantes: ProductVariant[] = [];
 
           Object.keys(productosPorAroma).forEach((aroma) => {
@@ -281,6 +286,7 @@ export function ProductDetail({
                   safeString(productoRepresentativo.linea) ||
                   linea ||
                   undefined,
+                image: productoRepresentativo.image || productoRepresentativo.src || "/placeholder.svg", // Incluimos la imagen
               };
 
               console.log("➕ Añadiendo variante:", variante);
@@ -290,7 +296,6 @@ export function ProductDetail({
 
           console.log("🛍️ Total de variantes creadas:", variantes.length);
 
-          // Incluir también el producto actual si tiene aroma y al menos 2 atributos
           if (
             currentProduct &&
             safeString(currentProduct.aroma) !== "" &&
@@ -307,6 +312,7 @@ export function ProductDetail({
               stock: currentProduct.stock,
               aroma: safeString(currentProduct.aroma),
               linea: safeString(currentProduct.linea) || undefined,
+              image: currentProduct.image || currentProduct.src || "/placeholder.svg",
             };
 
             const exists = variantes.some(
@@ -325,7 +331,6 @@ export function ProductDetail({
             setVariants(variantes);
           }
 
-          // Inicializar cantidades
           const initialQuantities: Record<string, number> = {};
           variantes.forEach((variant) => {
             initialQuantities[variant.id] = 1;
@@ -343,7 +348,7 @@ export function ProductDetail({
       }
     },
     []
-  ); // SOLUCIÓN: Array de dependencias vacío
+  );
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -374,11 +379,9 @@ export function ProductDetail({
         console.log("✅ Producto cargado:", productData);
         setProduct(productData);
 
-        // Verificar si es producto individual
         const esIndividual = esProductoIndividual(productData);
         console.log("🔍 ¿Es producto individual?", esIndividual);
 
-        // Si NO es producto individual y tiene al menos 2 atributos, buscar variantes
         const tieneAtributosSuficientes = tieneAlMenosDosAtributos(productData);
 
         if (!esIndividual && tieneAtributosSuficientes) {
@@ -395,13 +398,12 @@ export function ProductDetail({
             currentAroma: productData.aroma,
           });
 
-          // SOLUCIÓN: Pasar productData directamente en lugar de depender del estado
           await fetchVariants(
             productData.category,
             marca,
             safeString(productData.aroma),
             linea,
-            productData // Pasamos el producto actual como parámetro
+            productData
           );
         } else {
           console.log(
@@ -431,14 +433,12 @@ export function ProductDetail({
   const handleAddToCart = () => {
     if (!product) return;
 
-    // Convertir precio string a número de forma segura
     let priceNumber = 0;
     if (product.price && typeof product.price === "string") {
       const cleanedPrice = product.price.replace("$", "").replace(",", ".");
       priceNumber = Number.parseFloat(cleanedPrice) || 0;
     }
 
-    // Solo agregar si el precio es válido
     if (priceNumber > 0) {
       for (let i = 0; i < quantity; i++) {
         addItem({
@@ -472,7 +472,7 @@ export function ProductDetail({
           variant.linea ? ` - Línea ${variant.linea}` : ""
         } - ${variant.name}`,
         price: variant.price,
-        image: product.image || "/placeholder.svg",
+        image: variant.image || "/placeholder.svg",
         quantity: 0,
         stockIndividual: 0,
       });
@@ -526,7 +526,6 @@ export function ProductDetail({
       ? lineaSeleccionada
       : safeString(product.linea);
 
-  // Función para obtener el precio formateado del producto
   const getProductPrice = (): number => {
     if (!product.price) return 0;
     if (typeof product.price === "string") {
@@ -584,7 +583,7 @@ export function ProductDetail({
             </p>
           </div>
 
-          {/* PRECIO Y BOTÓN DE AGREGAR AL CARRITO PARA PRODUCTOS INDIVIDUALES */}
+          {/* PRECIO Y BOTÓN PARA PRODUCTOS INDIVIDUALES */}
           {esIndividual && productPrice > 0 && (
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between mb-3">
@@ -693,7 +692,7 @@ export function ProductDetail({
             </div>
           )}
 
-          {/* LISTADO DE AROMAS PARA PRODUCTOS AGRUPADOS */}
+          {/* LISTADO DE AROMAS CON IMÁGENES - VERSIÓN MEJORADA */}
           {puedeMostrarAromas && (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -708,64 +707,92 @@ export function ProductDetail({
               </div>
 
               {variants.length > 0 ? (
-                <div className="space-y-2 max-h-80 overflow-y-auto">
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
                   {variants.map((variant: ProductVariant) => (
                     <div
                       key={variant.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                      className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
                     >
-                      <div className="flex-1">
-                        <span className="font-medium text-gray-800 text-sm">
+                      {/* Imagen del producto */}
+                      <div className="flex-shrink-0">
+                        <div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden">
+                          <Image
+                            src={variant.image || "/placeholder.svg"}
+                            alt={variant.name}
+                            width={80}
+                            height={80}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Información del producto */}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-800 text-sm mb-1">
                           {variant.name}
-                        </span>
-                        <div className="text-xs text-gray-600">
-                          {formatPrice(variant.price)} • {variant.stock}{" "}
-                          disponibles
+                        </h4>
+                        <div className="flex items-center gap-3 text-xs text-gray-600">
+                          <span className="font-bold text-babalu-primary">
+                            {formatPrice(variant.price)}
+                          </span>
+                          <span>
+                            {variant.stock > 0 ? (
+                              <>
+                                <span className="text-green-600 font-medium">
+                                  ✓
+                                </span>{" "}
+                                {variant.stock} disponibles
+                              </>
+                            ) : (
+                              <span className="text-red-500 font-medium">
+                                Sin stock
+                              </span>
+                            )}
+                          </span>
                           {variant.linea && !lineaDisplay && (
-                            <span className="ml-1 text-gray-500">
-                              (Línea {variant.linea})
+                            <span className="text-gray-500">
+                              Línea {variant.linea}
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center border border-gray-300 rounded">
+                      {/* Selector de cantidad y botón */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center border border-gray-300 rounded-lg bg-white">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() =>
                               handleVariantQuantityChange(variant.id, -1)
                             }
-                            className="px-1 py-0 hover:bg-gray-100 h-6 w-6"
+                            className="px-2 py-1 hover:bg-gray-100 h-8 w-8"
                             disabled={variant.stock === 0}
                           >
-                            <Minus className="w-2.5 h-2.5" />
+                            <Minus className="w-3 h-3" />
                           </Button>
-
-                          <span className="px-2 py-0 font-medium min-w-[1.5rem] text-center text-xs">
+                          <span className="px-3 py-1 font-medium min-w-[2rem] text-center text-sm">
                             {variantQuantities[variant.id] || 1}
                           </span>
-
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() =>
                               handleVariantQuantityChange(variant.id, 1)
                             }
-                            className="px-1 py-0 hover:bg-gray-100 h-6 w-6"
+                            className="px-2 py-1 hover:bg-gray-100 h-8 w-8"
                             disabled={variant.stock === 0}
                           >
-                            <Plus className="w-2.5 h-2.5" />
+                            <Plus className="w-3 h-3" />
                           </Button>
                         </div>
 
                         <Button
                           onClick={() => handleAddVariantToCart(variant)}
-                          className="bg-babalu-primary hover:bg-babalu-dark text-white px-2 py-1 flex items-center gap-1 text-xs h-6"
+                          className="bg-babalu-primary hover:bg-babalu-dark text-white px-4 py-2 flex items-center gap-2 text-sm h-8 whitespace-nowrap"
                           disabled={variant.stock === 0}
                         >
-                          <ShoppingCart className="w-2.5 h-2.5" />
+                          <ShoppingCart className="w-3.5 h-3.5" />
                           Agregar
                         </Button>
                       </div>

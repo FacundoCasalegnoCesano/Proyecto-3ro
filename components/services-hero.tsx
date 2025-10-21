@@ -40,7 +40,7 @@ export function ServicesHero() {
               <div className="w-80 h-80 bg-babalu-primary rounded-full p-8">
                 <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
                   <Image
-                    src="/placeholder.svg?height=250&width=250&text=Spiritual+Services&bg=F5F5F5"
+                    src="/img/Manos iluminadas por resplandor dorado.webp"
                     alt="Servicios Espirituales"
                     width={250}
                     height={250}

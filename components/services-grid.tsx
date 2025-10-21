@@ -26,10 +26,10 @@ export function ServicesGrid() {
     {
       id: "tarot",
       title: "Lectura De Tarot",
-      subtitle: "Tarot Rider-Waite",
+      subtitle: "Tarot Egipcio",
       description:
-        "Consultas personalizadas de Tarot para guiar tu camino espiritual. Utilizamos el tradicional mazo Rider-Waite para brindarte claridad sobre tu presente y futuro. Cada lectura es única y adaptada a tus necesidades específicas, ayudándote a tomar decisiones importantes con confianza y sabiduría.",
-      image: "/img/cartas-tarot.jpg",
+        "Consultas personalizadas de Tarot para guiar tu camino espiritual. Utilizamos el tradicional mazo Egipcio para brindarte claridad sobre tu presente y futuro. Cada lectura es única y adaptada a tus necesidades específicas, ayudándote a tomar decisiones importantes con confianza y sabiduría.",
+      image: "/img/510084.webp",
       price: "3500",
       duration: "60 minutos",
       benefits: [
@@ -48,7 +48,7 @@ export function ServicesGrid() {
       description:
         "Terapia de sanación energética que utiliza la imposición de manos para canalizar energía universal. El Reiki ayuda a equilibrar los chakras, reducir el estrés y promover la sanación natural del cuerpo y la mente. Una experiencia profundamente relajante que restaura tu equilibrio interno.",
       image:
-        "/placeholder.svg?height=300&width=400&text=Reiki+Session&bg=E8F5E8",
+        "/img/reiki-niveles.webp",
       price: "4000",
       duration: "90 minutos",
       benefits: [
@@ -67,7 +67,7 @@ export function ServicesGrid() {
       description:
         "Ritual de limpieza energética con péndulo y cristales que se utiliza para detectar y eliminar bloqueos energéticos en el cuerpo y el entorno, promoviendo el equilibrio, la paz y la armonía. Ideal para liberar energías estancadas y restaurar tu vibración natural.",
       image:
-        "/placeholder.svg?height=300&width=400&text=Spiritual+Cleansing&bg=F0E6FF",
+        "/img/lg.webp",
       price: "2800",
       duration: "45 minutos",
       benefits: [
@@ -86,7 +86,7 @@ export function ServicesGrid() {
       description:
         "Limpieza energética completa de hogares, oficinas o locales comerciales. Utilizamos sahumerios, cristales y técnicas ancestrales para purificar y armonizar los espacios, creando un ambiente de paz y prosperidad. Transformamos la energía de tu hogar o lugar de trabajo.",
       image:
-        "/placeholder.svg?height=300&width=400&text=Space+Cleansing&bg=FFF4E6",
+        "/img/R6XJNzldS_2000x1500__1.webp",
       price: "5500",
       duration: "2-3 horas",
       benefits: [
@@ -105,7 +105,7 @@ export function ServicesGrid() {
       description:
         "Herramienta de radiestesia vibracional usada para diagnosticar y equilibrar el campo energético de una persona o espacio. El péndulo hebreo es una técnica especializada que permite identificar y liberar bloqueos profundos, facilitando un proceso de sanación integral y transformación personal.",
       image:
-        "/placeholder.svg?height=300&width=400&text=Hebrew+Pendulum&bg=FFE6F0",
+        "/img/Limpieza-con-Pendulo-Hebreo-banner-1024x576.webp",
       price: "10000",
       duration: "1-2 horas",
       benefits: [
@@ -124,7 +124,7 @@ export function ServicesGrid() {
       description:
         "Es una herramienta que permite profundizar en el autoconocimiento y la comprensión de uno mismo, siendo guía y orientación en momentos de incertidumbre o cambio. También permite al consultante realizar una reflexión e introspección, ofreciendo una perspectiva única y profunda sobre la vida y su entorno, conectando con la sabiduría ancestral africana.",
       image:
-        "/placeholder.svg?height=300&width=400&text=African+Tarot&bg=E6F3FF",
+        "/img/D_NQ_NP_951846-MLA92809211063_092025-O.webp",
       price: "10000",
       duration: "1-2 horas",
       benefits: [

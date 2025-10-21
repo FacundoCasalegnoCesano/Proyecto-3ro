@@ -14,7 +14,7 @@ export function MiCaminoGrid() {
     {
       id: "quien-soy",
       title: "¿Quien soy?",
-      content: `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.`,
+      content: `Mi nombre es María Laura Cesano. Soy enfermera en el Hospital SAMCo de la ciudad de Gálvez y, desde hace algunos años, también acompaño procesos de sanación energética y espiritual. Mi experiencia en la salud me enseñó que el bienestar va mucho más allá del cuerpo físico: también abarca la mente, las emociones y el alma.`,
       image: "/img/about-me.jpg", // Cambia por tu imagen real
     },
     {
@@ -26,7 +26,11 @@ export function MiCaminoGrid() {
     {
       id: "mi-formacion",
       title: "Mi Formación",
-      content: `Mi camino en las artes espirituales comenzó hace más de 8 años cuando descubrí el poder sanador del Reiki. Desde entonces, me he formado en diversas disciplinas: Reiki Usui nivel III, Lectura de Tarot Rider-Waite, Limpieza Energética y Aromaterapia. Cada certificación ha sido un paso más en mi crecimiento personal y espiritual.`,
+      content: `Mi camino en las artes espirituales comenzó hace casi tres años, cuando descubrí el poder sanador del Reiki. Esa experiencia despertó en mí un profundo interés por comprender y trabajar con las energías que nos rodean.
+
+Desde entonces, me he formado en diferentes disciplinas como Reiki, Tarot y limpiezas energéticas, encontrando en cada una de ellas una herramienta para acompañar procesos de equilibrio, paz y transformación.
+
+Hoy continúo ampliando mis conocimientos con el propósito de ayudar a otros a reconectarse con su energía vital, su propósito y su bienestar interior.`,
       image: "/img/training.jpg", // Cambia por tu imagen real
     },
     {
@@ -44,7 +48,7 @@ export function MiCaminoGrid() {
     {
       id: "mi-espacio",
       title: "Mi Espacio Sagrado",
-      content: `He creado un ambiente especial donde la energía fluye libremente. Mi consulta está diseñada para generar paz y tranquilidad, con cristales, plantas sagradas y una decoración que invita a la relajación. Cada elemento ha sido cuidadosamente seleccionado para potenciar la experiencia de sanación y conexión espiritual.`,
+      content: `Creé un espacio pensado para que la energía circule en armonía. Mi lugar de atención está diseñado para transmitir paz y tranquilidad, con cristales, plantas y una ambientación que invita a relajarse y conectar. Cada detalle fue elegido con amor e intención, para potenciar la experiencia de sanación y bienestar espiritual.`,
       image: "/img/sacred-space.jpg", // Cambia por tu imagen real
     },
   ];

@@ -7,19 +7,19 @@ import { Button } from "../../components/ui/button";
 
 const heroImages = [
   {
-    src: "/img/cartas-tarot.jpg",
+    src: "/img/una-por-una-un-repaso-por-todas-las-cartas-del-6W4474GEFBAENM72ABI5CHFCTI.webp",
     alt: "Tarot cards spread",
     focalPoint: "center center",
     content: {
       title: "Descubre tu Destino con el Tarot",
       description:
-        "Consultas personalizadas de Tarot Rider-Waite para guiar tu camino espiritual.",
+        "Consultas personalizadas de Tarot Africano para guiar tu camino espiritual.",
       buttonText: "Reservar Lectura",
       buttonAction: () => {},
     },
   },
   {
-    src: "/img/1744750643661.jpg",
+    src: "/img/reiki-niveles.webp",
     alt: "Reiki session",
     focalPoint: "center 30%",
     content: {
@@ -31,7 +31,7 @@ const heroImages = [
     },
   },
   {
-    src: "/placeholder.svg?height=500&width=800",
+    src: "/img/lg.webp",
     alt: "Spiritual cleansing",
     focalPoint: "center center",
     content: {

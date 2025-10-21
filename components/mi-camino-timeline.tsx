@@ -24,114 +24,93 @@ export function MiCaminoTimeline() {
   const timelineEvents: TimelineEvent[] = [
     {
       id: "inicio",
-      year: "2016",
-      date: "Marzo 2016",
+      year: "2023",
+      date: "Marzo 2023",
       title: "El Despertar Espiritual",
       description:
         "Mi primer contacto con el mundo espiritual llegó en un momento de gran transformación personal. Buscando sanación interior, descubrí el poder del Reiki y sentí una conexión inmediata con esta práctica ancestral.",
-      location: "Buenos Aires, Argentina",
       type: "personal",
       icon: Sparkles,
-      image:
-        "/placeholder.svg?height=200&width=300&text=Spiritual+Awakening&bg=E8F5E8",
     },
     {
       id: "reiki-1",
-      year: "2017",
-      date: "Junio 2017",
+      year: "2023",
+      date: "Abril 2023",
       title: "Certificación Reiki Nivel I",
       description:
         "Completé mi primera certificación en Reiki Usui Nivel I. Este fue el comienzo formal de mi camino como sanadora energética. Aprendí las bases de la canalización de energía universal.",
-      location: "Centro Holístico Luz Dorada",
       type: "education",
       icon: Award,
-      image:
-        "/placeholder.svg?height=200&width=300&text=Reiki+Level+1&bg=FFE4B5",
     },
     {
       id: "primeros-clientes",
-      year: "2018",
-      date: "Enero 2018",
+      year: "2023",
+      date: "Mayo 2023",
       title: "Primeras Sesiones",
       description:
         "Comencé a ofrecer mis primeras sesiones de Reiki a familiares y amigos. La respuesta fue increíble y confirmó que este era mi verdadero llamado. Cada sesión me enseñaba algo nuevo.",
       type: "milestone",
       icon: Users,
-      image:
-        "/placeholder.svg?height=200&width=300&text=First+Sessions&bg=F0E6FF",
     },
     {
       id: "tarot",
-      year: "2019",
-      date: "Septiembre 2019",
+      year: "2023",
+      date: "Agosto 2023",
       title: "Iniciación en el Tarot",
       description:
-        "Descubrí el Tarot Rider-Waite y me fascinó su capacidad para brindar guía y claridad. Dediqué meses al estudio intensivo de cada carta y su simbolismo profundo.",
+        "Descubrí el Tarot Africano y me fascinó su capacidad para brindar guía y claridad. Dediqué meses al estudio intensivo de cada carta y su simbolismo profundo.",
       type: "education",
       icon: Sparkles,
-      image:
-        "/placeholder.svg?height=200&width=300&text=Tarot+Learning&bg=FFB6C1",
     },
     {
       id: "reiki-2",
-      year: "2020",
-      date: "Marzo 2020",
+      year: "2023",
+      date: "Septiembre 2023",
       title: "Reiki Nivel II - Okuden",
       description:
         "Avancé al segundo nivel de Reiki, aprendiendo los símbolos sagrados y técnicas de sanación a distancia. Este nivel profundizó mi conexión con la energía universal.",
-      location: "Formación Online - Pandemia",
       type: "education",
       icon: Award,
-      image:
-        "/placeholder.svg?height=200&width=300&text=Reiki+Level+2&bg=E0FFFF",
     },
     {
       id: "espacio-propio",
-      year: "2021",
-      date: "Julio 2021",
+      year: "2023",
+      date: "Octubre 2023",
       title: "Mi Primer Espacio Sagrado",
       description:
-        "Abrí mi primer consultorio dedicado exclusivamente a la sanación energética. Diseñé cada detalle para crear un ambiente de paz y transformación.",
-      location: "Villa Crespo, CABA",
+        "Tome la decision de Crear mi propio espacio sagrado y asi fue como comenze la construccion de mi consultorio dedicado exclusivamente a la sanación energética. Cada detalle fue pensado para crear un ambiente de paz y transformación.",
       type: "milestone",
       icon: MapPin,
-      image:
-        "/placeholder.svg?height=200&width=300&text=Sacred+Space&bg=F5DEB3",
     },
     {
       id: "reiki-master",
-      year: "2022",
-      date: "Noviembre 2022",
+      year: "2023",
+      date: "Noviembre 2023",
       title: "Maestría en Reiki - Shinpiden",
       description:
         "Alcancé el nivel de Maestra en Reiki Usui. Ahora puedo iniciar a otros en esta hermosa práctica y transmitir las enseñanzas que tanto han transformado mi vida.",
       type: "achievement",
       icon: Award,
-      image:
-        "/placeholder.svg?height=200&width=300&text=Reiki+Master&bg=FFD700",
     },
     {
       id: "expansion",
       year: "2023",
-      date: "Abril 2023",
+      date: "Diciembre 2023",
       title: "Expansión de Servicios",
       description:
         "Incorporé la limpieza espiritual y de espacios a mis servicios. También comencé a trabajar con productos artesanales como sahumerios y cristales.",
       type: "milestone",
       icon: Sparkles,
-      image:
-        "/placeholder.svg?height=200&width=300&text=Service+Expansion&bg=DDA0DD",
     },
     {
       id: "presente",
-      year: "2024",
+      year: "2025",
       date: "Presente",
       title: "Babalu Aye Reiki & Tarot",
       description:
         "Hoy continúo mi misión de acompañar a las personas en su camino de sanación y crecimiento espiritual. Cada día es una oportunidad de servir desde el amor.",
       type: "personal",
       icon: Heart,
-      image: "/placeholder.svg?height=200&width=300&text=Present+Day&bg=FFC0CB",
     },
   ];
 
@@ -336,19 +315,6 @@ export function MiCaminoTimeline() {
                   <p className="text-gray-600 text-sm leading-relaxed">
                     {event.description}
                   </p>
-
-                  {/* Imagen */}
-                  {event.image && (
-                    <div className="mt-3 rounded-lg overflow-hidden">
-                      <Image
-                        src={event.image || "/placeholder.svg"}
-                        alt={event.title}
-                        width={300}
-                        height={150}
-                        className="w-full h-32 object-cover"
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
             ))}

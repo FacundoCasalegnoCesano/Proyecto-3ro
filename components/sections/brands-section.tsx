@@ -28,6 +28,9 @@ export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Guardar la referencia actual en una variable local
+    const currentSectionRef = sectionRef.current;
+    
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -40,16 +43,16 @@ export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
       }
     );
 
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
+    if (currentSectionRef) {
+      observer.observe(currentSectionRef);
     }
 
     return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
+      if (currentSectionRef) {
+        observer.unobserve(currentSectionRef);
       }
     };
-  }, []);
+  }, []); // Dependencies array vacío ya que solo necesitamos ejecutar esto una vez
 
   // Marcas de ejemplo - tú puedes pasar tu propio array
   const defaultBrands: Brand[] = [

@@ -53,6 +53,8 @@ export function RecommendedProducts() {
   }, []);
 
   useEffect(() => {
+    // Guardar la referencia actual en una variable
+    const currentSectionRef = sectionRef.current;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -65,16 +67,16 @@ export function RecommendedProducts() {
       }
     );
 
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
+    if (currentSectionRef) {
+      observer.observe(currentSectionRef);
     }
 
     return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
+      if (currentSectionRef) {
+        observer.unobserve(currentSectionRef);
       }
     };
-  }, []);
+  }, []); // Ahora no hay dependencias que cambien
 
   const handleAddToCart = (product: Product) => {
     const priceNumber = Number.parseFloat(product.price.replace("$", ""));

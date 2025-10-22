@@ -8,6 +8,9 @@ export function EcoFriendlySection() {
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Guardar la referencia actual en una variable local
+    const currentSectionRef = sectionRef.current;
+    
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -20,16 +23,16 @@ export function EcoFriendlySection() {
       }
     );
 
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
+    if (currentSectionRef) {
+      observer.observe(currentSectionRef);
     }
 
     return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
+      if (currentSectionRef) {
+        observer.unobserve(currentSectionRef);
       }
     };
-  }, []);
+  }, []); // Dependencies array vacío
 
   const features = [
     {

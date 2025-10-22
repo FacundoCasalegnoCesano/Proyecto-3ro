@@ -15,12 +15,12 @@ export default function HomePage() {
       <div>
         <ProductsSection
           title="PRODUCTOS MAS VENDIDOS"
-          productIds={[4, 5, 3, 6, 1]}
+          productIds={[60002, 90001, 180002, 60001, 30001]}
         />
       </div>
       <EcoFriendlySection />
       <NavigationSection />
-      <ProductsSection title="PRODUCTOS RECOMENDADOS" productIds={[7, 8, 2]} />
+      <ProductsSection title="PRODUCTOS RECOMENDADOS" productIds={[180001, 150002, 30002]} />
       <BrandsSection />
       <FooterSection />
     </PageLayout>

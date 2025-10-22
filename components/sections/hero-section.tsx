@@ -63,7 +63,7 @@ export function HeroSection() {
       setTimeout(() => {
         setIsContentVisible(true);
       }, 100);
-    }, 300);
+    }, 100);
   };
 
   const handleButtonAction = () => {

@@ -325,11 +325,6 @@ export function CompraWizard() {
 
         // ⚠️ ELIMINADO: clearCart() - No limpiar el carrito aquí para evitar alerts
 
-        // Redirigir después de 3 segundos
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 3000);
-      } else {
         // Manejar error de stock insuficiente del servidor
         if (orderResponse.outOfStockItems) {
           const errorMessage = `Stock insuficiente durante el procesamiento: ${orderResponse.outOfStockItems

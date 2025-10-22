@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ExternalLink } from "lucide-react";
 import {
@@ -24,6 +24,12 @@ interface BrandsSectionProps {
 export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 300);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Marcas de ejemplo - tú puedes pasar tu propio array
   const defaultBrands: Brand[] = [
@@ -89,36 +95,45 @@ export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
     <>
       <section className="w-full py-12 md:py-16 bg-gray-50">
         <div className="container px-4 md:px-6">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+          <div className={`text-center mb-10 transition-all duration-700 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 transform transition-transform duration-300 hover:scale-105">
               Marcas con las que Trabajamos
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
               Colaboramos con las mejores marcas del mercado para ofrecerte
               productos de calidad
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-8">
-            {displayBrands.map((brand) => (
+            {displayBrands.map((brand, index) => (
               <a
                 key={brand.id}
                 href={brand.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative flex items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-babalu-primary"
+                className={`group relative flex items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 ${
+                  isVisible 
+                    ? 'opacity-100 translate-y-0' 
+                    : 'opacity-0 translate-y-8'
+                }`}
+                style={{
+                  transitionDelay: `${index * 100}ms`
+                }}
               >
                 <div className="relative w-full h-24 flex items-center justify-center">
                   <Image
                     src={brand.logo || "/placeholder.svg"}
                     alt={brand.alt}
                     fill
-                    className="object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
+                    className="object-contain grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110"
                   />
                 </div>
 
                 {/* Icono de enlace externo que aparece al hacer hover */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
                   <ExternalLink className="h-4 w-4 text-babalu-primary" />
                 </div>
 
@@ -128,12 +143,14 @@ export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
             ))}
           </div>
 
-          <div className="mt-10 text-center">
+          <div className={`mt-10 text-center transition-all duration-700 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}>
             <p className="text-sm text-gray-500">
               ¿Eres una marca y quieres trabajar con nosotros?{" "}
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="text-babalu-primary hover:underline font-medium cursor-pointer"
+                className="text-babalu-primary hover:underline font-medium cursor-pointer transform transition-transform duration-300 hover:scale-105"
               >
                 Contáctanos aquí
               </button>

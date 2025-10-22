@@ -46,12 +46,24 @@ const heroImages = [
 export function HeroSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isContentVisible, setIsContentVisible] = useState(false);
   const router = useRouter();
 
   const handleSlideChange = (index: number) => {
     console.log("Slide cambiado a:", index);
-    setCurrentIndex(index);
-    setIsInitialized(true);
+    
+    // Animación de salida
+    setIsContentVisible(false);
+    
+    setTimeout(() => {
+      setCurrentIndex(index);
+      setIsInitialized(true);
+      
+      // Animación de entrada
+      setTimeout(() => {
+        setIsContentVisible(true);
+      }, 100);
+    }, 300);
   };
 
   const handleButtonAction = () => {
@@ -60,15 +72,14 @@ export function HeroSection() {
 
   useEffect(() => {
     if (isInitialized) {
-      console.log("Índice actual:", currentIndex);
-      console.log("Contenido actual:", heroImages[currentIndex]?.content);
+      setIsContentVisible(true);
     }
-  }, [currentIndex, isInitialized]);
+  }, [isInitialized]);
 
   const currentContent = heroImages[currentIndex]?.content || {};
 
   return (
-    <section className="w-full h-[70vh] min-h-[500px] max-h-[800px] relative">
+    <section className="w-full h-[70vh] min-h-[500px] max-h-[800px] relative overflow-hidden">
       <HeroCarousel
         images={heroImages}
         className="h-full"
@@ -77,16 +88,20 @@ export function HeroSection() {
 
       {/* Contenido dinámico */}
       {isInitialized && (
-        <div className="absolute left-4 md:left-8 top-1/2 transform -translate-y-1/2 max-w-xs md:max-w-md z-10">
-          <div className="bg-[#FBE9E7] bg-opacity-90 p-4 md:p-6 rounded-lg shadow-lg">
-            <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 md:mb-3">
+        <div className={`absolute left-4 md:left-8 top-1/2 transform -translate-y-1/2 max-w-xs md:max-w-md z-10 transition-all duration-500 ${
+          isContentVisible 
+            ? 'translate-x-0 opacity-100' 
+            : '-translate-x-8 opacity-0'
+        }`}>
+          <div className="bg-[#FBE9E7] bg-opacity-90 p-4 md:p-6 rounded-lg shadow-lg backdrop-blur-sm">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 md:mb-3 transform transition-transform duration-300 hover:scale-105">
               {currentContent.title}
             </h1>
-            <p className="text-sm md:text-base text-gray-700 mb-3 md:mb-4">
+            <p className="text-sm md:text-base text-gray-700 mb-3 md:mb-4 leading-relaxed">
               {currentContent.description}
             </p>
             <Button
-              className="bg-babalu-primary hover:bg-babalu-dark text-white"
+              className="bg-babalu-primary hover:bg-babalu-dark text-white transform transition-all duration-300 hover:scale-105 hover:shadow-lg"
               onClick={handleButtonAction}
             >
               {currentContent.buttonText}
@@ -101,8 +116,10 @@ export function HeroSection() {
         {heroImages.map((_, index) => (
           <button
             key={index}
-            className={`w-3 h-3 rounded-full transition-all ${
-              currentIndex === index ? "bg-white w-6" : "bg-white/50"
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              currentIndex === index 
+                ? "bg-white w-6 scale-110" 
+                : "bg-white/50 hover:bg-white/80 hover:scale-110"
             }`}
             aria-label={`Ir a slide ${index + 1}`}
           />

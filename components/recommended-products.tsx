@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Button } from "../components/ui/button";
 import { useCart } from "../contexts/cart-context";
@@ -11,6 +11,8 @@ export function RecommendedProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -50,6 +52,32 @@ export function RecommendedProducts() {
     fetchRecommendedProducts();
   }, []);
 
+  useEffect(() => {
+    // Guardar la referencia actual en una variable
+    const currentSectionRef = sectionRef.current;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "50px",
+      }
+    );
+
+    if (currentSectionRef) {
+      observer.observe(currentSectionRef);
+    }
+
+    return () => {
+      if (currentSectionRef) {
+        observer.unobserve(currentSectionRef);
+      }
+    };
+  }, []); // Ahora no hay dependencias que cambien
+
   const handleAddToCart = (product: Product) => {
     const priceNumber = Number.parseFloat(product.price.replace("$", ""));
 
@@ -65,7 +93,7 @@ export function RecommendedProducts() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg p-8">
+      <div ref={sectionRef} className="bg-white rounded-lg p-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
           TAMBIEN TE <span className="font-normal">RECOMENDAMOS</span>
         </h2>
@@ -81,7 +109,7 @@ export function RecommendedProducts() {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg p-8">
+      <div ref={sectionRef} className="bg-white rounded-lg p-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
           TAMBIEN TE <span className="font-normal">RECOMENDAMOS</span>
         </h2>
@@ -95,7 +123,7 @@ export function RecommendedProducts() {
 
   if (products.length === 0) {
     return (
-      <div className="bg-white rounded-lg p-8">
+      <div ref={sectionRef} className="bg-white rounded-lg p-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
           TAMBIEN TE <span className="font-normal">RECOMENDAMOS</span>
         </h2>
@@ -109,22 +137,37 @@ export function RecommendedProducts() {
   }
 
   return (
-    <div className="bg-white rounded-lg p-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">
+    <div 
+      ref={sectionRef}
+      className={`bg-white rounded-lg p-8 transition-all duration-700 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+    >
+      <h2 className="text-2xl font-bold text-gray-800 mb-8 transform transition-transform duration-300 hover:scale-105">
         TAMBIEN TE <span className="font-normal">RECOMENDAMOS</span>
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {products.map((product) => (
-          <div key={product.id} className="text-center">
+        {products.map((product, index) => (
+          <div 
+            key={product.id} 
+            className={`text-center transform transition-all duration-500 hover:scale-105 hover:shadow-lg rounded-lg overflow-hidden ${
+              isVisible 
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-8'
+            }`}
+            style={{
+              transitionDelay: `${isVisible ? index * 100 : 0}ms`
+            }}
+          >
             {/* Imagen del producto */}
-            <div className="aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden">
+            <div className="aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden group">
               <Image
                 src={product.image || "/placeholder.svg"}
                 alt={product.name}
                 width={200}
                 height={200}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer"
                 onClick={() =>
                   (window.location.href = `/productos/${product.id}`)
                 }
@@ -132,16 +175,20 @@ export function RecommendedProducts() {
             </div>
 
             {/* Información del producto */}
-            <div className="space-y-2">
-              <h3 className="font-semibold text-gray-800">{product.name}</h3>
-              <p className="text-xl font-bold text-gray-800">{product.price}</p>
-              <p className="text-sm text-gray-600 line-clamp-2">
+            <div className="space-y-2 p-2">
+              <h3 className="font-semibold text-gray-800 transition-colors duration-300 hover:text-babalu-primary">
+                {product.name}
+              </h3>
+              <p className="text-xl font-bold text-gray-800 transform transition-transform duration-300 hover:scale-105">
+                {product.price}
+              </p>
+              <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
                 {product.description}
               </p>
 
               <Button
                 onClick={() => handleAddToCart(product)}
-                className="w-full bg-babalu-primary hover:bg-babalu-dark text-white text-sm mt-3"
+                className="w-full bg-babalu-primary hover:bg-babalu-dark text-white text-sm mt-3 transform transition-all duration-300 hover:scale-105 hover:shadow-md"
                 size="sm"
               >
                 Agregar al Carrito

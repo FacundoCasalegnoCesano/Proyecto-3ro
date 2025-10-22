@@ -8,16 +8,22 @@ import Image from "next/image";
 import { UserDropdown } from "./user-dropdown";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export function Header() {
   const { toggleCart, getTotalItems, getTotalPrice } = useCart();
   const { data: session, status } = useSession();
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
+  const [mounted, setMounted] = useState(false);
 
   // ✅ DEBUG: Ver qué hay en la sesión
   console.log("Header - session:", session);
   console.log("Header - session.user:", session?.user);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Mostrar loading mientras se verifica la sesión
   if (status === "loading") {
@@ -54,7 +60,7 @@ export function Header() {
   const isLoggedIn = !!session?.user;
 
   return (
-    <header className="bg-babalu-primary text-babalu-medium">
+    <header className={`bg-babalu-primary text-babalu-medium transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -104,7 +110,7 @@ export function Header() {
             <Button
               variant="outline"
               size="sm"
-              className="relative bg-[#FBE9E7] text-babalu-medium border-babalu-medium"
+              className="relative bg-[#FBE9E7] text-babalu-medium border-babalu-medium hover:bg-[#FBE9E7]/90 transition-colors"
               onClick={toggleCart}
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
@@ -122,9 +128,9 @@ export function Header() {
               <UserDropdown
                 user={{
                   nombre: session.user.nombre || "Usuario",
-                  apellido: session.user.apellido || "", // ✅ Cambiado de lastName a apellido
+                  apellido: session.user.apellido || "",
                   email: session.user.email || "",
-                  rol: session.user.rol || "user", // ✅ Agregar el rol
+                  rol: session.user.rol || "user",
                 }}
                 onLogout={() => signOut({ callbackUrl: "/" })}
               />
@@ -133,7 +139,7 @@ export function Header() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-[#FBE9E7] text-babalu-medium border-babalu-medium hover:bg-[#FBE9E7]/80"
+                  className="bg-[#FBE9E7] text-babalu-medium border-babalu-medium hover:bg-[#FBE9E7]/80 transition-colors"
                 >
                   <User className="w-4 h-4 mr-1" />
                   Ingresar

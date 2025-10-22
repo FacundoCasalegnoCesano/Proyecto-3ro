@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Button } from "../components/ui/button";
 import { useCart } from "../contexts/cart-context";
@@ -12,6 +12,7 @@ export function RecommendedProducts() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -36,9 +37,6 @@ export function RecommendedProducts() {
         }
 
         setProducts(data.data.slice(0, 4));
-        
-        // Activar animación después de cargar
-        setTimeout(() => setIsVisible(true), 100);
       } catch (err) {
         console.error("Error fetching recommended products:", err);
         setError(
@@ -52,6 +50,30 @@ export function RecommendedProducts() {
     };
 
     fetchRecommendedProducts();
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "50px",
+      }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
   }, []);
 
   const handleAddToCart = (product: Product) => {
@@ -69,7 +91,7 @@ export function RecommendedProducts() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg p-8">
+      <div ref={sectionRef} className="bg-white rounded-lg p-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
           TAMBIEN TE <span className="font-normal">RECOMENDAMOS</span>
         </h2>
@@ -85,7 +107,7 @@ export function RecommendedProducts() {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg p-8">
+      <div ref={sectionRef} className="bg-white rounded-lg p-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
           TAMBIEN TE <span className="font-normal">RECOMENDAMOS</span>
         </h2>
@@ -99,7 +121,7 @@ export function RecommendedProducts() {
 
   if (products.length === 0) {
     return (
-      <div className="bg-white rounded-lg p-8">
+      <div ref={sectionRef} className="bg-white rounded-lg p-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
           TAMBIEN TE <span className="font-normal">RECOMENDAMOS</span>
         </h2>
@@ -113,9 +135,12 @@ export function RecommendedProducts() {
   }
 
   return (
-    <div className={`bg-white rounded-lg p-8 transition-all duration-700 ${
-      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-    }`}>
+    <div 
+      ref={sectionRef}
+      className={`bg-white rounded-lg p-8 transition-all duration-700 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+    >
       <h2 className="text-2xl font-bold text-gray-800 mb-8 transform transition-transform duration-300 hover:scale-105">
         TAMBIEN TE <span className="font-normal">RECOMENDAMOS</span>
       </h2>
@@ -130,7 +155,7 @@ export function RecommendedProducts() {
                 : 'opacity-0 translate-y-8'
             }`}
             style={{
-              transitionDelay: `${index * 100}ms`
+              transitionDelay: `${isVisible ? index * 100 : 0}ms`
             }}
           >
             {/* Imagen del producto */}

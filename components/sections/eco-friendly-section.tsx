@@ -1,14 +1,34 @@
 "use client";
 
 import { Leaf, Recycle, Heart, Sprout } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export function EcoFriendlySection() {
   const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 200);
-    return () => clearTimeout(timer);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "50px",
+      }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
   }, []);
 
   const features = [
@@ -39,7 +59,7 @@ export function EcoFriendlySection() {
   ];
 
   return (
-    <section className="w-full py-12 md:py-16 bg-gradient-to-r from-green-50 to-emerald-50">
+    <section ref={sectionRef} className="w-full py-12 md:py-16 bg-gradient-to-r from-green-50 to-emerald-50">
       <div className="container px-4 md:px-6">
         <div className={`text-center mb-10 transition-all duration-700 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
@@ -66,7 +86,7 @@ export function EcoFriendlySection() {
                   : 'opacity-0 translate-y-8'
               }`}
               style={{
-                transitionDelay: `${index * 150}ms`
+                transitionDelay: `${isVisible ? index * 150 : 0}ms`
               }}
             >
               <div className="p-3 bg-green-100 rounded-full mb-4 transform transition-all duration-500 hover:scale-110 hover:rotate-12 group">

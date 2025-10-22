@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { ExternalLink } from "lucide-react";
 import {
@@ -25,10 +25,30 @@ export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 300);
-    return () => clearTimeout(timer);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "50px",
+      }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
   }, []);
 
   // Marcas de ejemplo - tú puedes pasar tu propio array
@@ -93,7 +113,7 @@ export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
 
   return (
     <>
-      <section className="w-full py-12 md:py-16 bg-gray-50">
+      <section ref={sectionRef} className="w-full py-12 md:py-16 bg-gray-50">
         <div className="container px-4 md:px-6">
           <div className={`text-center mb-10 transition-all duration-700 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
@@ -120,7 +140,7 @@ export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
                     : 'opacity-0 translate-y-8'
                 }`}
                 style={{
-                  transitionDelay: `${index * 100}ms`
+                  transitionDelay: `${isVisible ? index * 100 : 0}ms`
                 }}
               >
                 <div className="relative w-full h-24 flex items-center justify-center">

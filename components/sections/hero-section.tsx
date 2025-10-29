@@ -19,7 +19,7 @@ const heroImages = [
     },
   },
   {
-    src: "/img/reiki-niveles.webp",
+    src: "/img/persona-que-realiza-terapia-reiki_23-2149403922.webp",
     alt: "Reiki session",
     focalPoint: "center 30%",
     content: {
@@ -42,7 +42,7 @@ const heroImages = [
     },
   },
     {
-    src: "/img/lg.webp",
+    src: "/img/1662063240.webp",
     alt: "Spiritual cleansing",
     focalPoint: "center center",
     content: {

@@ -14,13 +14,13 @@ export default function HomePage() {
       <HeroSection />
       <div>
         <ProductsSection
-          title="PRODUCTOS MAS VENDIDOS"
-          productIds={[60002, 90001, 180002, 60001, 30001]}
+          title=" MAS VENDIDOS"
+          productIds={[60002, 90001, 180002, 60001, 30001,360009,360012,270001]}
         />
       </div>
       <BrandsSection />
       <NavigationSection />
-      <ProductsSection title="PRODUCTOS RECOMENDADOS" productIds={[180001, 150002, 30002]} />
+      <ProductsSection title=" RECOMENDADOS" productIds={[180001, 150002, 30002,360005,360007,360002,360010]} />
       <EcoFriendlySection />
       <FooterSection />
     </PageLayout>

@@ -18,10 +18,10 @@ export default function HomePage() {
           productIds={[60002, 90001, 180002, 60001, 30001]}
         />
       </div>
-      <EcoFriendlySection />
+      <BrandsSection />
       <NavigationSection />
       <ProductsSection title="PRODUCTOS RECOMENDADOS" productIds={[180001, 150002, 30002]} />
-      <BrandsSection />
+      <EcoFriendlySection />
       <FooterSection />
     </PageLayout>
   );

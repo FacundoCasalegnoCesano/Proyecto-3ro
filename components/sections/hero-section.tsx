@@ -41,6 +41,17 @@ const heroImages = [
       buttonAction: () => {},
     },
   },
+    {
+    src: "/img/lg.webp",
+    alt: "Spiritual cleansing",
+    focalPoint: "center center",
+    content: {
+      title: "Promo Por Tu Cumpleaños",
+      description: "Si realizas una compra de productos o reservas un servicio el dia de tu cumpleaños se te realizara un 10% de descuento.",
+      buttonText: "Explorar Productos",
+      buttonAction: () => {},
+    },
+  },
 ];
 
 export function HeroSection() {

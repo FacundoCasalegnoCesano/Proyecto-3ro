@@ -9,8 +9,6 @@ export async function verifyAdminRole() {
   try {
     const session = await getServerSession(authOptions);
 
-    console.log("verifyAdminRole - session:", session); // DEBUG
-
     if (!session || !session.user) {
       return {
         isAdmin: false,
@@ -19,10 +17,15 @@ export async function verifyAdminRole() {
       };
     }
 
-    // ✅ Usar session.user.id directamente (ya es number según tu configuración)
     const userId = session.user.id;
 
-    console.log("verifyAdminRole - userId:", userId, "rol:", session.user.rol); // DEBUG
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return {
+        isAdmin: false,
+        error: "No hay sesión activa",
+        status: 401,
+      };
+    }
 
     // Verificar si el usuario existe en la base de datos
     const user = await prisma.user.findUnique({
@@ -30,20 +33,7 @@ export async function verifyAdminRole() {
       select: { rol: true },
     });
 
-    if (!user) {
-      return {
-        isAdmin: false,
-        error: "Usuario no encontrado",
-        status: 404,
-      };
-    }
-
-    console.log("verifyAdminRole - user from DB:", user); // DEBUG
-
-    // ✅ Verificar rol tanto en la sesión como en la base de datos
-    const isAdmin = user.rol === "admin" || session.user.rol === "admin";
-
-    if (!isAdmin) {
+    if (!user || user.rol !== "admin") {
       return {
         isAdmin: false,
         error: "Acceso denegado. Se requieren privilegios de administrador",
@@ -55,8 +45,8 @@ export async function verifyAdminRole() {
       isAdmin: true,
       userId: userId,
     };
-  } catch (error) {
-    console.error("Error verificando rol de admin:", error);
+  } catch {
+    console.error("Error verificando rol de admin");
     return {
       isAdmin: false,
       error: "Error interno del servidor",
@@ -82,8 +72,8 @@ export async function requireAuth() {
       userId: session.user.id,
       session: session,
     };
-  } catch (error) {
-    console.error("Error verificando autenticación:", error);
+  } catch {
+    console.error("Error verificando autenticación");
     return {
       isAuthenticated: false,
       error: "Error interno del servidor",

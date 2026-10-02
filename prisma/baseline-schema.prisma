@@ -25,22 +25,9 @@ model Products {
   tipoPiedra    String? @db.VarChar(100)
   cantidad      String? @db.VarChar(100)
   stock         Int     @default(0)
-  familyId      Int?    @map("family_id")
-  family        ProductFamily? @relation(fields: [familyId], references: [id], onDelete: SetNull)
   envios        deliver @relation(fields: [empresaEnvios], references: [id], onDelete: Cascade)
-  cartItems   Cart[]   // Nueva relación con Cart
   @@index([empresaEnvios, category])
-  @@index([familyId])
   @@map("products")
-}
-
-model ProductFamily {
-  id       Int        @id @default(autoincrement())
-  key      String     @unique @db.VarChar(600)
-  nombre   String     @db.VarChar(150)
-  products Products[]
-
-  @@map("product_families")
 }
 
 model Cart {
@@ -51,12 +38,9 @@ model Cart {
   quantity  Int      @default(1)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  
-  // Relaciones
-  product Products @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  
+
   @@map("cart")
-  
+
   // Índices para mejor performance
   @@index([user_id])
   @@index([session_id])
@@ -158,21 +142,19 @@ model Order {
   shippingMethod String  // JSON stringified
   status    String      @default("pending") // pending, completed, cancelled
   orderDate DateTime    @default(now())
-  items     OrderItem[]
-  
+
   @@map("orders")
 }
 
 model OrderItem {
   id           Int     @id @default(autoincrement())
   orderId      Int
-  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId    Int
   quantity     Int
   price        Float
   productName  String
   productImage String
-  
+
   @@map("order_items")
 }
 

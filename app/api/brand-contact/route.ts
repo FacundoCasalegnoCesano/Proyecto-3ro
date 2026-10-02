@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, BrandContactStatus } from "@prisma/client";
 import nodemailer from "nodemailer";
 import type { BrandContact } from "app/types/brand-contact";
+import { verifyAdminRole } from "lib/auth-utils";
 
 const prisma = new PrismaClient();
 
@@ -278,6 +279,14 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const admin = await verifyAdminRole();
+    if (!admin.isAdmin) {
+      return NextResponse.json(
+        { error: admin.error },
+        { status: admin.status }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") as BrandContactStatus | null;
 

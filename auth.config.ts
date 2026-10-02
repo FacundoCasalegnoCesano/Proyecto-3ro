@@ -59,7 +59,7 @@ export const authOptions: NextAuthOptions = {
             rol: user.rol,
           };
         } catch (error) {
-          console.error("Error en authorize:", error);
+          console.error("Error en authorize");
           throw new Error("Error durante la autenticación");
         }
       },
@@ -72,20 +72,12 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        console.log("JWT Callback - Usuario logueado:", {
-          id: user.id,
-          email: user.email,
-          rol: user.rol,
-        });
-
-        // ✅ Asegurar que el id sea number usando Number()
         token.id = Number(user.id);
         token.nombre = user.nombre;
         token.apellido = user.apellido;
         token.fechaNac = user.fechaNac;
         token.rol = user.rol;
       } else if (token.id) {
-        // ✅ También asegurar en actualizaciones subsiguientes
         token.id = Number(token.id);
       }
 
@@ -93,14 +85,6 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token) {
-        console.log(
-          "Session Callback - Token ID:",
-          token.id,
-          "Rol:",
-          token.rol
-        );
-
-        // ✅ Asegurar que el id sea number en la sesión también
         const userId = Number(token.id);
 
         session.user = {
@@ -135,21 +119,4 @@ export const authOptions: NextAuthOptions = {
       },
     },
   },
-  events: {
-    async signIn({ user }) {
-      console.log("Usuario firmando:", user.email, "Rol:", user.rol);
-    },
-    async session({ session }) {
-      console.log(
-        "Sesión activa para:",
-        session.user.email,
-        "Rol:",
-        session.user.rol
-      );
-    },
-    async signOut({ session }) {
-      console.log("Usuario cerrando sesión");
-    },
-  },
-  debug: process.env.NODE_ENV === "development",
 };

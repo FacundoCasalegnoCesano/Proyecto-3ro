@@ -5,11 +5,8 @@ import { createUser } from "../../../lib/auth-helpers";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  console.log("API de registro llamada");
-
   try {
     const body = await request.json();
-    console.log("Datos recibidos:", body);
 
     const { nombre, apellido, email, password, fechaNac } = body;
 
@@ -28,8 +25,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("Intentando crear usuario...");
-
     const user = await createUser({
       nombre,
       apellido,
@@ -37,8 +32,6 @@ export async function POST(request: NextRequest) {
       password,
       fechaNac: new Date(fechaNac),
     });
-
-    console.log("Usuario creado exitosamente:", user);
 
     return NextResponse.json(
       {
@@ -48,8 +41,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error en API register:", error);
-
     const errorMessage =
       error instanceof Error ? error.message : "Error interno del servidor";
 
@@ -61,7 +52,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json(
+      { error: "Error interno del servidor" },
+      { status: 500 }
+    );
   }
 }
 

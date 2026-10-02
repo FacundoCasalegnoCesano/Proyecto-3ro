@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, BrandContactStatus } from "@prisma/client";
+import { verifyAdminRole } from "lib/auth-utils";
 
 const prisma = new PrismaClient();
 
@@ -8,6 +9,11 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const admin = await verifyAdminRole();
+    if (!admin.isAdmin) {
+      return NextResponse.json({ error: admin.error }, { status: admin.status });
+    }
+
     const { id } = params;
     const body = await request.json();
     const { status } = body;
@@ -64,6 +70,11 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const admin = await verifyAdminRole();
+    if (!admin.isAdmin) {
+      return NextResponse.json({ error: admin.error }, { status: admin.status });
+    }
+
     const { id } = params;
 
     const contact = await prisma.brandContact.findUnique({

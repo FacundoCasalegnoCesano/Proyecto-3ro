@@ -1,26 +1,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Gem,
+  Sparkles,
+  SunMedium,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 
-interface IconProps {
-  className?: string;
-  size?: number;
-  strokeWidth?: number;
-}
-
 interface Subcategory {
   name: string;
+  label?: string;
   image?: string;
   emoji?: string;
-  icon?: React.ComponentType<IconProps>;
+  icon?: LucideIcon;
 }
 
 interface ProductCategoryGroup {
   id: string;
   name: string;
+  label?: string;
   subcategories: Subcategory[];
 }
 
@@ -61,7 +64,11 @@ export function ProductsSidebar({
       id: "aromatizantes_group",
       name: "Aromatizantes",
       subcategories: [
-        { name: "Rocio Aurico", image: "" },
+        {
+          name: "Rocio Aurico",
+          label: "Rocío áurico",
+          icon: Sparkles,
+        },
         { name: "Aromatizante para auto", image: "/img/air-freshener.png" },
         { name: "Aromatizante de ambiente", image: "/img/diffuser.png" },
         { name: "Esencia", image: "/img/essence.png" },
@@ -72,14 +79,19 @@ export function ProductsSidebar({
     {
       id: "decoracion_group",
       name: "Decoracion Espiritual",
+      label: "Decoración espiritual",
       subcategories: [
         { name: "Vela", image: "/img/candles.png" },
         { name: "Cascada de humo", image: "/img/fountain.png" },
         { name: "Estatua", image: "/img/buddha.png" },
-        { name: "Lampara de Sal", image: "/img/salt-lamp.png" },
-        { name: "Ceramica", image: "/img/incense.png" },
-        { name: "Accesorios", image: "" },
-        { name: "Atrapaluz", image: "" },
+        {
+          name: "Lampara de Sal",
+          label: "Lámpara de sal",
+          image: "/img/salt-lamp.png",
+        },
+        { name: "Ceramica", label: "Cerámica", image: "/img/incense.png" },
+        { name: "Accesorios", icon: Gem },
+        { name: "Atrapaluz", icon: SunMedium },
       ],
     },
   ];
@@ -126,10 +138,13 @@ export function ProductsSidebar({
   const renderIcon = (item: Subcategory) => {
     if (item.image) {
       return (
-        <div className="w-10 h-10 bg-white/20 rounded flex items-center justify-center">
+        <div
+          aria-hidden="true"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-white/20"
+        >
           <Image
             src={item.image}
-            alt={item.name}
+            alt=""
             width={24}
             height={24}
             className="object-contain"
@@ -140,7 +155,10 @@ export function ProductsSidebar({
 
     if (item.emoji) {
       return (
-        <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
+        <div
+          aria-hidden="true"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-white/20"
+        >
           <span className="text-xs">{item.emoji}</span>
         </div>
       );
@@ -149,22 +167,28 @@ export function ProductsSidebar({
     if (item.icon) {
       const IconComponent = item.icon;
       return (
-        <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
-          <IconComponent className="w-4 h-4" />
+        <div
+          aria-hidden="true"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-white/20"
+        >
+          <IconComponent className="h-5 w-5" strokeWidth={1.75} />
         </div>
       );
     }
 
     return (
-      <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
+      <div
+        aria-hidden="true"
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-white/20"
+      >
         <span className="text-xs">📦</span>
       </div>
     );
   };
 
   return (
-    <div className="bg-gray border-2 border-babalu-primary/100 rounded-lg p-4 text-black">
-      <div className="flex justify-between items-center mb-4">
+    <div className="min-w-0 rounded-lg border-2 border-babalu-primary/100 bg-gray p-4 text-black">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-xl font-bold">Categorías</h2>
       </div>
 
@@ -178,14 +202,22 @@ export function ProductsSidebar({
         <div key={group.id} className="mb-4">
           <button
             onClick={() => toggleCategoryGroup(group.name)}
-            className="flex items-center justify-between w-full text-left font-semibold mb-2 hover:text-babalu-primary transition-colors"
+            className="mb-2 flex w-full min-w-0 items-start justify-between gap-2 text-left font-semibold transition-colors hover:text-babalu-primary"
             disabled={isLoading}
           >
-            <span>{group.name}</span>
+            <span className="min-w-0 flex-1 break-words">
+              {group.label || group.name}
+            </span>
             {expandedCategories.includes(group.name) ? (
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown
+                aria-hidden="true"
+                className="mt-0.5 h-4 w-4 flex-shrink-0"
+              />
             ) : (
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight
+                aria-hidden="true"
+                className="mt-0.5 h-4 w-4 flex-shrink-0"
+              />
             )}
           </button>
 
@@ -195,7 +227,7 @@ export function ProductsSidebar({
                 <button
                   key={subcategory.name}
                   onClick={() => handleSubcategoryClick(subcategory.name)}
-                  className={`flex items-center space-x-2 text-sm hover:text-babalu-primary transition-colors w-full text-left p-2 rounded ${
+                  className={`flex w-full min-w-0 items-center gap-2 rounded p-2 text-left text-sm transition-colors hover:text-babalu-primary ${
                     currentSelectedCategory === subcategory.name
                       ? "bg-white/20 font-medium border-l-4 border-orange-500"
                       : "border-l-4 border-transparent"
@@ -203,7 +235,9 @@ export function ProductsSidebar({
                   disabled={isLoading}
                 >
                   {renderIcon(subcategory)}
-                  <span>{subcategory.name}</span>
+                  <span className="min-w-0 flex-1 break-words">
+                    {subcategory.label || subcategory.name}
+                  </span>
                 </button>
               ))}
             </div>

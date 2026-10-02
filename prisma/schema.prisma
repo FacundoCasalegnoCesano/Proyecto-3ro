@@ -25,10 +25,22 @@ model Products {
   tipoPiedra    String? @db.VarChar(100)
   cantidad      String? @db.VarChar(100)
   stock         Int     @default(0)
+  familyId      Int?    @map("family_id")
+  family        ProductFamily? @relation(fields: [familyId], references: [id], onDelete: SetNull)
   envios        deliver @relation(fields: [empresaEnvios], references: [id], onDelete: Cascade)
   cartItems   Cart[]   // Nueva relación con Cart
   @@index([empresaEnvios, category])
+  @@index([familyId])
   @@map("products")
+}
+
+model ProductFamily {
+  id       Int        @id @default(autoincrement())
+  key      String     @unique @db.VarChar(600)
+  nombre   String     @db.VarChar(150)
+  products Products[]
+
+  @@map("product_families")
 }
 
 model Cart {

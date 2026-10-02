@@ -47,7 +47,7 @@ export function Footer({
     },
     {
       title: "Mi Camino",
-      links: [{ href: "/mi-camino", label: "Sobre Mi" }],
+      links: [{ href: "/mi-camino", label: "Sobre mí" }],
     },
   ];
 

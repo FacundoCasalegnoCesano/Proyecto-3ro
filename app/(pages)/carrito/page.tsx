@@ -1,5 +1,5 @@
-import { CarritoPageContent } from "../../../components/sections/carrito-page-content";
+import { redirect } from "next/navigation";
 
 export default function CarritoPage() {
-  return <CarritoPageContent />;
+  redirect("/productos");
 }

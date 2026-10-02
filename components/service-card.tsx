@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { Button } from "../components/ui/button";
 import { Clock, DollarSign, CheckCircle, Star } from "lucide-react";
 import { useState } from "react";
+import { formatPrice, parsePrice } from "../utils/price-utils";
 
 interface Service {
   id: string;
@@ -23,17 +23,8 @@ interface ServiceCardProps {
 export function ServiceCard({ service }: ServiceCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleReservar = () => {
-    // Redirigir al formulario de reserva con el servicio preseleccionado
-    window.location.href = `/reserva?servicio=${service.id}`;
-  };
-
   const handleVerMas = () => {
     setIsExpanded(!isExpanded);
-  };
-
-  const formatPrice = (price: string) => {
-    return `$${price}`;
   };
 
   return (
@@ -101,7 +92,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
           <div className="flex items-center space-x-2">
             <DollarSign className="w-5 h-5 text-babalu-primary" />
             <span className="text-3xl font-bold text-babalu-primary">
-              {formatPrice(service.price)}
+              {formatPrice(parsePrice(service.price))}
             </span>
           </div>
           <div className="flex items-center space-x-2 text-gray-600">
@@ -138,23 +129,6 @@ export function ServiceCard({ service }: ServiceCardProps) {
           </ul>
         </div>
 
-        {/* Botones de acción */}
-        <div className="space-y-3">
-          <Button
-            onClick={handleReservar}
-            className="w-full bg-babalu-primary hover:bg-babalu-dark text-white py-3 text-lg font-medium rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-lg flex items-center justify-center space-x-2"
-          >
-            <span>Reservar Sesión</span>
-          </Button>
-
-          {/* Información adicional */}
-          <div className="text-center">
-            <p className="text-xs text-gray-500 mb-2">
-              ✓ Confirmación inmediata por email • ✓ Puedes cancelar hasta 24h
-              antes
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import {
   Carousel,
@@ -8,15 +8,10 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi as EmblaCarouselApi,
 } from "../components/ui/carousel";
 
-interface CarouselApi {
-  selectedScrollSnap: () => number;
-  scrollNext: () => void;
-  scrollPrev: () => void;
-  on: (event: string, callback: () => void) => void;
-  off: (event: string, callback: () => void) => void;
-}
+export type HeroCarouselApi = NonNullable<EmblaCarouselApi>;
 
 interface HeroImage {
   src: string;
@@ -28,14 +23,17 @@ interface HeroCarouselProps {
   images: HeroImage[];
   className?: string;
   onSlideChange: (index: number) => void;
+  onApiChange?: (api: HeroCarouselApi) => void;
 }
 
 export function HeroCarousel({
   images = [],
   className = "",
   onSlideChange,
+  onApiChange,
 }: HeroCarouselProps) {
-  const apiRef = useRef<CarouselApi | null>(null);
+  const apiRef = useRef<HeroCarouselApi | null>(null);
+  const [carouselApi, setCarouselApiState] = useState<HeroCarouselApi | null>(null);
   const autoplayRef = useRef<NodeJS.Timeout | null>(null);
 
   // Memorizar stopAutoplay para evitar recreación en cada render
@@ -54,9 +52,19 @@ export function HeroCarousel({
     }, 5000);
   }, [stopAutoplay]);
 
+  const handlePrevious = useCallback(() => {
+    stopAutoplay();
+    apiRef.current?.scrollPrev();
+  }, [stopAutoplay]);
+
+  const handleNext = useCallback(() => {
+    stopAutoplay();
+    apiRef.current?.scrollNext();
+  }, [stopAutoplay]);
+
   // Inicialización del carrusel
   useEffect(() => {
-    const api = apiRef.current;
+    const api = carouselApi;
     if (!api) return;
 
     const handleSelect = () => {
@@ -77,16 +85,19 @@ export function HeroCarousel({
       api.off("pointerDown", stopAutoplay);
       api.off("pointerUp", startAutoplay);
     };
-  }, [onSlideChange, startAutoplay, stopAutoplay]);
+  }, [carouselApi, onSlideChange, startAutoplay, stopAutoplay]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const setCarouselApi = (api: any) => {
-    apiRef.current = api;
-    if (api) {
+  const setCarouselApi = useCallback(
+    (api: EmblaCarouselApi) => {
+      if (!api) return;
+      apiRef.current = api;
+      setCarouselApiState(api);
+      onApiChange?.(api);
       // Notificar el slide inicial inmediatamente
       onSlideChange(api.selectedScrollSnap());
-    }
-  };
+    },
+    [onApiChange, onSlideChange]
+  );
 
   if (!images?.length) {
     return (
@@ -108,7 +119,7 @@ export function HeroCarousel({
         }}
         setApi={setCarouselApi}
       >
-        <CarouselContent className="h-[65vh] md:h-[70vh]">
+        <CarouselContent className="h-full">
           {images.map((image, index) => (
             <CarouselItem
               key={`${image.src}-${index}`}
@@ -133,12 +144,14 @@ export function HeroCarousel({
         </CarouselContent>
 
         <CarouselPrevious
-          className="left-2 md:left-4 text-white border-white hover:bg-white/20"
-          onClick={stopAutoplay}
+          className="left-2 z-30 h-11 w-11 border-white/80 bg-black/40 text-white hover:bg-black/60 hover:text-white focus-visible:ring-2 focus-visible:ring-white md:left-4 md:h-9 md:w-9"
+          aria-label="Imagen anterior"
+          onClick={handlePrevious}
         />
         <CarouselNext
-          className="right-2 md:right-4 text-white border-white hover:bg-white/20"
-          onClick={stopAutoplay}
+          className="right-2 z-30 h-11 w-11 border-white/80 bg-black/40 text-white hover:bg-black/60 hover:text-white focus-visible:ring-2 focus-visible:ring-white md:right-4 md:h-9 md:w-9"
+          aria-label="Imagen siguiente"
+          onClick={handleNext}
         />
       </Carousel>
     </div>

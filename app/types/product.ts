@@ -11,6 +11,8 @@ export interface Product {
   stock: number;
   aroma: string | null;
   id: number;
+  familyId?: number | null;
+  familyName?: string | null;
   name: string;
   price: string;
   image: string;

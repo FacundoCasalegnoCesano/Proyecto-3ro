@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner"; // ✅ Importar Sonner
+import { findProductVariant } from "../utils/productVariantMatcher";
+import { parsePriceInput } from "../utils/price-utils";
 
 interface UploadedImage {
   publicId: string;
@@ -38,6 +40,7 @@ interface ProductFormData {
   marca: string;
   aroma: string;
   linea: string;
+  familyName: string;
   description: string;
   images: UploadedImage[];
   cantidad: string;
@@ -54,6 +57,7 @@ interface FormErrors {
   marca?: string;
   aroma?: string;
   linea?: string;
+  familyName?: string;
   description?: string;
   images?: string;
   cantidad?: string;
@@ -115,7 +119,10 @@ interface ProductoExistente {
   color?: string;
   tipo?: string;
   piedra?: string;
+  cantidad?: string;
+  image?: string;
   category: string;
+  familyName?: string | null;
 }
 
 export function AgregarProductoForm() {
@@ -126,6 +133,7 @@ export function AgregarProductoForm() {
     marca: "",
     aroma: "",
     linea: "",
+    familyName: "",
     description: "",
     images: [],
     cantidad: "1",
@@ -736,64 +744,34 @@ export function AgregarProductoForm() {
           const data = await response.json();
 
           if (data.success && data.data.length > 0) {
-            const productoSimilar = data.data.find((p: ProductoExistente) => {
-              const mismoNombre =
-                p.name.toLowerCase() === formData.name.toLowerCase();
-              const mismaCategoria =
-                p.category.toLowerCase() === formData.category.toLowerCase();
-
-              let camposCoinciden = true;
-
-              if (campos.marca) {
-                camposCoinciden =
-                  camposCoinciden &&
-                  p.marca?.toLowerCase() === formData.marca.toLowerCase();
-              }
-
-              if (campos.aroma) {
-                camposCoinciden =
-                  camposCoinciden &&
-                  p.aroma?.toLowerCase() === formData.aroma.toLowerCase();
-              }
-
-              if (campos.linea) {
-                camposCoinciden =
-                  camposCoinciden &&
-                  (p.linea || "").toLowerCase() ===
-                    (formData.linea || "").toLowerCase();
-              }
-
-              if (campos.tamaño) {
-                camposCoinciden =
-                  camposCoinciden &&
-                  (p.tamaño || "").toLowerCase() ===
-                    (formData.tamaño || "").toLowerCase();
-              }
-
-              if (campos.color) {
-                camposCoinciden =
-                  camposCoinciden &&
-                  (p.color || "").toLowerCase() ===
-                    (formData.color || "").toLowerCase();
-              }
-
-              if (campos.tipo) {
-                camposCoinciden =
-                  camposCoinciden &&
-                  (p.tipo || "").toLowerCase() ===
-                    (formData.tipo || "").toLowerCase();
-              }
-
-              // Verificar piedra si existe
-              if (formData.piedra) {
-                camposCoinciden =
-                  camposCoinciden &&
-                  (p.piedra || "").toLowerCase() ===
-                    (formData.piedra || "").toLowerCase();
-              }
-
-              return mismoNombre && mismaCategoria && camposCoinciden;
-            });
+            const dimensions = [
+              "marca",
+              "aroma",
+              "linea",
+              "familyName",
+              "tamaño",
+              "color",
+              "tipo",
+              "piedra",
+              ...(campos.cantidad ? ["cantidad"] : []),
+            ];
+            const productoSimilar = findProductVariant(
+              data.data as ProductoExistente[],
+              {
+                name: formData.name,
+                category: formData.category,
+                marca: formData.marca,
+                aroma: formData.aroma,
+                linea: formData.linea,
+                tamaño: formData.tamaño,
+                color: formData.color,
+                tipo: formData.tipo,
+                piedra: formData.piedra,
+                cantidad: formData.cantidad,
+                familyName: formData.familyName.trim(),
+              },
+              dimensions
+            );
 
             setProductoExistente(productoSimilar || null);
           } else {
@@ -809,6 +787,7 @@ export function AgregarProductoForm() {
     verificarProductoExistente();
   }, [
     formData.name,
+    formData.familyName,
     formData.category,
     formData.marca,
     formData.aroma,
@@ -817,6 +796,7 @@ export function AgregarProductoForm() {
     formData.color,
     formData.tipo,
     formData.piedra,
+    formData.cantidad,
   ]);
 
   const handleInputChange = (
@@ -1020,11 +1000,15 @@ export function AgregarProductoForm() {
   const handleAddNewMarca = async () => {
     if (newMarcaValue.trim() && formData.category) {
       try {
-        const response = await fetch(
-          `/api/agregarProd?saveMarca=true&category=${encodeURIComponent(
-            formData.category
-          )}&marca=${encodeURIComponent(newMarcaValue.trim())}`
-        );
+        const response = await fetch("/api/agregarProd", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            catalogOption: "marca",
+            category: formData.category,
+            marca: newMarcaValue.trim(),
+          }),
+        });
 
         if (response.ok) {
           const newMarca = {
@@ -1071,13 +1055,16 @@ export function AgregarProductoForm() {
   const handleAddNewAroma = async () => {
     if (newAromaValue.trim() && formData.category && formData.marca) {
       try {
-        const response = await fetch(
-          `/api/agregarProd?saveAroma=true&category=${encodeURIComponent(
-            formData.category
-          )}&marca=${encodeURIComponent(
-            formData.marca
-          )}&aroma=${encodeURIComponent(newAromaValue.trim())}`
-        );
+        const response = await fetch("/api/agregarProd", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            catalogOption: "aroma",
+            category: formData.category,
+            marca: formData.marca,
+            aroma: newAromaValue.trim(),
+          }),
+        });
 
         if (response.ok) {
           const newAroma = {
@@ -1124,15 +1111,17 @@ export function AgregarProductoForm() {
   const handleAddNewLinea = async () => {
     if (newLineaValue.trim() && formData.category && formData.marca) {
       try {
-        const response = await fetch(
-          `/api/agregarProd?saveLinea=true&category=${encodeURIComponent(
-            formData.category
-          )}&marca=${encodeURIComponent(
-            formData.marca
-          )}&aroma=${encodeURIComponent(
-            formData.aroma || ""
-          )}&linea=${encodeURIComponent(newLineaValue.trim())}`
-        );
+        const response = await fetch("/api/agregarProd", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            catalogOption: "linea",
+            category: formData.category,
+            marca: formData.marca,
+            aroma: formData.aroma || "",
+            linea: newLineaValue.trim(),
+          }),
+        });
 
         if (response.ok) {
           const newLinea = {
@@ -1296,7 +1285,10 @@ export function AgregarProductoForm() {
   };
 
   const handleImageUpload = (result: { publicId: string; url: string }) => {
-    if (!result.url) return;
+    if (!result.url) {
+      setFormData((prev) => ({ ...prev, images: [] }));
+      return;
+    }
 
     const newImage: UploadedImage = {
       publicId: result.publicId,
@@ -1351,11 +1343,15 @@ export function AgregarProductoForm() {
       newErrors.name = "El nombre debe tener al menos 3 caracteres";
     }
 
+    if (!formData.familyName.trim()) {
+      newErrors.familyName = "El modelo o familia es requerido para vincular variantes";
+    }
+
     // Validar precio
     if (!formData.price.trim()) {
       newErrors.price = "El precio es requerido";
-    } else if (!/^\d+(\.\d{1,2})?$/.test(formData.price)) {
-      newErrors.price = "Ingresa un precio válido (ej: 25.99)";
+    } else if ((parsePriceInput(formData.price) ?? 0) <= 0) {
+      newErrors.price = "Ingresa un precio válido mayor a cero (ej.: 1290,50)";
     }
 
     // Validar categoría
@@ -1443,7 +1439,7 @@ export function AgregarProductoForm() {
     }
 
     // Validar imágenes
-    if (formData.images.length === 0) {
+    if (formData.images.length === 0 && !productoExistente) {
       newErrors.images = "Se requiere al menos una imagen del producto";
     }
 
@@ -1489,6 +1485,7 @@ export function AgregarProductoForm() {
           marca: formData.marca,
           aroma: formData.aroma,
           linea: formData.linea,
+          familyName: formData.familyName.trim(),
           tamaño: formData.tamaño,
           color: formData.color,
           tipo: formData.tipo,
@@ -1556,6 +1553,7 @@ export function AgregarProductoForm() {
           marca: "",
           aroma: "",
           linea: "",
+          familyName: "",
           description: "",
           images: [],
           cantidad: "1",
@@ -1671,6 +1669,23 @@ export function AgregarProductoForm() {
               )}
             </div>
 
+            <div className="md:col-span-2">
+              <label htmlFor="familyName" className="block text-sm font-medium text-gray-700 mb-2">
+                Modelo / familia
+              </label>
+              <input
+                id="familyName"
+                name="familyName"
+                type="text"
+                value={formData.familyName}
+                onChange={handleInputChange}
+                className={`block w-full px-3 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary ${errors.familyName ? "border-red-300" : "border-gray-300"}`}
+                placeholder="Ej.: Sahumerio Línea Clásica"
+              />
+              {errors.familyName && <p className="mt-1 text-sm text-red-600">{errors.familyName}</p>}
+              <p className="mt-1 text-xs text-gray-500">Escribí el modelo base sin el aroma y repetilo para cada variante; cada una conserva su propia foto.</p>
+            </div>
+
             <div>
               <label
                 htmlFor="price"
@@ -1683,12 +1698,13 @@ export function AgregarProductoForm() {
                 id="price"
                 name="price"
                 type="text"
+                inputMode="decimal"
                 value={formData.price}
                 onChange={handleInputChange}
                 className={`block w-full px-3 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary ${
                   errors.price ? "border-red-300" : "border-gray-300"
                 }`}
-                placeholder="2500"
+                placeholder="1290,50"
               />
               {errors.price && (
                 <p className="mt-1 text-sm text-red-600">{errors.price}</p>
@@ -1772,6 +1788,18 @@ export function AgregarProductoForm() {
                   </span>{" "}
                   unidades.
                 </p>
+                <p className="text-xs text-blue-700 mt-1">
+                  La imagen guardada para esta variante se conservará al reponer stock. Para cambiarla, editá el producto existente.
+                </p>
+                {productoExistente.image && (
+                  <Image
+                    src={productoExistente.image}
+                    alt={`Imagen de ${productoExistente.name}`}
+                    width={72}
+                    height={72}
+                    className="mt-2 rounded object-cover"
+                  />
+                )}
               </div>
             )}
 

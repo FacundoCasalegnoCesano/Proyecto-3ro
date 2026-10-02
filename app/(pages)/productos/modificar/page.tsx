@@ -1,10 +1,12 @@
 // app/productos/modificar/page.tsx
-"use client";
-
 import { Header } from "components/header";
 import { ModificarProductoPageContent } from "components/sections/modificar-producto-page-content";
 import { PageLayout } from "components/layout/page-layout";
 import { Suspense } from "react";
+import { verifyAdminRole } from "lib/auth-utils";
+import { redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 // Componente interno que usa useSearchParams
 function ModificarProductoContent() {
@@ -17,7 +19,10 @@ function ModificarProductoContent() {
 }
 
 // Componente principal con Suspense
-export default function ModificarProductoPage() {
+export default async function ModificarProductoPage() {
+  const admin = await verifyAdminRole();
+  if (!admin.isAdmin) redirect(admin.status === 401 ? "/iniciar-sesion" : "/productos");
+
   return (
     <Suspense
       fallback={

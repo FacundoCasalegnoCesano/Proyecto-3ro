@@ -1,15 +1,98 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "lib/prisma";
 import { Prisma } from "@prisma/client";
+import { verifyAdminRole } from "lib/auth-utils";
+import { createHash } from "crypto";
+import { parsePriceInput } from "utils/price-utils";
+import {
+  buildRestockUpdateData,
+  findProductVariant,
+} from "utils/productVariantMatcher";
 
 export const dynamic = "force-dynamic";
 
+async function requireAdminResponse() {
+  const admin = await verifyAdminRole();
+  if (!admin.isAdmin) {
+    return NextResponse.json(
+      { success: false, error: admin.error },
+      { status: admin.status }
+    );
+  }
+  return null;
+}
+
+async function saveCatalogOption(body: Record<string, unknown>) {
+  const kind = body.catalogOption;
+  const category = typeof body.category === "string" ? body.category.trim() : "";
+  const marca = typeof body.marca === "string" ? body.marca.trim() : "";
+  const aroma = typeof body.aroma === "string" ? body.aroma.trim() : "";
+  const linea = typeof body.linea === "string" ? body.linea.trim() : "";
+
+  if (!category || !marca ||
+    (kind !== "marca" && kind !== "aroma" && kind !== "linea") ||
+    (kind === "aroma" && !aroma) || (kind === "linea" && !linea)) {
+    return NextResponse.json(
+      { success: false, error: "Los datos de categoría, marca, aroma o línea son inválidos" },
+      { status: 400 }
+    );
+  }
+
+  if (kind === "aroma" && !aroma) {
+    return NextResponse.json({ success: false, error: "Se requiere aroma" }, { status: 400 });
+  }
+
+  const values = {
+    category,
+    marca,
+    aroma: kind === "aroma" ? aroma : kind === "linea" ? aroma : "",
+    Linea: kind === "linea" ? linea : "",
+  };
+
+  await prisma.categoryMarca.upsert({
+    where: { category_marca_aroma_Linea: values },
+    update: {},
+    create: values,
+  });
+
+  return NextResponse.json({ success: true, message: "Opción guardada exitosamente" });
+}
+
+function buildProductFamilyKey(
+  { category, marca, linea, tipo, familyName }: {
+    category: string;
+    marca?: string | null;
+    linea?: string | null;
+    tipo?: string | null;
+    familyName: string;
+  }
+) {
+  const values = [category, marca || "", linea || "", tipo || "", familyName]
+    .map((value) => value.trim().toLowerCase());
+  return createHash("sha256").update(values.join("\0")).digest("hex");
+}
+
+async function resolveProductFamily(
+  tx: Prisma.TransactionClient,
+  family: Parameters<typeof buildProductFamilyKey>[0]
+) {
+  const key = buildProductFamilyKey(family);
+  return tx.productFamily.upsert({
+    where: { key },
+    update: { nombre: family.familyName.trim() },
+    create: { key, nombre: family.familyName.trim() },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const adminResponse = await requireAdminResponse();
+    if (adminResponse) return adminResponse;
+
     console.log("📦 Recibiendo solicitud para crear producto...");
 
     const body = await request.json();
-    console.log("Datos recibidos:", body);
+    if (body.catalogOption) return await saveCatalogOption(body);
 
     const {
       nombre,
@@ -26,6 +109,7 @@ export async function POST(request: NextRequest) {
       color,
       tipo,
       piedra,
+      familyName,
     } = body;
 
     // Validar campos requeridos básicos
@@ -33,7 +117,6 @@ export async function POST(request: NextRequest) {
       !nombre ||
       !precio ||
       !descripcion ||
-      !imgUrl ||
       !category ||
       !cantidad
     ) {
@@ -42,11 +125,36 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error:
-            "Faltan campos requeridos: nombre, precio, descripcion, imgUrl, category, cantidad",
+            "Faltan campos requeridos: nombre, precio, descripcion, category, cantidad",
         },
         { status: 400 }
       );
     }
+
+    if (familyName !== undefined &&
+      (typeof familyName !== "string" || familyName.trim().length > 150)) {
+      return NextResponse.json(
+        { success: false, error: "El nombre del modelo no puede superar 150 caracteres" },
+        { status: 400 }
+      );
+    }
+
+    const normalizedFamilyName = typeof familyName === "string" ? familyName.trim() : "";
+    const existingFamily = normalizedFamilyName
+      ? await prisma.productFamily.findUnique({
+          where: {
+            key: buildProductFamilyKey({
+              category,
+              marca,
+              linea,
+              tipo,
+              familyName: normalizedFamilyName,
+            }),
+          },
+          select: { id: true },
+        })
+      : null;
+    const requestedFamilyId = existingFamily?.id ?? null;
 
     // Determinar campos requeridos según la categoría
     const getCamposRequeridos = (category: string) => {
@@ -327,9 +435,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Validar precio
-    const precioNumerico = parseFloat(precio);
-    if (isNaN(precioNumerico) || precioNumerico <= 0) {
-      console.log("❌ Precio inválido:", precio);
+    const precioNumerico = parsePriceInput(precio);
+    if (precioNumerico === null || !Number.isFinite(precioNumerico) || precioNumerico <= 0) {
+      console.log("❌ Precio inválido");
       return NextResponse.json(
         {
           success: false,
@@ -340,9 +448,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Validar cantidad
-    const cantidadNumerica = parseInt(cantidad);
-    if (isNaN(cantidadNumerica) || cantidadNumerica <= 0) {
-      console.log("❌ Cantidad inválida:", cantidad);
+    const cantidadNumerica = typeof cantidad === "number" ? cantidad : Number(cantidad);
+    if ((typeof cantidad !== "number" && typeof cantidad !== "string") ||
+        (typeof cantidad === "string" && !/^\d+$/.test(cantidad)) ||
+        !Number.isInteger(cantidadNumerica) || cantidadNumerica <= 0 || cantidadNumerica > 2147483647) {
+      console.log("❌ Cantidad inválida");
       return NextResponse.json(
         {
           success: false,
@@ -373,71 +483,99 @@ export async function POST(request: NextRequest) {
       nombre: nombre.trim(),
     };
 
-    // Agregar campos condicionales según lo que esté presente
-    if (marca) whereClause.marca = marca.trim();
-    if (aroma) whereClause.aroma = aroma.trim();
-    if (linea) whereClause.Linea = linea.trim();
-    if (tamaño) whereClause.tamaño = tamaño.trim();
-    if (color) whereClause.color = color.trim();
-    if (tipo) whereClause.tipo = tipo.trim();
-    if (piedra) whereClause.tipoPiedra = piedra.trim();
-    // Para velas, también buscar por cantidad
-    if (camposRequeridos.cantidad) {
-      whereClause.cantidad = cantidad;
-    }
+    const dimensions = [
+      "marca",
+      "aroma",
+      "linea",
+      "tamaño",
+      "color",
+      "tipo",
+      "piedra",
+      ...(camposRequeridos.cantidad ? ["cantidad"] : []),
+    ];
 
-    productoExistente = await prisma.products.findFirst({
+    const productosMismoNombre = await prisma.products.findMany({
       where: whereClause,
+      orderBy: { id: "asc" },
     });
+    productoExistente = findProductVariant(
+      productosMismoNombre
+        .filter((producto) =>
+          requestedFamilyId !== null
+            ? producto.familyId === requestedFamilyId
+            : !normalizedFamilyName && !producto.familyId
+        )
+        .map((producto) => ({
+        nombre: producto.nombre,
+        category: producto.category,
+        marca: producto.marca,
+        aroma: producto.aroma,
+        Linea: producto.Linea,
+        tamaño: producto.tamaño,
+        color: producto.color,
+        tipo: producto.tipo,
+        tipoPiedra: producto.tipoPiedra,
+        cantidad: producto.cantidad,
+        producto,
+        })),
+      { nombre, category, marca, aroma, linea, tamaño, color, tipo, piedra, cantidad },
+      dimensions
+    )?.producto || null;
 
     // Si existe un producto, incrementar su stock
     if (productoExistente) {
       console.log("✅ Producto existente encontrado, incrementando stock...");
 
-      const nuevoStock = productoExistente.stock + cantidadNumerica;
+      const productoActualizado = await prisma.$transaction(async (tx) => {
+        const data: Prisma.ProductsUncheckedUpdateInput = buildRestockUpdateData(productoExistente, {
+          quantity: cantidadNumerica,
+          price: precioNumerico,
+          description: descripcion,
+          cantidad: String(cantidadNumerica),
+          includeQuantity: camposRequeridos.cantidad,
+        });
+        if (typeof familyName === "string") {
+          data.familyId = familyName.trim()
+            ? (await resolveProductFamily(tx, { category, marca, linea, tipo, familyName })).id
+            : null;
+        }
 
-      const productoActualizado = await prisma.products.update({
-        where: { id: productoExistente.id },
-        data: {
-          stock: nuevoStock,
-          precio: precio.toString(),
-          descripcion: descripcion.trim(),
-          imgUrl: imgUrl,
-          imgPublicId: imgPublicId || productoExistente.imgPublicId,
-          Linea: linea?.trim() || productoExistente.Linea,
-          tamaño: tamaño?.trim() || productoExistente.tamaño,
-          color: color?.trim() || productoExistente.color,
-          tipo: tipo?.trim() || productoExistente.tipo,
-          tipoPiedra: piedra?.trim() || productoExistente.tipoPiedra,
-          cantidad: camposRequeridos.cantidad
-            ? cantidad
-            : productoExistente.cantidad,
-        },
-        include: {
-          envios: {
-            include: {
-              empresa: true,
-            },
+        return tx.products.update({
+          where: { id: productoExistente.id },
+          data,
+          include: {
+            envios: { include: { empresa: true } },
+            family: true,
           },
-        },
+        });
       });
 
       console.log(
-        `✅ Stock actualizado para producto existente. Stock anterior: ${productoExistente.stock}, Stock agregado: ${cantidadNumerica}, Stock nuevo: ${nuevoStock}`
+        `✅ Stock actualizado para producto existente. Stock anterior: ${productoExistente.stock}, Stock agregado: ${cantidadNumerica}, Stock nuevo: ${productoActualizado.stock}`
       );
 
       return NextResponse.json(
         {
           success: true,
-          message: `Stock incrementado para el producto existente. Stock anterior: ${productoExistente.stock}, Stock nuevo: ${nuevoStock}`,
+          message: `Stock incrementado para el producto existente. Stock anterior: ${productoExistente.stock}, Stock nuevo: ${productoActualizado.stock}`,
           data: {
             ...productoActualizado,
             stockAnterior: productoExistente.stock,
             stockAgregado: cantidadNumerica,
-            stockNuevo: nuevoStock,
+            stockNuevo: productoActualizado.stock,
           },
         },
         { status: 200 }
+      );
+    }
+
+    if (!imgUrl) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Se requiere una imagen para crear una variante nueva",
+        },
+        { status: 400 }
       );
     }
 
@@ -514,11 +652,22 @@ export async function POST(request: NextRequest) {
     // Crear nuevo producto
     console.log("🛒 Creando producto nuevo...");
 
-    const nuevoProducto = await prisma.products.create({
-      data: {
+    const nuevoProducto = await prisma.$transaction(async (tx) => {
+      const familyId = typeof familyName === "string" && familyName.trim()
+        ? (await resolveProductFamily(tx, {
+            category,
+            marca,
+            linea,
+            tipo,
+            familyName,
+          })).id
+        : null;
+
+      return tx.products.create({
+        data: {
         nombre: nombre.trim(),
         descripcion: descripcion.trim(),
-        precio: precio.toString(),
+        precio: String(precioNumerico),
         imgUrl: imgUrl,
         imgPublicId: imgPublicId || "",
         category: category.trim(),
@@ -529,17 +678,20 @@ export async function POST(request: NextRequest) {
         color: color?.trim() || null,
         tipo: tipo?.trim() || null,
         tipoPiedra: piedra?.trim() || null,
-        cantidad: camposRequeridos.cantidad ? cantidad : null,
+        cantidad: camposRequeridos.cantidad ? String(cantidadNumerica) : null,
         stock: cantidadNumerica,
-        empresaEnvios: empresaEnviosId,
-      },
-      include: {
-        envios: {
-          include: {
-            empresa: true,
-          },
+          empresaEnvios: empresaEnviosId,
+          familyId,
         },
-      },
+        include: {
+          envios: {
+            include: {
+              empresa: true,
+            },
+          },
+          family: true,
+        },
+      });
     });
 
     console.log("✅ Producto creado exitosamente:", nuevoProducto.id);
@@ -571,6 +723,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
+    const familyIdParam = searchParams.get("familyId");
     const category = searchParams.get("category");
     const marca = searchParams.get("marca");
     const aroma = searchParams.get("aroma");
@@ -586,177 +739,6 @@ export async function GET(request: NextRequest) {
     const getMarcas = searchParams.get("getMarcas");
     const getAromas = searchParams.get("getAromas");
     const getLineas = searchParams.get("getLineas");
-    const saveMarca = searchParams.get("saveMarca");
-    const saveAroma = searchParams.get("saveAroma");
-    const saveLinea = searchParams.get("saveLinea");
-
-    // Endpoint para guardar una nueva línea
-    if (saveLinea === "true") {
-      try {
-        const categoryParam = searchParams.get("category");
-        const marcaParam = searchParams.get("marca");
-        const aromaParam = searchParams.get("aroma");
-        const lineaParam = searchParams.get("linea");
-
-        if (!categoryParam || !marcaParam || !lineaParam) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: "Se requiere categoría, marca y línea",
-            },
-            { status: 400 }
-          );
-        }
-
-        await prisma.categoryMarca.upsert({
-          where: {
-            category_marca_aroma_Linea: {
-              category: categoryParam.trim(),
-              marca: marcaParam.trim(),
-              aroma: aromaParam?.trim() || "",
-              Linea: lineaParam.trim(),
-            },
-          },
-          update: {},
-          create: {
-            category: categoryParam.trim(),
-            marca: marcaParam.trim(),
-            aroma: aromaParam?.trim() || "",
-            Linea: lineaParam.trim(),
-          },
-        });
-
-        console.log(
-          `✅ Nueva línea guardada: ${lineaParam} para marca ${marcaParam} en categoría ${categoryParam}`
-        );
-
-        return NextResponse.json({
-          success: true,
-          message: "Línea guardada exitosamente",
-        });
-      } catch (error) {
-        console.error("❌ Error al guardar línea:", error);
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Error al guardar la línea",
-          },
-          { status: 500 }
-        );
-      }
-    }
-
-    // Endpoint para guardar un nuevo aroma
-    if (saveAroma === "true") {
-      try {
-        const categoryParam = searchParams.get("category");
-        const marcaParam = searchParams.get("marca");
-        const aromaParam = searchParams.get("aroma");
-        const lineaParam = searchParams.get("linea");
-
-        if (!categoryParam || !marcaParam || !aromaParam) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: "Se requiere categoría, marca y aroma",
-            },
-            { status: 400 }
-          );
-        }
-
-        await prisma.categoryMarca.upsert({
-          where: {
-            category_marca_aroma_Linea: {
-              category: categoryParam.trim(),
-              marca: marcaParam.trim(),
-              aroma: aromaParam.trim(),
-              Linea: lineaParam?.trim() || "",
-            },
-          },
-          update: {},
-          create: {
-            category: categoryParam.trim(),
-            marca: marcaParam.trim(),
-            aroma: aromaParam.trim(),
-            Linea: lineaParam?.trim() || "",
-          },
-        });
-
-        console.log(
-          `✅ Nuevo aroma guardado: ${aromaParam} para marca ${marcaParam} en categoría ${categoryParam}`
-        );
-
-        return NextResponse.json({
-          success: true,
-          message: "Aroma guardado exitosamente",
-        });
-      } catch (error) {
-        console.error("❌ Error al guardar aroma:", error);
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Error al guardar el aroma",
-          },
-          { status: 500 }
-        );
-      }
-    }
-
-    // Endpoint para guardar una nueva marca
-    if (saveMarca === "true") {
-      try {
-        const categoryParam = searchParams.get("category");
-        const marcaParam = searchParams.get("marca");
-        const lineaParam = searchParams.get("linea");
-
-        if (!categoryParam || !marcaParam) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: "Se requiere categoría y marca",
-            },
-            { status: 400 }
-          );
-        }
-
-        await prisma.categoryMarca.upsert({
-          where: {
-            category_marca_aroma_Linea: {
-              category: categoryParam.trim(),
-              marca: marcaParam.trim(),
-              aroma: "",
-              Linea: lineaParam?.trim() || "",
-            },
-          },
-          update: {},
-          create: {
-            category: categoryParam.trim(),
-            marca: marcaParam.trim(),
-            aroma: "",
-            Linea: lineaParam?.trim() || "",
-          },
-        });
-
-        console.log(
-          `✅ Nueva marca guardada: ${marcaParam} en categoría ${categoryParam}`
-        );
-
-        return NextResponse.json({
-          success: true,
-          message: "Marca guardada exitosamente",
-        });
-      } catch (error) {
-        console.error("❌ Error al guardar marca:", error);
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Error al guardar la marca",
-          },
-          { status: 500 }
-        );
-      }
-    }
-
     // Endpoint para obtener líneas únicas por categoría, marca y aroma
     if (getLineas === "true") {
       try {
@@ -969,23 +951,6 @@ export async function GET(request: NextRequest) {
               uniqueMarcas.length
             );
 
-            for (const marca of uniqueMarcas) {
-              try {
-                await prisma.categoryMarca.create({
-                  data: {
-                    category: categoryFilter,
-                    marca: marca,
-                    aroma: "",
-                    Linea: "",
-                  },
-                });
-              } catch (error) {
-                console.log(
-                  `⚠️ Marca ya existe en CategoryMarca: ${marca}`,
-                  error
-                );
-              }
-            }
           }
         } else {
           const allMarcas = await prisma.categoryMarca.findMany({
@@ -1027,8 +992,8 @@ export async function GET(request: NextRequest) {
     if (id) {
       console.log("📦 Obteniendo producto con ID:", id);
 
-      const productId = parseInt(id);
-      if (isNaN(productId)) {
+      const productId = Number(id);
+      if (!Number.isSafeInteger(productId) || productId < 1) {
         return NextResponse.json(
           {
             success: false,
@@ -1041,6 +1006,7 @@ export async function GET(request: NextRequest) {
       const producto = await prisma.products.findUnique({
         where: { id: productId },
         include: {
+          family: true,
           envios: {
             include: {
               empresa: true,
@@ -1065,7 +1031,7 @@ export async function GET(request: NextRequest) {
         return "disponible";
       };
 
-      const priceNumber = parseFloat(producto.precio) || 0;
+      const priceNumber = parsePriceInput(producto.precio) ?? 0;
 
       const formattedProduct = {
         id: producto.id,
@@ -1087,6 +1053,8 @@ export async function GET(request: NextRequest) {
         shipping: producto.envios?.empresa?.nombre || "Envío Gratis",
         src: producto.imgUrl,
         description: producto.descripcion,
+        familyId: producto.familyId,
+        familyName: producto.family?.nombre || null,
       };
 
       console.log("✅ Producto encontrado:", formattedProduct.name);
@@ -1113,6 +1081,17 @@ export async function GET(request: NextRequest) {
     });
 
     const where: Prisma.ProductsWhereInput = {};
+
+    if (familyIdParam !== null) {
+      const familyId = Number(familyIdParam);
+      if (!Number.isSafeInteger(familyId) || familyId < 1) {
+        return NextResponse.json(
+          { success: false, error: "ID de familia inválido" },
+          { status: 400 }
+        );
+      }
+      where.familyId = familyId;
+    }
 
     if (category && category !== "all" && category !== "null") {
       where.category = category;
@@ -1176,7 +1155,16 @@ export async function GET(request: NextRequest) {
       orderBy = { id: "desc" };
     }
 
-    const take = limit ? parseInt(limit) : undefined;
+    const take = limit === null ? 100 : Number(limit);
+    const offsetParam = searchParams.get("offset");
+    const skip = offsetParam === null ? 0 : Number(offsetParam);
+    if (!Number.isInteger(take) || take < 1 || take > 100 ||
+        !Number.isInteger(skip) || skip < 0 || skip > 100000) {
+      return NextResponse.json(
+        { success: false, error: "Límite u offset inválido" },
+        { status: 400 }
+      );
+    }
 
     console.log("🔍 Consulta a la base de datos:", { where, orderBy, take });
 
@@ -1184,7 +1172,9 @@ export async function GET(request: NextRequest) {
       where,
       orderBy,
       take,
+      skip,
       include: {
+        family: true,
         envios: {
           include: {
             empresa: true,
@@ -1202,7 +1192,7 @@ export async function GET(request: NextRequest) {
     };
 
     const formattedProducts = productos.map((producto) => {
-      const priceNumber = parseFloat(producto.precio) || 0;
+      const priceNumber = parsePriceInput(producto.precio) ?? 0;
 
       return {
         id: producto.id,
@@ -1224,6 +1214,8 @@ export async function GET(request: NextRequest) {
         shipping: producto.envios?.empresa?.nombre || "Envío Gratis",
         src: producto.imgUrl,
         description: producto.descripcion,
+        familyId: producto.familyId,
+        familyName: producto.family?.nombre || null,
       };
     });
 
@@ -1245,6 +1237,9 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const adminResponse = await requireAdminResponse();
+    if (adminResponse) return adminResponse;
+
     const body = await request.json();
 
     const {
@@ -1263,6 +1258,7 @@ export async function PUT(request: NextRequest) {
       tipo,
       piedra,
       cantidad,
+      familyName,
       stock,
       shipping,
     } = body;
@@ -1274,6 +1270,14 @@ export async function PUT(request: NextRequest) {
           error:
             "Faltan campos requeridos: id, nombre, precio, descripcion, imgUrl",
         },
+        { status: 400 }
+      );
+    }
+
+    if (familyName !== undefined &&
+      (typeof familyName !== "string" || familyName.trim().length > 150)) {
+      return NextResponse.json(
+        { success: false, error: "El nombre del modelo no puede superar 150 caracteres" },
         { status: 400 }
       );
     }
@@ -1292,8 +1296,8 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const precioNumerico = parseFloat(precio);
-    if (isNaN(precioNumerico) || precioNumerico <= 0) {
+    const precioNumerico = parsePriceInput(precio);
+    if (precioNumerico === null || !Number.isFinite(precioNumerico) || precioNumerico <= 0) {
       return NextResponse.json(
         {
           success: false,
@@ -1305,8 +1309,10 @@ export async function PUT(request: NextRequest) {
 
     let stockFinal = productoExistente.stock;
     if (stock !== undefined) {
-      stockFinal = parseInt(stock);
-      if (isNaN(stockFinal) || stockFinal < 0) {
+      stockFinal = typeof stock === "number" ? stock : Number(stock);
+      if ((typeof stock !== "number" && typeof stock !== "string") ||
+          (typeof stock === "string" && !/^\d+$/.test(stock)) ||
+          !Number.isInteger(stockFinal) || stockFinal < 0 || stockFinal > 2147483647) {
         return NextResponse.json(
           {
             success: false,
@@ -1362,35 +1368,71 @@ export async function PUT(request: NextRequest) {
       category || productoExistente.category
     );
 
-    const productoActualizado = await prisma.products.update({
-      where: { id: parseInt(id) },
-      data: {
+    const productoActualizado = await prisma.$transaction(async (tx) => {
+      const finalCategory = category || productoExistente.category || "";
+      const finalMarca = marca === undefined
+        ? productoExistente.marca
+        : marca.trim() || null;
+      const finalAroma = aroma === undefined
+        ? productoExistente.aroma
+        : aroma.trim() || null;
+      const finalLinea = linea === undefined
+        ? productoExistente.Linea
+        : linea.trim() || null;
+      const finalTamaño = tamaño === undefined
+        ? productoExistente.tamaño
+        : tamaño.trim() || null;
+      const finalColor = color === undefined
+        ? productoExistente.color
+        : color.trim() || null;
+      const finalTipo = tipo === undefined
+        ? productoExistente.tipo
+        : tipo.trim() || null;
+      const finalPiedra = piedra === undefined
+        ? productoExistente.tipoPiedra
+        : piedra.trim() || null;
+
+      const data: Prisma.ProductsUncheckedUpdateInput = {
         nombre: nombre.trim(),
         descripcion: descripcion.trim(),
-        precio: precio.toString(),
+        precio: String(precioNumerico),
         imgUrl: imgUrl,
         imgPublicId: imgPublicId || "",
-        category: category || productoExistente.category,
-        marca: marca?.trim() || productoExistente.marca,
-        aroma: aroma?.trim() || productoExistente.aroma,
-        Linea: linea?.trim() || productoExistente.Linea,
-        tamaño: tamaño?.trim() || productoExistente.tamaño,
-        color: color?.trim() || productoExistente.color,
-        tipo: tipo?.trim() || productoExistente.tipo,
-        tipoPiedra: piedra?.trim() || productoExistente.tipoPiedra,
+        category: finalCategory,
+        marca: finalMarca,
+        aroma: finalAroma,
+        Linea: finalLinea,
+        tamaño: finalTamaño,
+        color: finalColor,
+        tipo: finalTipo,
+        tipoPiedra: finalPiedra,
         cantidad: camposRequeridos.cantidad
           ? cantidad
           : productoExistente.cantidad,
         stock: stockFinal,
         empresaEnvios: empresaEnviosId,
-      },
-      include: {
-        envios: {
-          include: {
-            empresa: true,
-          },
+      };
+      if (familyName !== undefined) {
+        const normalizedFamilyName = familyName.trim();
+        data.familyId = normalizedFamilyName
+          ? (await resolveProductFamily(tx, {
+              category: finalCategory,
+              marca: finalMarca,
+              linea: finalLinea,
+              tipo: finalTipo,
+              familyName: normalizedFamilyName,
+            })).id
+          : null;
+      }
+
+      return tx.products.update({
+        where: { id: parseInt(id) },
+        data,
+        include: {
+          envios: { include: { empresa: true } },
+          family: true,
         },
-      },
+      });
     });
 
     return NextResponse.json({
@@ -1412,74 +1454,111 @@ export async function PUT(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const adminResponse = await requireAdminResponse();
+    if (adminResponse) return adminResponse;
+
     const body = await request.json();
     const { id, stock, operation } = body;
-
-    if (!id) {
+    const productId = typeof id === "number" ? id : Number(id);
+    if (!Number.isInteger(productId) || productId < 1) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "ID del producto es requerido",
-        },
+        { success: false, error: "ID del producto es inválido" },
         { status: 400 }
       );
     }
 
-    const productoExistente = await prisma.products.findUnique({
-      where: { id: parseInt(id) },
-    });
-
-    if (!productoExistente) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Producto no encontrado",
-        },
-        { status: 404 }
-      );
+    const maxStock = 2_147_483_647;
+    let producto = await prisma.products.findUnique({ where: { id: productId } });
+    if (!producto) {
+      return NextResponse.json({ success: false, error: "Producto no encontrado" }, { status: 404 });
     }
 
-    let nuevoStock: number;
+    if (operation === "increment" || operation === "decrement") {
+      const amount = stock === undefined ? 1 : Number(stock);
+      if ((typeof stock === "string" && !/^\d+$/.test(stock)) ||
+          !Number.isInteger(amount) || amount < 1 || amount > maxStock) {
+        return NextResponse.json(
+          { success: false, error: "La cantidad debe ser un entero positivo" },
+          { status: 400 }
+        );
+      }
 
-    if (operation) {
-      const amount = parseInt(stock) || 1;
       if (operation === "increment") {
-        nuevoStock = productoExistente.stock + amount;
-      } else if (operation === "decrement") {
-        nuevoStock = Math.max(0, productoExistente.stock - amount);
+        const result = await prisma.products.updateMany({
+          where: { id: productId, stock: { lte: maxStock - amount } },
+          data: { stock: { increment: amount } },
+        });
+        if (result.count === 0) {
+          producto = await prisma.products.findUnique({ where: { id: productId } });
+          if (!producto) {
+            return NextResponse.json({ success: false, error: "Producto no encontrado" }, { status: 404 });
+          }
+          return NextResponse.json(
+            { success: false, error: "El stock supera el máximo permitido" },
+            { status: 400 }
+          );
+        }
       } else {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Operación inválida. Use "increment" o "decrement"',
-          },
-          { status: 400 }
-        );
+        let updated = false;
+        for (let attempt = 0; attempt < 3 && !updated; attempt += 1) {
+          const decrement = await prisma.products.updateMany({
+            where: { id: productId, stock: { gte: amount } },
+            data: { stock: { decrement: amount } },
+          });
+          if (decrement.count > 0) {
+            updated = true;
+            break;
+          }
+
+          producto = await prisma.products.findUnique({ where: { id: productId } });
+          if (!producto) {
+            return NextResponse.json({ success: false, error: "Producto no encontrado" }, { status: 404 });
+          }
+          if (producto.stock === 0) {
+            updated = true;
+          } else if (producto.stock < amount) {
+            const clamp = await prisma.products.updateMany({
+              where: { id: productId, stock: producto.stock },
+              data: { stock: 0 },
+            });
+            updated = clamp.count > 0;
+          }
+        }
+        if (!updated) {
+          return NextResponse.json(
+            { success: false, error: "No se pudo ajustar el stock; intentá nuevamente" },
+            { status: 409 }
+          );
+        }
       }
+    } else if (operation !== undefined && operation !== null && operation !== "") {
+      return NextResponse.json(
+        { success: false, error: 'Operación inválida. Use "increment" o "decrement"' },
+        { status: 400 }
+      );
     } else {
-      nuevoStock = parseInt(stock);
-      if (isNaN(nuevoStock) || nuevoStock < 0) {
+      const targetStock = typeof stock === "number" ? stock : Number(stock);
+      if (stock === undefined ||
+          (typeof stock === "string" && !/^\d+$/.test(stock)) ||
+          !Number.isInteger(targetStock) || targetStock < 0 || targetStock > maxStock) {
         return NextResponse.json(
-          {
-            success: false,
-            error: "El stock debe ser un número válido mayor o igual a 0",
-          },
+          { success: false, error: "El stock debe ser un entero entre 0 y el máximo permitido" },
           { status: 400 }
         );
       }
+      await prisma.products.update({
+        where: { id: productId },
+        data: { stock: targetStock },
+      });
     }
 
-    const productoActualizado = await prisma.products.update({
-      where: { id: parseInt(id) },
-      data: { stock: nuevoStock },
-      include: {
-        envios: {
-          include: {
-            empresa: true,
-          },
-        },
-      },
+    const productoActualizado = await prisma.products.findUnique({
+      where: { id: productId },
+      include: { envios: { include: { empresa: true } }, family: true },
     });
+    if (!productoActualizado) {
+      return NextResponse.json({ success: false, error: "Producto no encontrado" }, { status: 404 });
+    }
 
     const calculateStatus = (stock: number) => {
       if (stock === 0) return "agotado";
@@ -1487,7 +1566,7 @@ export async function PATCH(request: NextRequest) {
       return "disponible";
     };
 
-    const priceNumber = parseFloat(productoActualizado.precio) || 0;
+    const priceNumber = parsePriceInput(productoActualizado.precio) ?? 0;
 
     const formattedProduct = {
       id: productoActualizado.id,
@@ -1509,6 +1588,8 @@ export async function PATCH(request: NextRequest) {
       shipping: productoActualizado.envios?.empresa?.nombre || "Envío Gratis",
       src: productoActualizado.imgUrl,
       description: productoActualizado.descripcion,
+      familyId: productoActualizado.familyId,
+      familyName: productoActualizado.family?.nombre || null,
     };
 
     return NextResponse.json({
@@ -1530,6 +1611,9 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const adminResponse = await requireAdminResponse();
+    if (adminResponse) return adminResponse;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 

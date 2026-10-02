@@ -1,12 +1,5 @@
-import { Header } from "components/header";
-import { CompraPageContent } from "components/sections/compra-page-content";
-import { PageLayout } from "components/layout/page-layout";
+import { redirect } from "next/navigation";
 
 export default function CompraPage() {
-  return (
-    <PageLayout>
-      <Header />
-      <CompraPageContent />
-    </PageLayout>
-  );
+  redirect("/productos");
 }

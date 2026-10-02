@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { formatPrice, parsePrice } from "../utils/price-utils";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "./ui/button";
 import {
@@ -501,7 +502,7 @@ export function ReservaForm() {
                       {servicio.title}
                     </h4>
                     <span className="text-lg font-bold text-babalu-primary">
-                      {servicio.price}
+                      {formatPrice(parsePrice(servicio.price))}
                     </span>
                   </div>
                   <p className="text-sm text-babalu-primary font-medium mb-2">
@@ -544,7 +545,7 @@ export function ReservaForm() {
               </div>
               <div className="text-right md:text-left">
                 <p className="text-2xl font-bold text-babalu-primary">
-                  {servicioSeleccionado.price}
+                  {formatPrice(parsePrice(servicioSeleccionado.price))}
                 </p>
                 <div className="flex items-center justify-end md:justify-start text-gray-600 mt-1">
                   <Clock className="w-4 h-4 mr-1" />

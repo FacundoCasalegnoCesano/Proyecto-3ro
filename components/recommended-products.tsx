@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
-import { Button } from "../components/ui/button";
-import { useCart } from "../contexts/cart-context";
+import { ProductImage } from "./product-image";
 import { Product } from "app/types/product";
 import { Loader2 } from "lucide-react";
+import { formatPrice, parsePrice } from "../utils/price-utils";
 
 export function RecommendedProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -13,7 +12,6 @@ export function RecommendedProducts() {
   const [error, setError] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
-  const { addItem } = useCart();
 
   useEffect(() => {
     const fetchRecommendedProducts = async () => {
@@ -78,24 +76,11 @@ export function RecommendedProducts() {
     };
   }, []); // Ahora no hay dependencias que cambien
 
-  const handleAddToCart = (product: Product) => {
-    const priceNumber = Number.parseFloat(product.price.replace("$", ""));
-
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: priceNumber,
-      image: product.image,
-      quantity: 0,
-      stockIndividual: 0,
-    });
-  };
-
   if (isLoading) {
     return (
       <div ref={sectionRef} className="bg-white rounded-lg p-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
-          TAMBIEN TE <span className="font-normal">RECOMENDAMOS</span>
+          TAMBIÉN TE <span className="font-normal">RECOMENDAMOS</span>
         </h2>
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-babalu-primary" />
@@ -111,7 +96,7 @@ export function RecommendedProducts() {
     return (
       <div ref={sectionRef} className="bg-white rounded-lg p-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
-          TAMBIEN TE <span className="font-normal">RECOMENDAMOS</span>
+          TAMBIÉN TE <span className="font-normal">RECOMENDAMOS</span>
         </h2>
         <div className="text-center py-8">
           <p className="text-red-500">Error al cargar productos recomendados</p>
@@ -125,7 +110,7 @@ export function RecommendedProducts() {
     return (
       <div ref={sectionRef} className="bg-white rounded-lg p-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
-          TAMBIEN TE <span className="font-normal">RECOMENDAMOS</span>
+          TAMBIÉN TE <span className="font-normal">RECOMENDAMOS</span>
         </h2>
         <div className="text-center py-8">
           <p className="text-gray-500">
@@ -144,7 +129,7 @@ export function RecommendedProducts() {
       }`}
     >
       <h2 className="text-2xl font-bold text-gray-800 mb-8 transform transition-transform duration-300 hover:scale-105">
-        TAMBIEN TE <span className="font-normal">RECOMENDAMOS</span>
+        TAMBIÉN TE <span className="font-normal">RECOMENDAMOS</span>
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -162,8 +147,8 @@ export function RecommendedProducts() {
           >
             {/* Imagen del producto */}
             <div className="aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden group">
-              <Image
-                src={product.image || "/placeholder.svg"}
+              <ProductImage
+                src={product.image || undefined}
                 alt={product.name}
                 width={200}
                 height={200}
@@ -171,6 +156,7 @@ export function RecommendedProducts() {
                 onClick={() =>
                   (window.location.href = `/productos/${product.id}`)
                 }
+                fallbackLabel={`${product.name}: imagen no disponible`}
               />
             </div>
 
@@ -180,19 +166,12 @@ export function RecommendedProducts() {
                 {product.name}
               </h3>
               <p className="text-xl font-bold text-gray-800 transform transition-transform duration-300 hover:scale-105">
-                {product.price}
+                {formatPrice(parsePrice(product.price))}
               </p>
               <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
                 {product.description}
               </p>
 
-              <Button
-                onClick={() => handleAddToCart(product)}
-                className="w-full bg-babalu-primary hover:bg-babalu-dark text-white text-sm mt-3 transform transition-all duration-300 hover:scale-105 hover:shadow-md"
-                size="sm"
-              >
-                Agregar al Carrito
-              </Button>
             </div>
           </div>
         ))}

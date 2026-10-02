@@ -4,6 +4,7 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import ImageUploader from "./imageUploader";
+import { parsePrice, parsePriceInput } from "../utils/price-utils";
 import {
   Package,
   DollarSign,
@@ -18,7 +19,6 @@ import {
   Flower2,
   Box,
 } from "lucide-react";
-import Image from "next/image";
 
 interface UploadedImage {
   publicId: string;
@@ -32,6 +32,7 @@ interface ProductFormData {
   category: string;
   marca: string;
   aroma: string;
+  familyName: string;
   description: string;
   stock: number;
   images: UploadedImage[];
@@ -43,6 +44,7 @@ interface FormErrors {
   category?: string;
   marca?: string;
   aroma?: string;
+  familyName?: string;
   description?: string;
   stock?: string;
   images?: string;
@@ -78,6 +80,7 @@ export function ModificarProductoForm({
     category: "",
     marca: "",
     aroma: "",
+    familyName: "",
     description: "",
     stock: 0,
     images: [],
@@ -238,10 +241,11 @@ export function ModificarProductoForm({
           setFormData({
             id: productData.id,
             name: productData.name,
-            price: productData.price.replace("$", ""), // Remover el símbolo de dólar
+            price: String(parsePrice(productData.price)),
             category: productData.category,
             marca: productData.marca || "",
             aroma: productData.aroma || "",
+            familyName: productData.familyName || "",
             description: productData.description,
             stock: productData.stock || 0,
             images: productImages,
@@ -367,11 +371,15 @@ export function ModificarProductoForm({
     if (newMarcaValue.trim() && formData.category) {
       try {
         // Guardar la marca en la base de datos
-        const response = await fetch(
-          `/api/agregarProd?saveMarca=true&category=${encodeURIComponent(
-            formData.category
-          )}&marca=${encodeURIComponent(newMarcaValue.trim())}`
-        );
+        const response = await fetch("/api/agregarProd", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            catalogOption: "marca",
+            category: formData.category,
+            marca: newMarcaValue.trim(),
+          }),
+        });
 
         if (response.ok) {
           const newMarca = {
@@ -421,13 +429,16 @@ export function ModificarProductoForm({
     if (newAromaValue.trim() && formData.category && formData.marca) {
       try {
         // Guardar el aroma en la base de datos
-        const response = await fetch(
-          `/api/agregarProd?saveAroma=true&category=${encodeURIComponent(
-            formData.category
-          )}&marca=${encodeURIComponent(
-            formData.marca
-          )}&aroma=${encodeURIComponent(newAromaValue.trim())}`
-        );
+        const response = await fetch("/api/agregarProd", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            catalogOption: "aroma",
+            category: formData.category,
+            marca: formData.marca,
+            aroma: newAromaValue.trim(),
+          }),
+        });
 
         if (response.ok) {
           const newAroma = {
@@ -489,7 +500,10 @@ export function ModificarProductoForm({
   };
 
   const handleImageUpload = (result: { publicId: string; url: string }) => {
-    if (!result.url) return; // Si se elimina la imagen
+    if (!result.url) {
+      setFormData((prev) => ({ ...prev, images: [] }));
+      return;
+    }
 
     const newImage: UploadedImage = {
       publicId: result.publicId,
@@ -510,13 +524,6 @@ export function ModificarProductoForm({
     }
   };
 
-  const handleImageRemove = () => {
-    setFormData((prev) => ({
-      ...prev,
-      images: [],
-    }));
-  };
-
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
@@ -530,8 +537,8 @@ export function ModificarProductoForm({
     // Validar precio
     if (!formData.price.trim()) {
       newErrors.price = "El precio es requerido";
-    } else if (!/^\d+(\.\d{1,2})?$/.test(formData.price)) {
-      newErrors.price = "Ingresa un precio válido (ej: 25.99)";
+    } else if ((parsePriceInput(formData.price) ?? 0) <= 0) {
+      newErrors.price = "Ingresa un precio válido mayor a cero (ej.: 1290,50)";
     }
 
     // Validar categoría
@@ -605,6 +612,7 @@ export function ModificarProductoForm({
           category: formData.category,
           marca: formData.marca,
           aroma: formData.aroma,
+          familyName: formData.familyName.trim(),
           stock: formData.stock,
           allImages: formData.images,
         }),
@@ -717,6 +725,13 @@ export function ModificarProductoForm({
               )}
             </div>
 
+            <div className="md:col-span-2">
+              <label htmlFor="familyName" className="block text-sm font-medium text-gray-700 mb-2">Modelo / familia</label>
+              <input id="familyName" name="familyName" type="text" value={formData.familyName} onChange={handleInputChange} className={`block w-full px-3 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary ${errors.familyName ? "border-red-300" : "border-gray-300"}`} placeholder="Ej.: Sahumerio Línea Clásica" />
+              {errors.familyName && <p className="mt-1 text-sm text-red-600">{errors.familyName}</p>}
+              {!errors.familyName && <p className="mt-1 text-xs text-gray-500">Usá el modelo base sin aroma y repetí el nombre entre variantes. También podés asignarlo a un producto antiguo; su foto se conserva. Dejalo vacío para desvincularlo.</p>}
+            </div>
+
             {/* Precio */}
             <div>
               <label
@@ -730,12 +745,13 @@ export function ModificarProductoForm({
                 id="price"
                 name="price"
                 type="text"
+                inputMode="decimal"
                 value={formData.price}
                 onChange={handleInputChange}
                 className={`block w-full px-3 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary ${
                   errors.price ? "border-red-300" : "border-gray-300"
                 }`}
-                placeholder="2500"
+                placeholder="1290,50"
               />
               {errors.price && (
                 <p className="mt-1 text-sm text-red-600">{errors.price}</p>
@@ -1030,43 +1046,15 @@ export function ModificarProductoForm({
           </h3>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-medium text-gray-700">
-                Imagen principal del producto
-              </h4>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Imágenes subidas */}
-              {formData.images.map((image, index) => (
-                <div key={index} className="relative">
-                  <div className="aspect-square border border-gray-300 rounded-lg overflow-hidden">
-                    <Image
-                      src={image.url}
-                      alt={`Imagen ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      width={300}
-                      height={300}
-                      priority={index === 0}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleImageRemove}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-
-              {/* Uploader de imagen */}
-              <ImageUploader
-                label="Cambiar imagen"
-                onUpload={handleImageUpload}
-                maxImages={1}
-              />
-            </div>
+            <h4 className="text-sm font-medium text-gray-700">
+              Imagen principal del producto
+            </h4>
+            <ImageUploader
+              label="Cambiar imagen"
+              onUpload={handleImageUpload}
+              maxImages={1}
+              existingImage={formData.images[0]?.url || null}
+            />
 
             {errors.images && (
               <p className="text-sm text-red-600">{errors.images}</p>

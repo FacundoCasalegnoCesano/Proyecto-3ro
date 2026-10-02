@@ -13,6 +13,7 @@ import { Button } from "./ui/button";
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react"; // ← Agregado useCallback
 import { useRouter } from "next/navigation";
+import { formatPrice, parsePrice } from "../utils/price-utils";
 
 interface Producto {
   id: number;
@@ -582,7 +583,7 @@ export function StockProductos() {
                   {/* Precio */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-semibold text-gray-900">
-                      {producto.price}
+                      {formatPrice(parsePrice(producto.price))}
                     </div>
                   </td>
 

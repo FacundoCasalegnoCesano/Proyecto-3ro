@@ -21,18 +21,22 @@ interface ProductMetadata {
   marca?: string;
   linea?: string;
   category?: string;
-  grupoCompleto?: Product[];
+  grupoCompleto?: Array<Product & { catalogGroupKey?: string }>;
   caracteristicas?: {
     tieneMarca: boolean;
     tieneLinea: boolean;
     tieneAromas: boolean;
     tieneCategoria: boolean;
   };
+  familyId?: number;
 }
 
 // Tipo para producto con metadata
 type ProductWithMetadata = Product & {
   metadata?: ProductMetadata;
+  matchesSearch?: boolean;
+  catalogGroupKey?: string;
+  catalogRepresentative?: boolean;
 };
 
 // Interface para el producto crudo de la API
@@ -55,6 +59,11 @@ interface RawProduct {
   piedra?: string | boolean;
   shipping?: string;
   metadata?: Record<string, unknown>;
+  familyId?: number | null;
+  familyName?: string | null;
+  matchesSearch?: boolean;
+  catalogGroupKey?: string;
+  catalogRepresentative?: boolean;
 }
 
 export function ProductsGridPage({
@@ -67,6 +76,12 @@ export function ProductsGridPage({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const productsPerPage = 6;
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 0,
+    grouped: 0,
+    individual: 0,
+  });
 
   // Función para capitalizar la primera letra de cada palabra (con validación de tipo)
   const capitalizarPalabras = useCallback(
@@ -177,6 +192,10 @@ export function ProductsGridPage({
   // Función para obtener la clave de agrupación basada en las características disponibles
   const obtenerClaveAgrupacion = useCallback(
     (product: Product): string => {
+      if (product.familyId != null) {
+        return JSON.stringify(["family", product.familyId]);
+      }
+
       const partes: string[] = [];
 
       // Incluir categoría si está disponible
@@ -200,7 +219,13 @@ export function ProductsGridPage({
         partes.push("sin-linea");
       }
 
-      return partes.join("-");
+      partes.push(
+        typeof product.tipo === "string" && product.tipo.trim()
+          ? product.tipo.trim().toLowerCase()
+          : "sin-tipo"
+      );
+
+      return JSON.stringify(partes);
     },
     [tieneCategoriaEspecifica, tieneMarcaEspecifica, tieneLineaEspecifica]
   );
@@ -237,13 +262,17 @@ export function ProductsGridPage({
   );
   // Función para agrupar productos por características comunes
   const groupProductsByCharacteristics = useCallback(
-    (products: Product[]): ProductWithMetadata[] => {
-      const grouped: { [key: string]: Product[] } = {};
-      const nonGrouped: Product[] = [];
+    (products: ProductWithMetadata[]): ProductWithMetadata[] => {
+      const grouped: { [key: string]: ProductWithMetadata[] } = {};
+      const nonGrouped: ProductWithMetadata[] = [];
 
-      products.forEach((product: Product) => {
-        // NUEVO: Si es una categoría que NO debe agruparse, tratarla como individual
-        if (categoriaNoDebeAgruparse(product.category)) {
+      products.forEach((product) => {
+        if (product.catalogGroupKey?.startsWith("product:")) {
+          nonGrouped.push(product);
+        } else if (product.catalogGroupKey) {
+          grouped[product.catalogGroupKey] ||= [];
+          grouped[product.catalogGroupKey].push(product);
+        } else if (categoriaNoDebeAgruparse(product.category)) {
           nonGrouped.push(product);
         } else if (puedeSerAgrupado(product)) {
           const key = obtenerClaveAgrupacion(product);
@@ -262,12 +291,25 @@ export function ProductsGridPage({
 
       Object.entries(grouped).forEach(([key, groupedProducts]) => {
         if (groupedProducts.length > 0) {
-          const [category, marca, linea] = key.split("-");
+          const representativeSource = groupedProducts[0];
+          const [category, marca, linea, tipo] = representativeSource.catalogGroupKey
+            ? [
+                (representativeSource.category || "sin-categoria").toLowerCase().trim(),
+                (representativeSource.marca || "sin-marca").toLowerCase().trim(),
+                String(representativeSource.linea || "sin-linea").toLowerCase().trim(),
+                (representativeSource.tipo || "sin-tipo").toLowerCase().trim(),
+              ]
+            : (JSON.parse(key) as string[]);
 
           const sortedByStock = groupedProducts.sort(
-            (a, b) => b.stock - a.stock
+            (a, b) =>
+              Number(Boolean(b.catalogRepresentative)) - Number(Boolean(a.catalogRepresentative)) ||
+              Number(Boolean(b.matchesSearch)) - Number(Boolean(a.matchesSearch)) ||
+              b.stock - a.stock
           );
-          const representative = sortedByStock[0];
+          const representative =
+            groupedProducts.find((product) => product.catalogRepresentative) ||
+            sortedByStock[0];
 
           const categoriaCapitalizada =
             category !== "sin-categoria" ? capitalizarPalabras(category) : "";
@@ -275,6 +317,8 @@ export function ProductsGridPage({
             marca !== "sin-marca" ? capitalizarPalabras(marca) : "";
           const lineaCapitalizada =
             linea !== "sin-linea" ? capitalizarPalabras(linea) : "";
+          const tipoCapitalizado =
+            tipo !== "sin-tipo" ? capitalizarPalabras(tipo) : "";
 
           const aromasUnicos = new Set<string>();
           groupedProducts.forEach((p) => {
@@ -291,16 +335,16 @@ export function ProductsGridPage({
           const tieneLinea = linea !== "sin-linea";
           const tieneAromas = cantidadAromas > 0;
 
-          let nombreGrupo = "";
+          let nombreGrupo = representative.familyName?.trim() || "";
           let descripcionGrupo = "";
 
-          if (tieneCategoria && tieneMarca) {
+          if (!nombreGrupo && tieneCategoria && tieneMarca) {
             if (tieneLinea) {
               if (tieneAromas) {
                 nombreGrupo = `${categoriaCapitalizada} ${marcaCapitalizada} - ${lineaCapitalizada}`;
-                descripcionGrupo = `${cantidadAromas} aroma${
-                  cantidadAromas > 1 ? "s" : ""
-                } disponible${cantidadAromas > 1 ? "s" : ""}`;
+                descripcionGrupo = `${groupedProducts.length} variante${
+                  groupedProducts.length > 1 ? "s" : ""
+                } · ${cantidadAromas} aroma${cantidadAromas > 1 ? "s" : ""}`;
               } else {
                 nombreGrupo = `${categoriaCapitalizada} ${marcaCapitalizada} - ${lineaCapitalizada}`;
                 descripcionGrupo = `${groupedProducts.length} variante${
@@ -310,9 +354,9 @@ export function ProductsGridPage({
             } else {
               if (tieneAromas) {
                 nombreGrupo = `${categoriaCapitalizada} ${marcaCapitalizada}`;
-                descripcionGrupo = `${cantidadAromas} aroma${
-                  cantidadAromas > 1 ? "s" : ""
-                } disponible${cantidadAromas > 1 ? "s" : ""}`;
+                descripcionGrupo = `${groupedProducts.length} variante${
+                  groupedProducts.length > 1 ? "s" : ""
+                } · ${cantidadAromas} aroma${cantidadAromas > 1 ? "s" : ""}`;
               } else {
                 nombreGrupo = `${categoriaCapitalizada} ${marcaCapitalizada}`;
                 descripcionGrupo = `${groupedProducts.length} variante${
@@ -320,7 +364,7 @@ export function ProductsGridPage({
                 } disponible${groupedProducts.length > 1 ? "s" : ""}`;
               }
             }
-          } else if (tieneCategoria && !tieneMarca) {
+          } else if (!nombreGrupo && tieneCategoria && !tieneMarca) {
             if (tieneLinea) {
               nombreGrupo = `${categoriaCapitalizada} - ${lineaCapitalizada}`;
               descripcionGrupo = `${groupedProducts.length} variante${
@@ -332,7 +376,7 @@ export function ProductsGridPage({
                 groupedProducts.length > 1 ? "s" : ""
               } disponible${groupedProducts.length > 1 ? "s" : ""}`;
             }
-          } else if (!tieneCategoria && tieneMarca) {
+          } else if (!nombreGrupo && !tieneCategoria && tieneMarca) {
             if (tieneLinea) {
               nombreGrupo = `${marcaCapitalizada} - ${lineaCapitalizada}`;
               descripcionGrupo = `${groupedProducts.length} variante${
@@ -344,7 +388,7 @@ export function ProductsGridPage({
                 groupedProducts.length > 1 ? "s" : ""
               } disponible${groupedProducts.length > 1 ? "s" : ""}`;
             }
-          } else {
+          } else if (!nombreGrupo) {
             if (tieneLinea) {
               nombreGrupo = lineaCapitalizada;
             } else {
@@ -353,6 +397,10 @@ export function ProductsGridPage({
             descripcionGrupo = `${groupedProducts.length} variante${
               groupedProducts.length > 1 ? "s" : ""
             }`;
+          }
+
+          if (tipoCapitalizado) {
+            nombreGrupo = `${nombreGrupo} · ${tipoCapitalizado}`;
           }
 
           const imagenRepresentativa =
@@ -374,6 +422,7 @@ export function ProductsGridPage({
             metadata: {
               isGrouped: true,
               isLineaGroup: true,
+              familyId: representative.familyId ?? undefined,
               totalVariantes: groupedProducts.length,
               totalAromas: cantidadAromas,
               aromas: listaAromas,
@@ -425,7 +474,20 @@ export function ProductsGridPage({
         })
       );
 
-      return [...representativeProducts, ...nonGroupedCapitalizados];
+      const orderByGroup = new Map<string, number>();
+      products.forEach((product, index) => {
+        if (product.catalogGroupKey && !orderByGroup.has(product.catalogGroupKey)) {
+          orderByGroup.set(product.catalogGroupKey, index);
+        }
+      });
+      const sourceIndex = (product: ProductWithMetadata) => {
+        const key = product.catalogGroupKey || product.metadata?.grupoCompleto?.[0]?.catalogGroupKey;
+        return key ? orderByGroup.get(key) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+      };
+
+      return [...representativeProducts, ...nonGroupedCapitalizados].sort(
+        (a, b) => sourceIndex(a) - sourceIndex(b)
+      );
     },
     [
       categoriaNoDebeAgruparse, // NUEVO: Añadir a las dependencias
@@ -442,13 +504,16 @@ export function ProductsGridPage({
 
   // Fetch productos desde la API
   useEffect(() => {
+    const controller = new AbortController();
     const fetchProducts = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        // Construir query parameters
-        const params = new URLSearchParams();
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          limit: String(productsPerPage),
+        });
 
         if (selectedCategory && selectedCategory !== "all") {
           params.append("category", selectedCategory);
@@ -462,7 +527,9 @@ export function ProductsGridPage({
           params.append("sort", sortBy);
         }
 
-        const response = await fetch(`/api/agregarProd?${params}`);
+        const response = await fetch(`/api/catalogo?${params}`, {
+          signal: controller.signal,
+        });
 
         // Verificar si la respuesta es HTML (error 404)
         const contentType = response.headers.get("content-type");
@@ -477,9 +544,14 @@ export function ProductsGridPage({
         }
 
         // Filtrar y preparar productos
-        const productosPreparados: Product[] = data.data.map(
+        const productosPreparados: ProductWithMetadata[] = data.data.map(
           (product: RawProduct) => ({
             ...product,
+            familyId: product.familyId ?? null,
+            familyName: product.familyName ?? null,
+            matchesSearch: product.matchesSearch ?? true,
+            catalogGroupKey: product.catalogGroupKey,
+            catalogRepresentative: product.catalogRepresentative,
             name: product.name || "",
             marca: product.marca || "",
             linea: product.linea || "",
@@ -503,18 +575,26 @@ export function ProductsGridPage({
           groupProductsByCharacteristics(productosPreparados);
 
         setProducts(productosAgrupados);
+        setPagination({
+          total: data.pagination.total,
+          totalPages: data.pagination.totalPages,
+          grouped: data.pagination.grouped,
+          individual: data.pagination.individual,
+        });
       } catch (err) {
+        if (controller.signal.aborted) return;
         console.error("Error fetching products:", err);
         setError(
           err instanceof Error ? err.message : "Error al cargar productos"
         );
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
 
     fetchProducts();
-  }, [selectedCategory, searchQuery, sortBy, groupProductsByCharacteristics]);
+    return () => controller.abort();
+  }, [selectedCategory, searchQuery, sortBy, currentPage, groupProductsByCharacteristics]);
 
   // Resetear página cuando cambian los filtros
   useEffect(() => {
@@ -522,20 +602,12 @@ export function ProductsGridPage({
   }, [selectedCategory, searchQuery, sortBy]);
 
   // Paginación
-  const totalPages = Math.ceil(products.length / productsPerPage);
-  const startIndex = (currentPage - 1) * productsPerPage;
-  const paginatedProducts = products.slice(
-    startIndex,
-    startIndex + productsPerPage
-  );
+  const totalPages = pagination.totalPages;
+  const paginatedProducts = products;
 
   // Contar grupos únicos para el mensaje informativo
-  const groupedProductsCount = products.filter(
-    (product) => product.metadata?.isGrouped
-  ).length;
-
-  // Contar productos individuales
-  const individualProductsCount = products.length - groupedProductsCount;
+  const groupedProductsCount = pagination.grouped;
+  const individualProductsCount = pagination.individual;
 
   if (isLoading) {
     return (
@@ -565,13 +637,14 @@ export function ProductsGridPage({
     <div>
       {/* Contador de productos */}
       <div className="mb-4 text-sm text-gray-600">
-        {products.length} producto{products.length !== 1 ? "s" : ""} encontrado
-        {products.length !== 1 ? "s" : ""}
+        {pagination.total} producto{pagination.total !== 1 ? "s" : ""} encontrado
+        {pagination.total !== 1 ? "s" : ""}
         {groupedProductsCount > 0 && (
           <span className="ml-2 text-blue-600 font-medium">
             ({groupedProductsCount}{" "}
-            {groupedProductsCount === 1 ? "grupo" : "grupos"} agrupados,{" "}
-            {individualProductsCount} individuales)
+            {groupedProductsCount === 1 ? "grupo" : "grupos"} y{" "}
+            {individualProductsCount}{" "}
+            {individualProductsCount === 1 ? "producto individual" : "productos individuales"})
           </span>
         )}
       </div>
@@ -609,7 +682,12 @@ export function ProductsGridPage({
           </button>
 
           {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-            const page = i + 1;
+            const visibleCount = Math.min(totalPages, 5);
+            const firstVisiblePage = Math.min(
+              Math.max(1, currentPage - 2),
+              totalPages - visibleCount + 1
+            );
+            const page = firstVisiblePage + i;
             return (
               <button
                 key={page}

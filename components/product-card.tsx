@@ -1,10 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { Card, CardContent } from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { ShoppingCart } from "lucide-react";
-import { useCart } from "../contexts/cart-context";
+import { ProductImage } from "./product-image";
 import { Product } from "app/types/product";
 import { useRouter } from "next/navigation";
 import { parsePrice, formatPrice } from "../utils/price-utils";
@@ -41,7 +38,6 @@ export function ProductCard({
   lineaSeleccionada,
   esProductoAgrupado = false,
 }: ProductCardProps) {
-  const { addItem } = useCart();
   const router = useRouter();
 
   // Función para capitalizar la primera letra de cada palabra
@@ -139,33 +135,6 @@ export function ProductCard({
 
     return categoriasNoAgrupables.some((cat) => categoria.includes(cat));
   };
-  const handleAddToCart = () => {
-    // Permitir agregar al carrito si NO es un producto agrupado O si es un producto individual
-    if (esProductoAgrupado && !esProductoIndividualActualizado(product)) return;
-
-    // Usar la función parsePrice para convertir de forma segura
-    const priceNumber = parsePrice(product.price);
-
-    console.log("Agregando al carrito:", {
-      id: product.id,
-      name: product.name,
-      price: priceNumber,
-      priceOriginal: product.price,
-    });
-
-    // Solo agregar si el precio es válido
-    if (priceNumber > 0) {
-      addItem({
-        id: product.id,
-        name: product.name,
-        price: priceNumber,
-        quantity: 1,
-        image: product.image || product.src || "/placeholder.svg",
-        stockIndividual: 0,
-      });
-    }
-  };
-
   const handleCardClick = () => {
     const params = new URLSearchParams();
 
@@ -225,23 +194,17 @@ export function ProductCard({
   };
 
   // Función para obtener la imagen del producto
-  const getProductImage = (): string => {
+  const getProductImage = (): string | undefined => {
     if (product.image && typeof product.image === "string")
       return product.image;
     if (product.src && typeof product.src === "string") return product.src;
-    return "/placeholder.svg?height=200&width=200";
+    return undefined;
   };
 
   // Función para obtener el precio formateado para display
   const getFormattedPrice = (): string => {
     if (!product.price) return "";
 
-    // Si ya está formateado como "$1.000,00", usarlo directamente
-    if (typeof product.price === "string" && product.price.includes("$")) {
-      return product.price;
-    }
-
-    // Si es un número o string numérico, formatearlo
     const priceNumber = parsePrice(product.price);
     return formatPrice(priceNumber);
   };
@@ -259,7 +222,12 @@ export function ProductCard({
   const lineaText = getLineaText();
   const productImage = getProductImage();
   const formattedPrice = getFormattedPrice();
+  const groupProducts = product.metadata?.grupoCompleto || [];
+  const groupPrices = groupProducts.map((item) => parsePrice(item.price));
+  const groupMinPrice = groupPrices.length ? Math.min(...groupPrices) : parsePrice(product.price);
+  const hasDifferentGroupPrices = new Set(groupPrices).size > 1;
   const groupInfo = getGroupInfo();
+  const aromaCount = groupInfo.aromas ?? 0;
   const esIndividual = esProductoIndividualActualizado(product);
 
   // Función para limpiar y capitalizar el nombre del producto
@@ -274,18 +242,27 @@ export function ProductCard({
 
   return (
     <Card
+      role="link"
+      tabIndex={0}
       className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full"
       onClick={handleCardClick}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleCardClick();
+        }
+      }}
     >
       <CardContent className="p-4 h-full flex flex-col">
         <div className="aspect-square bg-gray-200 rounded-lg mb-3 overflow-hidden">
-          <Image
+          <ProductImage
             src={productImage}
             alt={product.name || "Producto"}
             width={200}
             height={200}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
             onClick={handleImageClick}
+            fallbackLabel={`${product.name || "Producto"}: imagen no disponible`}
           />
         </div>
         <div className="space-y-2 flex-grow flex flex-col">
@@ -293,11 +270,23 @@ export function ProductCard({
             <h3 className="font-semibold text-gray-800 text-lg leading-tight">
               {nombreCapitalizado}
             </h3>
+            {product.familyName && (
+              <p className="text-xs text-gray-500">Modelo: {product.familyName}</p>
+            )}
 
             {/* Mostrar precio para productos individuales o no agrupados */}
-            {formattedPrice && (!esProductoAgrupado || esIndividual) && (
+            {formattedPrice && !esProductoAgrupado && (
               <p className="text-xl font-bold text-babalu-primary">
                 {formattedPrice}
+              </p>
+            )}
+            {esProductoAgrupado && (
+              <p className="text-xl font-bold text-babalu-primary">
+                {hasDifferentGroupPrices
+                  ? `Desde ${formatPrice(groupMinPrice)}`
+                  : groupPrices.length > 0
+                    ? formatPrice(groupMinPrice)
+                    : formattedPrice}
               </p>
             )}
 
@@ -342,34 +331,27 @@ export function ProductCard({
             {/* Mostrar información del grupo para productos agrupados */}
             {esProductoAgrupado && (
               <div className="text-xs text-blue-600 space-y-1">
-                {groupInfo.aromas && groupInfo.aromas > 0 && (
+                {groupInfo.variantes && groupInfo.variantes > 0 && (
                   <p>
-                    {groupInfo.aromas} aroma{groupInfo.aromas > 1 ? "s" : ""}{" "}
-                    disponible{groupInfo.aromas > 1 ? "s" : ""}
+                    {groupInfo.variantes} variante
+                    {groupInfo.variantes > 1 ? "s" : ""}
+                    {aromaCount > 0 && (
+                      <>
+                        {" · "}
+                        {aromaCount} aroma
+                        {aromaCount > 1 ? "s" : ""}
+                      </>
+                    )}
                   </p>
                 )}
-                {(!groupInfo.aromas || groupInfo.aromas === 0) && (
+                {(!groupInfo.variantes || groupInfo.variantes === 0) && (
                   <p>Haz clic para ver detalles</p>
                 )}
               </div>
             )}
           </div>
 
-          {/* Botón de agregar al carrito - Para productos NO agrupados o productos individuales */}
-          {!esProductoAgrupado || esIndividual ? (
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddToCart();
-              }}
-              className="w-full bg-babalu-primary hover:bg-babalu-dark text-white mt-3"
-              size="sm"
-              disabled={!formattedPrice}
-            >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Agregar al Carrito
-            </Button>
-          ) : (
+          {esProductoAgrupado && !esIndividual && (
             <div className="text-center py-2 mt-3 bg-gray-100 rounded text-sm text-gray-600">
               Haz clic para ver variantes disponibles
             </div>

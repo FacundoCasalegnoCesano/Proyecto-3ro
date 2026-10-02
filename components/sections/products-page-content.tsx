@@ -25,7 +25,7 @@ export function ProductsPageContent() {
         <div className="bg-white py-8">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl font-bold text-center text-gray-800">
-              Tienda
+              Catálogo
             </h1>
           </div>
         </div>
@@ -42,7 +42,7 @@ export function ProductsPageContent() {
       <div className="bg-white py-8">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold text-center text-gray-800">
-            Tienda
+            Catálogo
           </h1>
         </div>
       </div>
@@ -77,17 +77,17 @@ export function ProductsPageContent() {
       )}
 
       <div className="container mx-auto px-4 py-8">
-        <div className="flex gap-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
           {/* Sidebar de categorías */}
-          <div className="w-64 flex-shrink-0">
+          <aside className="w-full flex-shrink-0 lg:w-64">
             <ProductsSidebar
               selectedCategory={selectedCategory}
               onCategoryChange={setSelectedCategory}
             />
-          </div>
+          </aside>
 
           {/* Contenido principal */}
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <ProductsHeader
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}

@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { HeroCarousel } from "../../components/hero-carousel";
+import {
+  HeroCarousel,
+  type HeroCarouselApi,
+} from "../../components/hero-carousel";
 import { Button } from "../../components/ui/button";
 
 const heroImages = [
@@ -14,8 +17,8 @@ const heroImages = [
       title: "Descubre tu Destino con el Tarot",
       description:
         "Consultas personalizadas de Tarot Africano para guiar tu camino espiritual.",
-      buttonText: "Reservar Lectura",
-      buttonAction: () => {},
+      buttonText: "Ver lecturas",
+      href: "/servicios",
     },
   },
   {
@@ -26,8 +29,8 @@ const heroImages = [
       title: "Sanación Energética con Reiki",
       description:
         "Sesiones de Reiki para equilibrar tu energía vital y reducir el estrés.",
-      buttonText: "Agendar Sesión",
-      buttonAction: () => {},
+      buttonText: "Ver sesiones",
+      href: "/servicios",
     },
   },
   {
@@ -38,18 +41,19 @@ const heroImages = [
       title: "Limpieza Espiritual Profunda",
       description: "Rituales de limpieza energética para purificar tu aura.",
       buttonText: "Conocer Más",
-      buttonAction: () => {},
+      href: "/servicios",
     },
   },
-    {
+  {
     src: "/img/1662063240.webp",
     alt: "Spiritual cleansing",
     focalPoint: "center center",
     content: {
       title: "Promo Por Tu Cumpleaños",
-      description: "Si realizas una compra de productos o reservas un servicio el dia de tu cumpleaños se te realizara un 10% de descuento.",
+      description:
+        "Si realizas una compra de productos o reservas un servicio el día de tu cumpleaños, se te realizará un 10% de descuento.",
       buttonText: "Explorar Productos",
-      buttonAction: () => {},
+      href: "/productos",
     },
   },
 ];
@@ -58,27 +62,26 @@ export function HeroSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isContentVisible, setIsContentVisible] = useState(false);
+  const [carouselApi, setCarouselApi] = useState<HeroCarouselApi | null>(null);
   const router = useRouter();
 
-  const handleSlideChange = (index: number) => {
-    console.log("Slide cambiado a:", index);
-    
+  const handleSlideChange = useCallback((index: number) => {
     // Animación de salida
     setIsContentVisible(false);
-    
+
     setTimeout(() => {
       setCurrentIndex(index);
       setIsInitialized(true);
-      
+
       // Animación de entrada
       setTimeout(() => {
         setIsContentVisible(true);
       }, 100);
     }, 100);
-  };
+  }, []);
 
   const handleButtonAction = () => {
-    router.push("/servicios");
+    router.push(currentContent.href || "/servicios");
   };
 
   useEffect(() => {
@@ -90,16 +93,17 @@ export function HeroSection() {
   const currentContent = heroImages[currentIndex]?.content || {};
 
   return (
-    <section className="w-full h-[70vh] min-h-[500px] max-h-[800px] relative overflow-hidden">
+    <section className="relative h-[65vh] max-h-[800px] min-h-[500px] w-full overflow-hidden md:h-[70vh]">
       <HeroCarousel
         images={heroImages}
         className="h-full"
         onSlideChange={handleSlideChange}
+        onApiChange={setCarouselApi}
       />
 
       {/* Contenido dinámico */}
       {isInitialized && (
-        <div className={`absolute left-4 md:left-8 top-1/2 transform -translate-y-1/2 max-w-xs md:max-w-md z-10 transition-all duration-500 ${
+        <div className={`absolute inset-x-14 top-1/2 z-20 max-w-md -translate-y-1/2 transform transition-all duration-500 md:left-8 md:right-auto ${
           isContentVisible 
             ? 'translate-x-0 opacity-100' 
             : '-translate-x-8 opacity-0'
@@ -123,17 +127,25 @@ export function HeroSection() {
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
 
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+      <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 space-x-2 transform">
         {heroImages.map((_, index) => (
           <button
             key={index}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              currentIndex === index 
-                ? "bg-white w-6 scale-110" 
-                : "bg-white/50 hover:bg-white/80 hover:scale-110"
-            }`}
-            aria-label={`Ir a slide ${index + 1}`}
-          />
+            type="button"
+            onClick={() => carouselApi?.scrollTo(index)}
+            className="group flex h-11 min-w-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/30"
+            aria-label={`Ir a imagen ${index + 1}`}
+            aria-current={currentIndex === index ? "true" : undefined}
+          >
+            <span
+              aria-hidden="true"
+              className={`block h-3 rounded-full transition-all duration-300 ${
+                currentIndex === index
+                  ? "w-6 scale-110 bg-white"
+                  : "w-3 bg-white/50 group-hover:scale-110 group-hover:bg-white/80"
+              }`}
+            />
+          </button>
         ))}
       </div>
     </section>

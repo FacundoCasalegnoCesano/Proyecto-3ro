@@ -26,10 +26,6 @@ export function LoginForm() {
   } = useAuth({
     onSuccess: () => {
       // Redirección manejada automáticamente en el hook
-      console.log("Login exitoso - redireccionando...");
-    },
-    onError: (error) => {
-      console.log("Error en login:", error);
     },
   });
 
@@ -182,17 +178,6 @@ export function LoginForm() {
             </Button>
           </div>
 
-          {/* Credenciales de prueba */}
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-            <p className="text-sm text-blue-800 font-medium mb-2">
-              Credenciales de prueba:
-            </p>
-            <p className="text-sm text-blue-700">
-              <strong>Email:</strong> admin@babalu.com
-              <br />
-              <strong>Contraseña:</strong> 123456
-            </p>
-          </div>
         </form>
       </div>
     </>

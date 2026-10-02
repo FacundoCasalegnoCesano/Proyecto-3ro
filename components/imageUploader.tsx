@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CldUploadWidget } from "next-cloudinary";
 import type { CloudinaryUploadWidgetResults } from "next-cloudinary";
 import { Button } from "./ui/button";
@@ -24,6 +24,10 @@ export default function ImageUploader({
   existingImage?: string | null;
 }) {
   const [imageUrl, setImageUrl] = useState<string | null>(existingImage);
+
+  useEffect(() => {
+    setImageUrl(existingImage);
+  }, [existingImage]);
 
   const handleDelete = () => {
     setImageUrl(null);

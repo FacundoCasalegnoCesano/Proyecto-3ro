@@ -52,6 +52,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const errorRecord =
+      typeof error === "object" && error !== null
+        ? (error as Record<string, unknown>)
+        : null;
+    const allowedErrorNames = new Set([
+      "Error",
+      "SyntaxError",
+      "PrismaClientKnownRequestError",
+      "PrismaClientUnknownRequestError",
+      "PrismaClientRustPanicError",
+      "PrismaClientInitializationError",
+      "PrismaClientValidationError",
+    ]);
+    const safeErrorName =
+      error instanceof Error && allowedErrorNames.has(error.name)
+        ? error.name
+        : "Unknown";
+    const safePrismaCode =
+      typeof errorRecord?.code === "string" && /^P\d{4}$/.test(errorRecord.code)
+        ? errorRecord.code
+        : undefined;
+    const safePrismaErrorCode =
+      typeof errorRecord?.errorCode === "string" && /^P\d{4}$/.test(errorRecord.errorCode)
+        ? errorRecord.errorCode
+        : undefined;
+    const failureKind = /query engine|libssl/i.test(errorMessage)
+      ? "PRISMA_ENGINE"
+      : undefined;
+    console.error("Error en API register", {
+      name: safeErrorName,
+      prismaCode: safePrismaCode,
+      prismaErrorCode: safePrismaErrorCode,
+      hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+      failureKind,
+      nodeVersion: failureKind ? process.version : undefined,
+    });
+
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }

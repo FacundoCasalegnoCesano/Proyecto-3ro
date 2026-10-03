@@ -1,10 +1,28 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  buildCatalogFamilyTitle,
   buildProductVariants,
   getInitialVariantId,
+  sameCatalogText,
 } = require("../lib/product-variants.js");
 const { parsePrice, parsePriceInput, formatPrice } = require("../utils/price-utils.js");
+
+test("forma el título del grupo con categoría, marca y línea, omitiendo campos vacíos", () => {
+  assert.equal(
+    buildCatalogFamilyTitle("sahumerios", "sagrada madre", "cannabis"),
+    "Sahumerios Sagrada Madre Cannabis"
+  );
+  assert.equal(
+    buildCatalogFamilyTitle("aceites esenciales", "casa del aroma", "sueños"),
+    "Aceites Esenciales Casa Del Aroma Sueños"
+  );
+  assert.equal(buildCatalogFamilyTitle("Sahumerios", "Sagrada Madre", ""), "Sahumerios Sagrada Madre");
+  assert.equal(buildCatalogFamilyTitle("Sahumerios", "", "Común"), "Sahumerios Común");
+  assert.equal(buildCatalogFamilyTitle("Sin categoría", "Sin marca", "sin-linea"), "");
+  assert.equal(sameCatalogText(" Cannabis ", "cannabis"), true);
+  assert.equal(sameCatalogText("Modelo A", "Cannabis"), false);
+});
 
 const fixture = [
   {

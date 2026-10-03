@@ -5,6 +5,7 @@ import { ProductImage } from "./product-image";
 import { Product } from "app/types/product";
 import { useRouter } from "next/navigation";
 import { parsePrice, formatPrice } from "../utils/price-utils";
+import { buildCatalogFamilyTitle, sameCatalogText } from "../lib/product-variants";
 
 // En product-card.tsx, reemplaza la interfaz ProductMetadata con:
 interface ProductMetadata {
@@ -239,6 +240,19 @@ export function ProductCard({
   };
 
   const nombreCapitalizado = limpiarYCapitalizarNombre(product.name);
+  const categoryForTitle =
+    safeString(product.category) || safeString(product.metadata?.category);
+  const brandForTitle =
+    safeString(marcaSeleccionada) ||
+    safeString(product.marca) ||
+    safeString(product.metadata?.marca);
+  const lineForTitle =
+    safeString(lineaSeleccionada) ||
+    safeString(product.linea) ||
+    safeString(product.metadata?.linea);
+  const tituloPublico =
+    buildCatalogFamilyTitle(categoryForTitle, brandForTitle, lineForTitle) ||
+    nombreCapitalizado;
 
   return (
     <Card
@@ -268,9 +282,9 @@ export function ProductCard({
         <div className="space-y-2 flex-grow flex flex-col">
           <div className="flex-grow space-y-2">
             <h3 className="font-semibold text-gray-800 text-lg leading-tight">
-              {nombreCapitalizado}
+              {tituloPublico}
             </h3>
-            {product.familyName && (
+            {product.familyName && !sameCatalogText(product.familyName, lineForTitle) && (
               <p className="text-xs text-gray-500">Modelo: {product.familyName}</p>
             )}
 

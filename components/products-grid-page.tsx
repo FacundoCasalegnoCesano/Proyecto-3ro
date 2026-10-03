@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ProductCard } from "../components/product-card";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Product } from "app/types/product";
+import { buildCatalogFamilyTitle } from "../lib/product-variants";
 
 interface ProductsGridPageProps {
   selectedCategory: string | null;
@@ -335,7 +336,12 @@ export function ProductsGridPage({
           const tieneLinea = linea !== "sin-linea";
           const tieneAromas = cantidadAromas > 0;
 
-          let nombreGrupo = representative.familyName?.trim() || "";
+          const tituloCategoriaMarcaLinea = buildCatalogFamilyTitle(
+            categoriaCapitalizada,
+            marcaCapitalizada,
+            lineaCapitalizada
+          );
+          let nombreGrupo = tituloCategoriaMarcaLinea || representative.familyName?.trim() || "";
           let descripcionGrupo = "";
 
           if (!nombreGrupo && tieneCategoria && tieneMarca) {
@@ -399,8 +405,18 @@ export function ProductsGridPage({
             }`;
           }
 
-          if (tipoCapitalizado) {
+          if (tipoCapitalizado && !tituloCategoriaMarcaLinea) {
             nombreGrupo = `${nombreGrupo} · ${tipoCapitalizado}`;
+          }
+
+          if (!descripcionGrupo) {
+            descripcionGrupo = `${groupedProducts.length} variante${
+              groupedProducts.length > 1 ? "s" : ""
+            }${
+              tieneAromas
+                ? ` · ${cantidadAromas} aroma${cantidadAromas > 1 ? "s" : ""}`
+                : " disponibles"
+            }`;
           }
 
           const imagenRepresentativa =
@@ -445,33 +461,41 @@ export function ProductsGridPage({
 
       // Productos no agrupados - capitalizar nombres y limpiar campos vacíos
       const nonGroupedCapitalizados: ProductWithMetadata[] = nonGrouped.map(
-        (product) => ({
-          ...product,
-          name: capitalizarPalabras(product.name),
-          marca: tieneMarcaEspecifica(product.marca)
-            ? capitalizarPalabras(product.marca as string)
-            : "",
-          linea: tieneLineaEspecifica(product.linea)
-            ? formatearLinea(product.linea)
-            : "",
-          aroma: tieneAromaEspecifico(product.aroma)
-            ? formatearAroma(product.aroma)
-            : "",
-          category: product.category
+        (product) => {
+          const category = product.category
             ? capitalizarPalabras(product.category)
-            : product.category,
-          description: product.description
-            ? capitalizarPalabras(product.description)
-            : product.description,
-          tipo:
-            product.tipo && typeof product.tipo === "string"
-              ? capitalizarPalabras(product.tipo)
-              : product.tipo,
-          tamaño:
-            product.tamaño && typeof product.tamaño === "string"
-              ? capitalizarPalabras(product.tamaño)
-              : product.tamaño,
-        })
+            : product.category;
+          const brand = tieneMarcaEspecifica(product.marca)
+            ? capitalizarPalabras(product.marca as string)
+            : "";
+          const line = tieneLineaEspecifica(product.linea)
+            ? formatearLinea(product.linea)
+            : "";
+
+          return {
+            ...product,
+            name:
+              buildCatalogFamilyTitle(category, brand, line) ||
+              capitalizarPalabras(product.name),
+            marca: brand,
+            linea: line,
+            aroma: tieneAromaEspecifico(product.aroma)
+              ? formatearAroma(product.aroma)
+              : "",
+            category,
+            description: product.description
+              ? capitalizarPalabras(product.description)
+              : product.description,
+            tipo:
+              product.tipo && typeof product.tipo === "string"
+                ? capitalizarPalabras(product.tipo)
+                : product.tipo,
+            tamaño:
+              product.tamaño && typeof product.tamaño === "string"
+                ? capitalizarPalabras(product.tamaño)
+                : product.tamaño,
+          };
+        }
       );
 
       const orderByGroup = new Map<string, number>();

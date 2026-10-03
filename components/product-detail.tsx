@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { ProductImage } from "./product-image";
 import { Product } from "app/types/product";
 import { buildProductVariants, getInitialVariantId } from "../lib/product-variants";
+import { buildCatalogFamilyTitle, sameCatalogText } from "../lib/product-variants";
 import type { ProductVariant } from "../lib/product-variants";
 import { formatPrice, parsePrice } from "../utils/price-utils";
 
@@ -291,6 +292,12 @@ export function ProductDetail({
     variants.find((variant) => variant.aroma === safeString(product.aroma)) ||
     variants[0];
   const displayedName = selectedVariant?.productName || product.name;
+  const catalogFamilyTitle = buildCatalogFamilyTitle(
+    product.category,
+    marcaSeleccionada || safeString(product.marca),
+    lineaDisplay
+  );
+  const displayedTitle = catalogFamilyTitle || displayedName;
   const displayedDescription = selectedVariant?.description || product.description;
   const displayedImage = selectedVariant?.image || product.image || undefined;
   const displayedPrice = selectedVariant?.price ?? productPrice;
@@ -312,7 +319,7 @@ export function ProductDetail({
               alt={displayedName}
               width={500}
               height={500}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               fallbackLabel={`${displayedName}: imagen no disponible`}
             />
           </div>
@@ -325,7 +332,7 @@ export function ProductDetail({
               {product.category}
             </span>
             <h1 className="text-2xl font-bold text-gray-800 mb-2 sm:text-3xl">
-              {displayedName}
+              {displayedTitle}
               {puedeMostrarAromas && variants.length > 0 && (
                 <span className="text-lg text-gray-600 font-normal ml-2">
                   ({variants.length} variantes
@@ -333,7 +340,7 @@ export function ProductDetail({
                 </span>
               )}
             </h1>
-            {product.familyName && (
+            {product.familyName && !sameCatalogText(product.familyName, lineaDisplay) && (
               <p className="mb-3 text-sm text-gray-500">Modelo: {product.familyName}</p>
             )}
             <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
@@ -463,7 +470,7 @@ export function ProductDetail({
                             alt={variant.name}
                             width={64}
                             height={64}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                             fallbackLabel={`${variant.name}: imagen no disponible`}
                           />
                       </div>

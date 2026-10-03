@@ -11,6 +11,9 @@ interface UseLoginOptions {
   onError?: (error: string) => void;
 }
 
+const SERVICE_UNAVAILABLE_MESSAGE =
+  "El inicio de sesión no está disponible en este momento. Inténtalo de nuevo más tarde.";
+
 export function useLogin(options?: UseLoginOptions) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,14 +39,7 @@ export function useLogin(options?: UseLoginOptions) {
       toast.dismiss(loadingToast);
 
       if (result?.error) {
-        let errorMessage = "Email o contraseña incorrectos";
-
-        // Mapear errores específicos
-        if (result.error.includes("requeridos")) {
-          errorMessage = "Por favor, completa todos los campos";
-        } else if (result.error.includes("configuración")) {
-          errorMessage = "Error de configuración del usuario";
-        }
+        const errorMessage = mapSignInError(result.error);
 
         // Mostrar toast de error
         toast.error("Error de autenticación", {
@@ -77,19 +73,11 @@ export function useLogin(options?: UseLoginOptions) {
       }
 
       return false;
-    } catch (error: unknown) {
+    } catch {
       toast.dismiss(loadingToast);
 
-      // ✅ Manejo seguro del tipo unknown
-      let errorMessage = "Error desconocido al iniciar sesión";
-
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === "string") {
-        errorMessage = error;
-      } else if (error && typeof error === "object" && "message" in error) {
-        errorMessage = String(error.message);
-      }
+      // No mostrar mensajes de red o del servidor que puedan incluir detalles internos.
+      const errorMessage = SERVICE_UNAVAILABLE_MESSAGE;
 
       toast.error("Error", {
         description: errorMessage,
@@ -112,4 +100,21 @@ export function useLogin(options?: UseLoginOptions) {
     error,
     resetError,
   };
+}
+
+function mapSignInError(error: string): string {
+  if (error === "CredentialsSignin") {
+    return "Email o contraseña incorrectos";
+  }
+
+  // Keep the existing safe messages for explicitly recognized public errors.
+  if (error === "Email y contraseña son requeridos") {
+    return "Por favor, completa todos los campos";
+  }
+  if (error === "Error de configuración del usuario") {
+    return "Error de configuración del usuario";
+  }
+
+  // Service sentinels and all unknown NextAuth errors must not look like bad credentials.
+  return SERVICE_UNAVAILABLE_MESSAGE;
 }

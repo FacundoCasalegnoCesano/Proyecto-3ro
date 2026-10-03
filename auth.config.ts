@@ -15,11 +15,12 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        try {
-          if (!credentials?.email || !credentials?.password) {
-            throw new Error("Email y contraseña son requeridos");
-          }
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
 
+        let stage = "user_lookup";
+        try {
           const user = await prisma.user.findUnique({
             where: { email: credentials.email },
             select: {
@@ -34,20 +35,21 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!user) {
-            throw new Error("Credenciales inválidas");
+            return null;
           }
 
           if (!user.password) {
-            throw new Error("Error de configuración del usuario");
+            return null;
           }
 
+          stage = "password_compare";
           const isPasswordValid = await bcrypt.compare(
             credentials.password,
             user.password
           );
 
           if (!isPasswordValid) {
-            throw new Error("Credenciales inválidas");
+            return null;
           }
 
           return {
@@ -59,8 +61,42 @@ export const authOptions: NextAuthOptions = {
             rol: user.rol,
           };
         } catch (error) {
-          console.error("Error en authorize");
-          throw new Error("Error durante la autenticación");
+          const errorRecord =
+            typeof error === "object" && error !== null
+              ? (error as Record<string, unknown>)
+              : null;
+          const allowedErrorNames = new Set([
+            "Error",
+            "TypeError",
+            "RangeError",
+            "PrismaClientKnownRequestError",
+            "PrismaClientUnknownRequestError",
+            "PrismaClientRustPanicError",
+            "PrismaClientInitializationError",
+            "PrismaClientValidationError",
+          ]);
+          const errorName =
+            error instanceof Error && allowedErrorNames.has(error.name)
+              ? error.name
+              : "Unknown";
+          const prismaCode =
+            typeof errorRecord?.code === "string" &&
+            /^P\d{4}$/.test(errorRecord.code)
+              ? errorRecord.code
+              : undefined;
+          const prismaErrorCode =
+            typeof errorRecord?.errorCode === "string" &&
+            /^P\d{4}$/.test(errorRecord.errorCode)
+              ? errorRecord.errorCode
+              : undefined;
+
+          console.error("Error en authorize", {
+            stage,
+            name: errorName,
+            prismaCode,
+            prismaErrorCode,
+          });
+          throw new Error("AuthServiceUnavailable");
         }
       },
     }),

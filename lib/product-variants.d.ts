@@ -1,5 +1,8 @@
 import type { Product } from "../app/types/product";
 
+export function buildCatalogFamilyTitle(category?: string | null, brand?: string | null, line?: string | null): string;
+export function sameCatalogText(left?: string | null, right?: string | null): boolean;
+
 export interface ProductVariant {
   id: string;
   familyId?: number | null;

@@ -376,6 +376,34 @@ test("POST mantiene separados modelos distintos aunque compartan variante visibl
   assert.equal(state.products[0].precio, "1290.5");
 });
 
+test("POST crea cargas separadas para líneas distintas y repone sólo dentro de la línea", async () => {
+  const state = { products: [], nextId: 1, dbRole: "admin" };
+  const route = loadPostHandler(state);
+  const base = {
+    nombre: "Sahumerio White Widow",
+    precio: "1.290",
+    descripcion: "Sahumerio artesanal",
+    category: "Sahumerios",
+    marca: "Sagrada Madre",
+    aroma: "White Widow",
+    cantidad: "1",
+    familyName: "Cannabis",
+    imgUrl: "https://img.test/white-widow.jpg",
+  };
+
+  const cannabis = await post(route.POST, { ...base, linea: "Cannabis" });
+  const comun = await post(route.POST, { ...base, linea: "Común" });
+  const restockCannabis = await post(route.POST, { ...base, linea: "Cannabis" });
+
+  assert.equal(cannabis.status, 201);
+  assert.equal(comun.status, 201);
+  assert.equal(restockCannabis.status, 200);
+  assert.equal(state.products.length, 2);
+  assert.notEqual(state.products[0].familyId, state.products[1].familyId);
+  assert.equal(state.products.find((product) => product.Linea === "Cannabis").stock, 2);
+  assert.equal(state.products.find((product) => product.Linea === "Común").stock, 1);
+});
+
 test("POST rechaza precios parciales, no finitos o negativos", async () => {
   const state = { products: [], nextId: 1 };
   const route = loadPostHandler(state);

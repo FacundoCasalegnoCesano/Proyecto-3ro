@@ -10,7 +10,7 @@ datasource db {
 model Products {
   id            Int     @id @default(autoincrement())
   nombre        String
-  descripcion   String
+  descripcion   String   @db.Text
   precio        String
   imgUrl        String
   imgPublicId   String

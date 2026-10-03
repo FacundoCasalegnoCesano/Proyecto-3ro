@@ -30,6 +30,16 @@ npm run db:snapshot -- verify C:/Users/OS/Desktop/catalogo-checksum.json
 
 La segunda migración agrega las dos relaciones faltantes y la familia opcional de producto. No completa familias para filas históricas; quedan con `family_id = NULL` hasta que se vinculen desde edición.
 
+La tercera migración (`20261003000000_product_description_text`) cambia `products.descripcion` de `VARCHAR(191)` a `TEXT`. Resuelve el error Prisma P2000 al guardar descripciones de más de 191 caracteres. En una base existente que ya tiene el baseline y `20261002000000_product_families` registrados como aplicados, verificá y desplegá la migración pendiente antes de publicar la aplicación:
+
+```powershell
+npm run db:migrate:status
+npm run db:migrate:deploy
+npm run build
+```
+
+Si la base existente todavía no tiene historial Prisma, seguí primero la sección de base existente: compará el esquema, hacé el backup y registrá el baseline una sola vez con `prisma migrate resolve`. No vuelvas a registrar ni ejecutar el baseline cuando ya figura como aplicado; `db:migrate:deploy` debe aplicar únicamente la tercera migración pendiente. En una base nueva, `db:migrate:deploy` aplica las tres migraciones en orden.
+
 ## Carga de variantes
 
 Al crear variantes, repetí el mismo valor en “Modelo / familia” para cada aroma, tamaño o color y cargá una imagen propia por variante. Reponer stock conserva la imagen de la variante existente. Para agrupar un producto histórico, abrilo desde edición y asignale el modelo; la imagen no se reemplaza al asignar la familia. Los precios se ingresan en pesos, por ejemplo `1290,50`.
@@ -46,4 +56,4 @@ Se aplican baseline y migraciones posteriores en orden.
 
 ## Reversión
 
-Para revertirla manualmente, consultá primero el respaldo y quitá solo las restricciones que esta migración agregó en esa base. En la base local existente, conserva `products_empresaEnvios_fkey` y `deliver_empresaId_fkey`, que ya existían; se agregaron `cart_product_id_fkey`, `order_items_orderId_fkey` y `products_family_id_fkey`. Después de quitar las restricciones agregadas, quitá `products_family_id_idx`, `products.family_id` y finalmente `product_families`. No quites claves preexistentes.
+Para revertir cambios manualmente, consultá primero el respaldo y quitá solo las restricciones que la migración correspondiente agregó en esa base. En la base local existente, conserva `products_empresaEnvios_fkey` y `deliver_empresaId_fkey`, que ya existían; se agregaron `cart_product_id_fkey`, `order_items_orderId_fkey` y `products_family_id_fkey`. Para `descripcion`, no reduzcas automáticamente la columna a `VARCHAR(191)`: primero verificá que no existan valores de más de 191 caracteres y respaldá los datos, porque una reducción puede truncar o rechazar textos largos. Después de quitar las restricciones agregadas, quitá `products_family_id_idx`, `products.family_id` y finalmente `product_families`. No quites claves preexistentes.

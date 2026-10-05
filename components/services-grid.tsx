@@ -136,6 +136,40 @@ export function ServicesGrid() {
         "Integración de aspectos sombra",
       ],
     },
+    {
+      id: "sesion-de-tameana",
+      title: "Sesión de Tameana",
+      subtitle: "Terapia Vibracional",
+      description:
+        "Técnica de sanación holística que utiliza cristales de cuarzo, geometría sagrada y símbolos para elevar la vibración del cuerpo y la mente. Tameana trabaja liberando bloqueos emocionales y energéticos profundos, ayudando a restaurar el equilibrio interior y promoviendo una sensación de paz y claridad.",
+      image:
+        "/img/tameana.jpg",
+      price: "10000",
+      duration: "1-2 horas",
+      benefits: [
+        "Elevación del nivel de vibración energética",
+        "Liberación de bloqueos emocionales y estridentes",
+        "Reducción del estrés y la ansiedad",
+        "Aumento de la paz mental y la armonía interior",
+      ],
+    },
+    {
+      id: "terapia-floral",
+      title: "Consulta de Flores de Bach",
+      subtitle: "Terapia Floral",
+      description:
+        "Sistema natural de esencias florales diseñado para armonizar y equilibrar las emociones. En una entrevista personalizada, identificamos los estados emocionales que necesitas trabajar para preparar un preparado floral a tu medida, ayudándote a gestionar el miedo, la incertidumbre o el cansancio de forma suave.",
+      image:
+        "/img/flores.jpg",
+      price: "10000",
+      duration: "1-2 horas",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
   ];
 
   // Filtrar servicios

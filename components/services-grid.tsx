@@ -173,11 +173,11 @@ export function ServicesGrid() {
     {
       id: "pendulo",
       title: "Consulta al Péndulo y Oraculos",
-      subtitle: "Terapia Floral",
+      subtitle: "Pendulo y Oráculos",
       description:
         "Preguntas concretas al pendulo y al oráculo para obtener respuestas claras y precisas sobre situaciones específicas. Esta técnica permite acceder a la sabiduría interna y a la guía espiritual, ayudando a tomar decisiones informadas y a encontrar claridad en momentos de incertidumbre.",
       image:
-        "/img/flores.jpg",
+        "/img/pendulo.jpg",
       price: "15000",
       duration: "1-2 horas",
       benefits: [
@@ -194,7 +194,7 @@ export function ServicesGrid() {
       description:
         "Limpieza energetica profunda para destrabar lo que no avanza en tu vida (dinero, amor, trabajo, salud).",
       image:
-        "/img/flores.jpg",
+        "/img/abrecaminos.jpg",
       price: "25000",
       duration: "90 minutos",
       benefits: [
@@ -211,7 +211,7 @@ export function ServicesGrid() {
       description:
         "Este ritual ayuda a cortar pactos, promesas y lealtades inconsientes desde el útero y vidas pasadas.",
       image:
-        "/img/flores.jpg",
+        "/img/karmatico.jpg",
       price: "25000",
       duration: "90 minutos",
       benefits: [
@@ -228,7 +228,7 @@ export function ServicesGrid() {
       description:
         "Este ritual corta ese amor que duele, que no deja avanzar y que genera sufrimiento. No dejas de amar a tu familia, dejas de repetir su destino liberandote de lo que no te pertenece.",
       image:
-        "/img/flores.jpg",
+        "/img/familiares.jpg",
       price: "25000",
       duration: "90 minutos",
       benefits: [
@@ -245,7 +245,7 @@ export function ServicesGrid() {
       description:
         "Este ritual corta, limpia y protege de trabajos de magia, brujería, hechicería y mal de ojo.",
       image:
-        "/img/flores.jpg",
+        "/img/magia.jpg",
       price: "25000",
       duration: "90 minutos",
       benefits: [
@@ -262,7 +262,7 @@ export function ServicesGrid() {
       description:
         "Este ritual ayuda a armonizar el lazo para cortar con los conflictos y mejorar la comunicación, la comprensión y el amor en la relación.",
       image:
-        "/img/flores.jpg",
+        "/img/pareja.jpg",
       price: "25000",
       duration: "90 minutos",
       benefits: [
@@ -279,7 +279,7 @@ export function ServicesGrid() {
       description:
         "Este ritual ayuda a cortar lazos energéticos con personas, lugares o situaciones que ya no te sirven, liberando tu energía y permitiéndote avanzar en tu vida con mayor claridad y libertad. No corta el amor, corta la dependencia, la obsesión y el dolor, devuelve a cada uno su propia energía.",
       image:
-        "/img/flores.jpg",
+        "/img/energetico.jpg",
       price: "25000",
       duration: "90 minutos",
       benefits: [
@@ -296,7 +296,7 @@ export function ServicesGrid() {
       description:
         "Este ritual ayuda a limpiar y purificar tu energía, eliminando bloqueos y energías negativas que puedan estar afectando tu bienestar físico, emocional y espiritual. Es ideal para restaurar el equilibrio y la armonía en tu vida.",
       image:
-        "/img/flores.jpg",
+        "/img/limpieza.jpg",
       price: "25000",
       duration: "90 minutos",
       benefits: [

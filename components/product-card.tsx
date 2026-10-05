@@ -5,7 +5,7 @@ import { ProductImage } from "./product-image";
 import { Product } from "app/types/product";
 import { useRouter } from "next/navigation";
 import { parsePrice, formatPrice } from "../utils/price-utils";
-import { buildCatalogProductTitle, isCeramicsCategory, sameCatalogText } from "../lib/product-variants";
+import { buildCatalogProductTitle, isCeramicsCategory, isStatuesCategory, sameCatalogText } from "../lib/product-variants";
 
 // En product-card.tsx, reemplaza la interfaz ProductMetadata con:
 interface ProductMetadata {
@@ -254,7 +254,7 @@ export function ProductCard({
     categoryForTitle,
     brandForTitle,
     lineForTitle,
-    isCeramicsCategory(categoryForTitle) ? product.name : nombreCapitalizado
+    isCeramicsCategory(categoryForTitle) || isStatuesCategory(categoryForTitle) ? product.name : nombreCapitalizado
   );
 
   return (

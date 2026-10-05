@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ProductCard } from "../components/product-card";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Product } from "app/types/product";
-import { buildCatalogFamilyTitle, buildCatalogProductTitle, isCeramicsCategory } from "../lib/product-variants";
+import { buildCatalogFamilyTitle, buildCatalogProductTitle, isCeramicsCategory, isStatuesCategory } from "../lib/product-variants";
 
 interface ProductsGridPageProps {
   selectedCategory: string | null;
@@ -341,7 +341,7 @@ export function ProductsGridPage({
             marcaCapitalizada,
             lineaCapitalizada
           );
-          let nombreGrupo = isCeramicsCategory(category)
+          let nombreGrupo = isCeramicsCategory(category) || isStatuesCategory(category)
             ? buildCatalogProductTitle(category, marcaCapitalizada, lineaCapitalizada, representative.name)
             : tituloCategoriaMarcaLinea || representative.familyName?.trim() || "";
           let descripcionGrupo = "";

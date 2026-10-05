@@ -108,11 +108,12 @@ export function ModificarProductoForm({
     return category.toLowerCase().includes("sahumerio");
   };
 
-  const isCeramicaCategory = (category: string): boolean => {
+  const isMarcaOpcionalCategory = (category: string): boolean => {
     const normalizedCategory = category.toLowerCase();
     return (
       normalizedCategory.includes("ceramica") ||
-      normalizedCategory.includes("cerámica")
+      normalizedCategory.includes("cerámica") ||
+      normalizedCategory.includes("estatua")
     );
   };
 
@@ -150,7 +151,7 @@ export function ModificarProductoForm({
   // Cargar marcas cuando cambie la categoría
   useEffect(() => {
     const loadMarcas = async () => {
-      if (!formData.category) {
+      if (!formData.category || isMarcaOpcionalCategory(formData.category)) {
         setMarcas([]);
         setAromas([]);
         return;
@@ -554,8 +555,8 @@ export function ModificarProductoForm({
       newErrors.category = "Selecciona o agrega una categoría";
     }
 
-    // Validar marca salvo para cerámica, donde es opcional
-    if (!isCeramicaCategory(formData.category)) {
+    // La marca es opcional para cerámica y estatuas.
+    if (!isMarcaOpcionalCategory(formData.category)) {
       if (!formData.marca) {
         newErrors.marca = "La marca es requerida";
       } else if (formData.marca.trim().length < 2) {
@@ -861,7 +862,7 @@ export function ModificarProductoForm({
             </div>
 
             {/* Marca */}
-            {!isCeramicaCategory(formData.category) && (
+            {!isMarcaOpcionalCategory(formData.category) && (
               <div>
                 <label
                   htmlFor="marca"

@@ -313,7 +313,7 @@ export function ServicesGrid() {
       description:
         "Corta la promesa de escasez de 7 generaciones y abre el camino a la prosperidad y abundancia en tu vida. Este ritual ayuda a romper patrones familiares de limitación económica, permitiéndote atraer oportunidades y bienestar financiero.",
       image:
-        "/img/flores.jpg",
+        "placeholder.jpg",
       price: "30000",
       duration: "90 minutos",
       benefits: [
@@ -330,7 +330,7 @@ export function ServicesGrid() {
       description:
         "Tu sobrepeso no siempre es por comida. A veces es por historia. Es la lealtad al clan que paso hambre, a la abuela que guardo todo en el cuerpo para no desaparecer, a la que tuvo que hacerse grande y fuerte para que no le hagan daño. Este ritual corta ese pacto. No es dieta, es liberacion del cuerpo que carga con tu linaje",
       image:
-        "/img/flores.jpg",
+        "placeholder.jpg",
       price: "30000",
       duration: "90 minutos",
       benefits: [
@@ -347,7 +347,7 @@ export function ServicesGrid() {
       description:
         "Este ritual corta el pacto de no merecerte amor, de no sentirte suficiente, de no valorarte. Te ayuda a reconectar con tu esencia y a cultivar el amor propio, la autoestima y la confianza en ti mismo.",
       image:
-        "/img/flores.jpg",
+        "placeholder.jpg",
       price: "30000",
       duration: "90 minutos",
       benefits: [
@@ -364,7 +364,7 @@ export function ServicesGrid() {
       description:
         "Este ritual ayuda a fortalecer la relación contigo mismo, promoviendo la aceptación, el respeto y el cuidado personal. Es ideal para quienes buscan mejorar su autoestima y establecer límites saludables en sus relaciones.",
       image:
-        "/img/flores.jpg",
+        "placeholder.jpg",
       price: "25000",
       duration: "90 minutos",
       benefits: [

@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { ProductImage } from "./product-image";
 import { Product } from "app/types/product";
 import { buildProductVariants, getInitialVariantId } from "../lib/product-variants";
-import { buildCatalogFamilyTitle, sameCatalogText } from "../lib/product-variants";
+import { buildCatalogProductTitle, sameCatalogText } from "../lib/product-variants";
 import type { ProductVariant } from "../lib/product-variants";
 import { formatPrice, parsePrice } from "../utils/price-utils";
 
@@ -292,12 +292,12 @@ export function ProductDetail({
     variants.find((variant) => variant.aroma === safeString(product.aroma)) ||
     variants[0];
   const displayedName = selectedVariant?.productName || product.name;
-  const catalogFamilyTitle = buildCatalogFamilyTitle(
+  const displayedTitle = buildCatalogProductTitle(
     product.category,
     marcaSeleccionada || safeString(product.marca),
-    lineaDisplay
+    lineaDisplay,
+    displayedName
   );
-  const displayedTitle = catalogFamilyTitle || displayedName;
   const displayedDescription = selectedVariant?.description || product.description;
   const displayedImage = selectedVariant?.image || product.image || undefined;
   const displayedPrice = selectedVariant?.price ?? productPrice;

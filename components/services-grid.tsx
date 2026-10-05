@@ -30,7 +30,7 @@ export function ServicesGrid() {
       description:
         "Consultas personalizadas de Tarot para guiar tu camino espiritual. Utilizamos el tradicional mazo Egipcio para brindarte claridad sobre tu presente y futuro. Cada lectura es única y adaptada a tus necesidades específicas, ayudándote a tomar decisiones importantes con confianza y sabiduría.",
       image: "/img/510084.webp",
-      price: "3500",
+      price: "30000",
       duration: "60 minutos",
       benefits: [
         "Claridad sobre situaciones actuales",
@@ -49,8 +49,8 @@ export function ServicesGrid() {
         "Terapia de sanación energética que utiliza la imposición de manos para canalizar energía universal. El Reiki ayuda a equilibrar los chakras, reducir el estrés y promover la sanación natural del cuerpo y la mente. Una experiencia profundamente relajante que restaura tu equilibrio interno.",
       image:
         "/img/reiki-niveles.webp",
-      price: "4000",
-      duration: "90 minutos",
+      price: "22000",
+      duration: "60 minutos",
       benefits: [
         "Restaura el equilibrio energético",
         "Mejora la calidad del sueño",
@@ -68,8 +68,8 @@ export function ServicesGrid() {
         "Ritual de limpieza energética con péndulo y cristales que se utiliza para detectar y eliminar bloqueos energéticos en el cuerpo y el entorno, promoviendo el equilibrio, la paz y la armonía. Ideal para liberar energías estancadas y restaurar tu vibración natural.",
       image:
         "/img/lg.webp",
-      price: "2800",
-      duration: "45 minutos",
+      price: "27000",
+      duration: "90 minutos",
       benefits: [
         "Eliminación de energías negativas",
         "Promueve el bienestar físico, emocional y espiritual",
@@ -87,7 +87,7 @@ export function ServicesGrid() {
         "Limpieza energética completa de hogares, oficinas o locales comerciales. Utilizamos sahumerios, cristales y técnicas ancestrales para purificar y armonizar los espacios, creando un ambiente de paz y prosperidad. Transformamos la energía de tu hogar o lugar de trabajo.",
       image:
         "/img/R6XJNzldS_2000x1500__1.webp",
-      price: "5500",
+      price: "50000",
       duration: "2-3 horas",
       benefits: [
         "Purificación completa del ambiente",
@@ -106,8 +106,8 @@ export function ServicesGrid() {
         "Herramienta de radiestesia vibracional usada para diagnosticar y equilibrar el campo energético de una persona o espacio. El péndulo hebreo es una técnica especializada que permite identificar y liberar bloqueos profundos, facilitando un proceso de sanación integral y transformación personal.",
       image:
         "/img/Limpieza-con-Pendulo-Hebreo-banner-1024x576.webp",
-      price: "10000",
-      duration: "1-2 horas",
+      price: "32000",
+      duration: "3 horas",
       benefits: [
         "Sanación energética profunda",
         "Crecimiento personal acelerado",
@@ -125,7 +125,7 @@ export function ServicesGrid() {
         "Es una herramienta que permite profundizar en el autoconocimiento y la comprensión de uno mismo, siendo guía y orientación en momentos de incertidumbre o cambio. También permite al consultante realizar una reflexión e introspección, ofreciendo una perspectiva única y profunda sobre la vida y su entorno, conectando con la sabiduría ancestral africana.",
       image:
         "/img/D_NQ_NP_951846-MLA92809211063_092025-O.webp",
-      price: "10000",
+      price: "30000",
       duration: "1-2 horas",
       benefits: [
         "Sanación espiritual profunda",
@@ -141,11 +141,11 @@ export function ServicesGrid() {
       title: "Sesión de Tameana",
       subtitle: "Terapia Vibracional",
       description:
-        "Técnica de sanación holística que utiliza cristales de cuarzo, geometría sagrada y símbolos para elevar la vibración del cuerpo y la mente. Tameana trabaja liberando bloqueos emocionales y energéticos profundos, ayudando a restaurar el equilibrio interior y promoviendo una sensación de paz y claridad.",
+        "Terapia vibracional pleyadiana. Es una terapia de alta frecuencia que trabaja con cristales de cuarzo, geometria sagrada y simbolos pleyadianos. Atravez de la puja elevamos la vibracion para liberar bloqueos, cortar lazos y alinear chakras. Ideal para cuando te sentis entacada, cargada o repitiendo historias de lineaje.",
       image:
         "/img/tameana.jpg",
-      price: "10000",
-      duration: "1-2 horas",
+      price: "30000",
+      duration: "90 minutos",
       benefits: [
         "Elevación del nivel de vibración energética",
         "Liberación de bloqueos emocionales y estridentes",
@@ -155,14 +155,218 @@ export function ServicesGrid() {
     },
     {
       id: "terapia-floral",
-      title: "Consulta de Flores de Bach",
+      title: "Consulta de Flores de Bach y Formula Floral Personalizada",
       subtitle: "Terapia Floral",
       description:
-        "Sistema natural de esencias florales diseñado para armonizar y equilibrar las emociones. En una entrevista personalizada, identificamos los estados emocionales que necesitas trabajar para preparar un preparado floral a tu medida, ayudándote a gestionar el miedo, la incertidumbre o el cansancio de forma suave.",
+        "Sistema natural de esencias florales diseñado para armonizar y equilibrar las emociones. En una entrevista personalizada, identificamos los estados emocionales que necesitas trabajar para preparar una formula floral a tu medida, No tapan lo que sentis, te ayudan a atravesarlo con mas calma, claridad y amor.",
       image:
         "/img/flores.jpg",
-      price: "10000",
+      price: "40000",
       duration: "1-2 horas",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+    {
+      id: "pendulo",
+      title: "Consulta al Péndulo y Oraculos",
+      subtitle: "Pendulo y Oráculos",
+      description:
+        "Preguntas concretas al pendulo y al oráculo para obtener respuestas claras y precisas sobre situaciones específicas. Esta técnica permite acceder a la sabiduría interna y a la guía espiritual, ayudando a tomar decisiones informadas y a encontrar claridad en momentos de incertidumbre.",
+      image:
+        "/img/pendulo.jpg",
+      price: "15000",
+      duration: "1-2 horas",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+    {
+      id: "ritual-abrecaminos",
+      title: "Velomancia y Rituales con Velas",
+      subtitle: "Ritual Abrecaminos",
+      description:
+        "Limpieza energetica profunda para destrabar lo que no avanza en tu vida (dinero, amor, trabajo, salud).",
+      image:
+        "/img/abrecaminos.jpg",
+      price: "25000",
+      duration: "90 minutos",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+     {
+      id: "ritual-corte-carmatico",
+      title: "Ritual Corte Karmático",
+      subtitle: "Velomancia y Rituales con Velas",
+      description:
+        "Este ritual ayuda a cortar pactos, promesas y lealtades inconsientes desde el útero y vidas pasadas.",
+      image:
+        "/img/karmatico.jpg",
+      price: "25000",
+      duration: "90 minutos",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+      {
+      id: "ritual-corte-lealtades",
+      title: "Ritual Corte Lealtades Familiares",
+      subtitle: "Velomancia y Rituales con Velas",
+      description:
+        "Este ritual corta ese amor que duele, que no deja avanzar y que genera sufrimiento. No dejas de amar a tu familia, dejas de repetir su destino liberandote de lo que no te pertenece.",
+      image:
+        "/img/familiares.jpg",
+      price: "25000",
+      duration: "90 minutos",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+      {
+      id: "ritual-corte-magia",
+      title: "Ritual Corte de Trabajo de Magia",
+      subtitle: "Velomancia y Rituales con Velas",
+      description:
+        "Este ritual corta, limpia y protege de trabajos de magia, brujería, hechicería y mal de ojo.",
+      image:
+        "/img/magia.jpg",
+      price: "25000",
+      duration: "90 minutos",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+      {
+      id: "ritual-armonizacion",
+      title: "Ritual de Armonización y Vinculo de Pareja",
+      subtitle: "Velomancia y Rituales con Velas",
+      description:
+        "Este ritual ayuda a armonizar el lazo para cortar con los conflictos y mejorar la comunicación, la comprensión y el amor en la relación.",
+      image:
+        "/img/pareja.jpg",
+      price: "25000",
+      duration: "90 minutos",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+      {
+      id: "ritual-corte-energetico",
+      title: "Ritual Corte de Lazos Energéticos",
+      subtitle: "Velomancia y Rituales con Velas",
+      description:
+        "Este ritual ayuda a cortar lazos energéticos con personas, lugares o situaciones que ya no te sirven, liberando tu energía y permitiéndote avanzar en tu vida con mayor claridad y libertad. No corta el amor, corta la dependencia, la obsesión y el dolor, devuelve a cada uno su propia energía.",
+      image:
+        "/img/energetico.jpg",
+      price: "25000",
+      duration: "90 minutos",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+      {
+      id: "ritual-limpieza-espiritual",
+      title: "Ritual Limpieza Energética",
+      subtitle: "Velomancia y Rituales con Velas",
+      description:
+        "Este ritual ayuda a limpiar y purificar tu energía, eliminando bloqueos y energías negativas que puedan estar afectando tu bienestar físico, emocional y espiritual. Es ideal para restaurar el equilibrio y la armonía en tu vida.",
+      image:
+        "/img/limpieza.jpg",
+      price: "25000",
+      duration: "90 minutos",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+      {
+      id: "ritual-corte-generacional",
+      title: "Ritual Corte Generacional de la Escasez Economica",
+      subtitle: "Velomancia y Rituales con Velas",
+      description:
+        "Corta la promesa de escasez de 7 generaciones y abre el camino a la prosperidad y abundancia en tu vida. Este ritual ayuda a romper patrones familiares de limitación económica, permitiéndote atraer oportunidades y bienestar financiero.",
+      image:
+        "/img/flores.jpg",
+      price: "30000",
+      duration: "90 minutos",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+      {
+      id: "ritual-corte-sobrepeso",
+      title: "Ritual Corte Generacional de Sobrepeso",
+      subtitle: "Velomancia y Rituales con Velas",
+      description:
+        "Tu sobrepeso no siempre es por comida. A veces es por historia. Es la lealtad al clan que paso hambre, a la abuela que guardo todo en el cuerpo para no desaparecer, a la que tuvo que hacerse grande y fuerte para que no le hagan daño. Este ritual corta ese pacto. No es dieta, es liberacion del cuerpo que carga con tu linaje",
+      image:
+        "/img/flores.jpg",
+      price: "30000",
+      duration: "90 minutos",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+      {
+      id: "ritual-corte-amor-propio",
+      title: "Ritual Corte Generacional de Amor Propio",
+      subtitle: "Velomancia y Rituales con Velas",
+      description:
+        "Este ritual corta el pacto de no merecerte amor, de no sentirte suficiente, de no valorarte. Te ayuda a reconectar con tu esencia y a cultivar el amor propio, la autoestima y la confianza en ti mismo.",
+      image:
+        "/img/flores.jpg",
+      price: "30000",
+      duration: "90 minutos",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+      {
+      id: "ritual-amor-propio",
+      title: "Ritual de Amor Propio",
+      subtitle: "Velomancia y Rituales con Velas",
+      description:
+        "Este ritual ayuda a fortalecer la relación contigo mismo, promoviendo la aceptación, el respeto y el cuidado personal. Es ideal para quienes buscan mejorar su autoestima y establecer límites saludables en sus relaciones.",
+      image:
+        "/img/flores.jpg",
+      price: "25000",
+      duration: "90 minutos",
       benefits: [
         "Armonización y equilibrio emocional",
         "Alivio natural de la ansiedad, miedos y frustraciones",

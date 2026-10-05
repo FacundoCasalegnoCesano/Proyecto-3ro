@@ -108,6 +108,15 @@ export function ModificarProductoForm({
     return category.toLowerCase().includes("sahumerio");
   };
 
+  const isMarcaOpcionalCategory = (category: string): boolean => {
+    const normalizedCategory = category.toLowerCase();
+    return (
+      normalizedCategory.includes("ceramica") ||
+      normalizedCategory.includes("cerámica") ||
+      normalizedCategory.includes("estatua")
+    );
+  };
+
   // Cargar categorías al montar el componente
   useEffect(() => {
     const loadCategories = async () => {
@@ -142,7 +151,7 @@ export function ModificarProductoForm({
   // Cargar marcas cuando cambie la categoría
   useEffect(() => {
     const loadMarcas = async () => {
-      if (!formData.category) {
+      if (!formData.category || isMarcaOpcionalCategory(formData.category)) {
         setMarcas([]);
         setAromas([]);
         return;
@@ -546,11 +555,13 @@ export function ModificarProductoForm({
       newErrors.category = "Selecciona o agrega una categoría";
     }
 
-    // Validar marca
-    if (!formData.marca) {
-      newErrors.marca = "La marca es requerida";
-    } else if (formData.marca.trim().length < 2) {
-      newErrors.marca = "La marca debe tener al menos 2 caracteres";
+    // La marca es opcional para cerámica y estatuas.
+    if (!isMarcaOpcionalCategory(formData.category)) {
+      if (!formData.marca) {
+        newErrors.marca = "La marca es requerida";
+      } else if (formData.marca.trim().length < 2) {
+        newErrors.marca = "La marca debe tener al menos 2 caracteres";
+      }
     }
 
     // Validar aroma solo si la categoría es sahumerio
@@ -851,78 +862,80 @@ export function ModificarProductoForm({
             </div>
 
             {/* Marca */}
-            <div>
-              <label
-                htmlFor="marca"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Marca <span className="text-red-500">*</span>
-              </label>
-              {!showNewMarcaInput ? (
-                <select
-                  id="marca"
-                  name="marca"
-                  value={formData.marca}
-                  onChange={(e) => handleMarcaChange(e.target.value)}
-                  className={`block w-full px-3 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary bg-white ${
-                    errors.marca ? "border-red-300" : "border-gray-300"
-                  }`}
-                  disabled={!formData.category || isLoadingOptions}
+            {!isMarcaOpcionalCategory(formData.category) && (
+              <div>
+                <label
+                  htmlFor="marca"
+                  className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  <option value="">
-                    {!formData.category
-                      ? "Primero selecciona una categoría"
-                      : marcas.length === 0
-                      ? "No hay marcas para esta categoría"
-                      : "Seleccionar marca"}
-                  </option>
-                  {marcas.map((marca) => (
-                    <option key={marca.value} value={marca.value}>
-                      {marca.label}
+                  Marca <span className="text-red-500">*</span>
+                </label>
+                {!showNewMarcaInput ? (
+                  <select
+                    id="marca"
+                    name="marca"
+                    value={formData.marca}
+                    onChange={(e) => handleMarcaChange(e.target.value)}
+                    className={`block w-full px-3 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary bg-white ${
+                      errors.marca ? "border-red-300" : "border-gray-300"
+                    }`}
+                    disabled={!formData.category || isLoadingOptions}
+                  >
+                    <option value="">
+                      {!formData.category
+                        ? "Primero selecciona una categoría"
+                        : marcas.length === 0
+                        ? "No hay marcas para esta categoría"
+                        : "Seleccionar marca"}
                     </option>
-                  ))}
-                  <option value="add-new">➕ Agregar nueva marca</option>
-                </select>
-              ) : (
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    value={newMarcaValue}
-                    onChange={(e) => setNewMarcaValue(e.target.value)}
-                    placeholder="Nueva marca"
-                    className="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary"
-                    onKeyPress={(e) => e.key === "Enter" && handleAddNewMarca()}
-                  />
-                  <Button
-                    type="button"
-                    onClick={handleAddNewMarca}
-                    size="sm"
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleCancelNewMarca}
-                    size="sm"
-                    variant="outline"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
-              {errors.marca && (
-                <p className="mt-1 text-sm text-red-600">{errors.marca}</p>
-              )}
-              {formData.category &&
-                marcas.length === 0 &&
-                !showNewMarcaInput && (
-                  <p className="mt-1 text-xs text-blue-600">
-                    Esta es una categoría nueva. Agrega la primera marca para
-                    esta categoría.
-                  </p>
+                    {marcas.map((marca) => (
+                      <option key={marca.value} value={marca.value}>
+                        {marca.label}
+                      </option>
+                    ))}
+                    <option value="add-new">➕ Agregar nueva marca</option>
+                  </select>
+                ) : (
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={newMarcaValue}
+                      onChange={(e) => setNewMarcaValue(e.target.value)}
+                      placeholder="Nueva marca"
+                      className="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary"
+                      onKeyPress={(e) => e.key === "Enter" && handleAddNewMarca()}
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddNewMarca}
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleCancelNewMarca}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
                 )}
-            </div>
+                {errors.marca && (
+                  <p className="mt-1 text-sm text-red-600">{errors.marca}</p>
+                )}
+                {formData.category &&
+                  marcas.length === 0 &&
+                  !showNewMarcaInput && (
+                    <p className="mt-1 text-xs text-blue-600">
+                      Esta es una categoría nueva. Agrega la primera marca para
+                      esta categoría.
+                    </p>
+                  )}
+              </div>
+            )}
 
             {/* Aroma - Solo mostrar si la categoría es sahumerio */}
             {isSahumerioCategory(formData.category) && (

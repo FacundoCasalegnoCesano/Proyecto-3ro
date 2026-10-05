@@ -1,9 +1,12 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  buildCatalogProductTitle,
   buildCatalogFamilyTitle,
   buildProductVariants,
   getInitialVariantId,
+  isCeramicsCategory,
+  isStatuesCategory,
   sameCatalogText,
 } = require("../lib/product-variants.js");
 const { parsePrice, parsePriceInput, formatPrice } = require("../utils/price-utils.js");
@@ -22,6 +25,35 @@ test("forma el título del grupo con categoría, marca y línea, omitiendo campo
   assert.equal(buildCatalogFamilyTitle("Sin categoría", "Sin marca", "sin-linea"), "");
   assert.equal(sameCatalogText(" Cannabis ", "cannabis"), true);
   assert.equal(sameCatalogText("Modelo A", "Cannabis"), false);
+});
+
+test("conserva el nombre cargado para cerámica y estatuas, y mantiene el título por categoría para otras familias", () => {
+  assert.equal(isCeramicsCategory("Cerámica artesanal"), true);
+  assert.equal(isCeramicsCategory("CERAMICA"), true);
+  assert.equal(isCeramicsCategory("Sahumerios"), false);
+  assert.equal(isStatuesCategory("Estatua"), true);
+  assert.equal(isStatuesCategory("ESTATUAS decorativas"), true);
+  assert.equal(isStatuesCategory("Sahumerios"), false);
+  assert.equal(
+    buildCatalogProductTitle("Cerámica", "Taller Sur", "Rústica", "Cuenco OM / Portasahumerio LED"),
+    "Cuenco OM / Portasahumerio LED"
+  );
+  assert.equal(
+    buildCatalogProductTitle("Ceramica", "", "", ""),
+    "Ceramica"
+  );
+  assert.equal(
+    buildCatalogProductTitle("Estatuas", "Taller Sur", "Piedra", "Virgen María 3D"),
+    "Virgen María 3D"
+  );
+  assert.equal(
+    buildCatalogProductTitle("Estatua", "", "", ""),
+    "Estatua"
+  );
+  assert.equal(
+    buildCatalogProductTitle("Sahumerios", "Aroma Sur", "Clásica", "Sahumerio clásico"),
+    "Sahumerios Aroma Sur Clásica"
+  );
 });
 
 const fixture = [

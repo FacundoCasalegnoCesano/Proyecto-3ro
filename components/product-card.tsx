@@ -5,7 +5,7 @@ import { ProductImage } from "./product-image";
 import { Product } from "app/types/product";
 import { useRouter } from "next/navigation";
 import { parsePrice, formatPrice } from "../utils/price-utils";
-import { buildCatalogFamilyTitle, sameCatalogText } from "../lib/product-variants";
+import { buildCatalogProductTitle, isCeramicsCategory, isStatuesCategory, sameCatalogText } from "../lib/product-variants";
 
 // En product-card.tsx, reemplaza la interfaz ProductMetadata con:
 interface ProductMetadata {
@@ -250,9 +250,12 @@ export function ProductCard({
     safeString(lineaSeleccionada) ||
     safeString(product.linea) ||
     safeString(product.metadata?.linea);
-  const tituloPublico =
-    buildCatalogFamilyTitle(categoryForTitle, brandForTitle, lineForTitle) ||
-    nombreCapitalizado;
+  const tituloPublico = buildCatalogProductTitle(
+    categoryForTitle,
+    brandForTitle,
+    lineForTitle,
+    isCeramicsCategory(categoryForTitle) || isStatuesCategory(categoryForTitle) ? product.name : nombreCapitalizado
+  );
 
   return (
     <Card

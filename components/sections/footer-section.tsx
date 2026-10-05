@@ -5,7 +5,7 @@ import { Footer } from "../../components/footer";
 export function FooterSection() {
   const footerContactInfo = {
     instagram: "Instagram",
-    phone: "+54 11 1234-5678",
+    phone: "+54 9 3404 514018",
     email: "hola@babalu.com",
   };
 

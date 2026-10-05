@@ -141,7 +141,7 @@ export function ServicesGrid() {
       title: "Sesión de Tameana",
       subtitle: "Terapia Vibracional",
       description:
-        "Técnica de sanación holística que utiliza cristales de cuarzo, geometría sagrada y símbolos para elevar la vibración del cuerpo y la mente. Tameana trabaja liberando bloqueos emocionales y energéticos profundos, ayudando a restaurar el equilibrio interior y promoviendo una sensación de paz y claridad.",
+        "Terapia vibracional pleyadiana. Es una terapia de alta frecuencia que trabaja con cristales de cuarzo, geometria sagrada y simbolos pleyadianos. Atravez de la puja elevamos la vibracion para liberar bloqueos, cortar lazos y alinear chakras. Ideal para cuando te sentis entacada, cargada o repitiendo historias de lineaje.",
       image:
         "/img/tameana.jpg",
       price: "30000",

@@ -49,8 +49,8 @@ export function ServicesGrid() {
         "Terapia de sanación energética que utiliza la imposición de manos para canalizar energía universal. El Reiki ayuda a equilibrar los chakras, reducir el estrés y promover la sanación natural del cuerpo y la mente. Una experiencia profundamente relajante que restaura tu equilibrio interno.",
       image:
         "/img/reiki-niveles.webp",
-      price: "4000",
-      duration: "90 minutos",
+      price: "22000",
+      duration: "60 minutos",
       benefits: [
         "Restaura el equilibrio energético",
         "Mejora la calidad del sueño",
@@ -68,8 +68,8 @@ export function ServicesGrid() {
         "Ritual de limpieza energética con péndulo y cristales que se utiliza para detectar y eliminar bloqueos energéticos en el cuerpo y el entorno, promoviendo el equilibrio, la paz y la armonía. Ideal para liberar energías estancadas y restaurar tu vibración natural.",
       image:
         "/img/lg.webp",
-      price: "2800",
-      duration: "45 minutos",
+      price: "27000",
+      duration: "90 minutos",
       benefits: [
         "Eliminación de energías negativas",
         "Promueve el bienestar físico, emocional y espiritual",
@@ -87,7 +87,7 @@ export function ServicesGrid() {
         "Limpieza energética completa de hogares, oficinas o locales comerciales. Utilizamos sahumerios, cristales y técnicas ancestrales para purificar y armonizar los espacios, creando un ambiente de paz y prosperidad. Transformamos la energía de tu hogar o lugar de trabajo.",
       image:
         "/img/R6XJNzldS_2000x1500__1.webp",
-      price: "5500",
+      price: "50000",
       duration: "2-3 horas",
       benefits: [
         "Purificación completa del ambiente",
@@ -106,8 +106,8 @@ export function ServicesGrid() {
         "Herramienta de radiestesia vibracional usada para diagnosticar y equilibrar el campo energético de una persona o espacio. El péndulo hebreo es una técnica especializada que permite identificar y liberar bloqueos profundos, facilitando un proceso de sanación integral y transformación personal.",
       image:
         "/img/Limpieza-con-Pendulo-Hebreo-banner-1024x576.webp",
-      price: "10000",
-      duration: "1-2 horas",
+      price: "32000",
+      duration: "3 horas",
       benefits: [
         "Sanación energética profunda",
         "Crecimiento personal acelerado",
@@ -125,7 +125,7 @@ export function ServicesGrid() {
         "Es una herramienta que permite profundizar en el autoconocimiento y la comprensión de uno mismo, siendo guía y orientación en momentos de incertidumbre o cambio. También permite al consultante realizar una reflexión e introspección, ofreciendo una perspectiva única y profunda sobre la vida y su entorno, conectando con la sabiduría ancestral africana.",
       image:
         "/img/D_NQ_NP_951846-MLA92809211063_092025-O.webp",
-      price: "10000",
+      price: "30000",
       duration: "1-2 horas",
       benefits: [
         "Sanación espiritual profunda",
@@ -144,8 +144,8 @@ export function ServicesGrid() {
         "Técnica de sanación holística que utiliza cristales de cuarzo, geometría sagrada y símbolos para elevar la vibración del cuerpo y la mente. Tameana trabaja liberando bloqueos emocionales y energéticos profundos, ayudando a restaurar el equilibrio interior y promoviendo una sensación de paz y claridad.",
       image:
         "/img/tameana.jpg",
-      price: "10000",
-      duration: "1-2 horas",
+      price: "30000",
+      duration: "90 minutos",
       benefits: [
         "Elevación del nivel de vibración energética",
         "Liberación de bloqueos emocionales y estridentes",
@@ -155,13 +155,47 @@ export function ServicesGrid() {
     },
     {
       id: "terapia-floral",
-      title: "Consulta de Flores de Bach",
+      title: "Consulta de Flores de Bach y Formula Floral Personalizada",
       subtitle: "Terapia Floral",
       description:
         "Sistema natural de esencias florales diseñado para armonizar y equilibrar las emociones. En una entrevista personalizada, identificamos los estados emocionales que necesitas trabajar para preparar un preparado floral a tu medida, ayudándote a gestionar el miedo, la incertidumbre o el cansancio de forma suave.",
       image:
         "/img/flores.jpg",
-      price: "10000",
+      price: "40000",
+      duration: "1-2 horas",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+    {
+      id: "pendulo",
+      title: "Consulta al Péndulo y Oraculos",
+      subtitle: "Terapia Floral",
+      description:
+        "Preguntas concretas al pendulo y al oráculo para obtener respuestas claras y precisas sobre situaciones específicas. Esta técnica permite acceder a la sabiduría interna y a la guía espiritual, ayudando a tomar decisiones informadas y a encontrar claridad en momentos de incertidumbre.",
+      image:
+        "/img/flores.jpg",
+      price: "15000",
+      duration: "1-2 horas",
+      benefits: [
+        "Armonización y equilibrio emocional",
+        "Alivio natural de la ansiedad, miedos y frustraciones",
+        "Apoyo en procesos de cambio y momentos difíciles",
+        "Tratamiento 100% natural sin contraindicaciones",
+      ],
+    },
+    {
+      id: "ritual-velas",
+      title: "Velomancia y Rituales con Velas",
+      subtitle: "Terapia Floral",
+      description:
+        "Sistema natural de esencias florales diseñado para armonizar y equilibrar las emociones. En una entrevista personalizada, identificamos los estados emocionales que necesitas trabajar para preparar un preparado floral a tu medida, ayudándote a gestionar el miedo, la incertidumbre o el cansancio de forma suave.",
+      image:
+        "/img/flores.jpg",
+      price: "40000",
       duration: "1-2 horas",
       benefits: [
         "Armonización y equilibrio emocional",

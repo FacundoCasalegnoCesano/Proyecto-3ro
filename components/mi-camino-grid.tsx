@@ -20,7 +20,7 @@ export function MiCaminoGrid() {
     {
       id: "mi-area-trabajo",
       title: "Mi Area De Trabajo",
-      content: `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.`,
+      content: "",
       image: "/img/11744750643661.webp",
     },
     {
@@ -31,7 +31,7 @@ export function MiCaminoGrid() {
 Desde entonces, me he formado en diferentes disciplinas como Reiki, Tarot y limpiezas energéticas, encontrando en cada una de ellas una herramienta para acompañar procesos de equilibrio, paz y transformación.
 
 Hoy continúo ampliando mis conocimientos con el propósito de ayudar a otros a reconectarse con su energía vital, su propósito y su bienestar interior.`,
-      image: "/img/training.jpg", // Cambia por tu imagen real
+      image: "/img/certificado-final.png", // Cambia por tu imagen real
     },
     {
       id: "mi-mision",
@@ -49,7 +49,7 @@ Hoy continúo ampliando mis conocimientos con el propósito de ayudar a otros a 
       id: "mi-espacio",
       title: "Mi Espacio Sagrado",
       content: `Creé un espacio pensado para que la energía circule en armonía. Mi lugar de atención está diseñado para transmitir paz y tranquilidad, con cristales, plantas y una ambientación que invita a relajarse y conectar. Cada detalle fue elegido con amor e intención, para potenciar la experiencia de sanación y bienestar espiritual.`,
-      image: "/img/sacred-space.jpg", // Cambia por tu imagen real
+      image: "/img/espacio.jpeg", // Cambia por tu imagen real
     },
   ];
 

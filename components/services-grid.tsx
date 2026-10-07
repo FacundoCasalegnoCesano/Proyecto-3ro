@@ -3,7 +3,7 @@
 import { ServiceCard } from "./service-card";
 import { useState } from "react";
 import { Button } from "../components/ui/button";
-import { Search, Star, Users, Clock } from "lucide-react";
+import { Search, Sparkles, Users, Clock } from "lucide-react";
 
 interface Service {
   id: string;
@@ -305,76 +305,76 @@ export function ServicesGrid() {
         "Apoyo en procesos de cambio y momentos difíciles",
         "Tratamiento 100% natural sin contraindicaciones",
       ],
-    },
-      {
-      id: "ritual-corte-generacional",
-      title: "Ritual Corte Generacional de la Escasez Economica",
-      subtitle: "Velomancia y Rituales con Velas",
-      description:
-        "Corta la promesa de escasez de 7 generaciones y abre el camino a la prosperidad y abundancia en tu vida. Este ritual ayuda a romper patrones familiares de limitación económica, permitiéndote atraer oportunidades y bienestar financiero.",
-      image:
-        "placeholder.jpg",
-      price: "30000",
-      duration: "90 minutos",
-      benefits: [
-        "Armonización y equilibrio emocional",
-        "Alivio natural de la ansiedad, miedos y frustraciones",
-        "Apoyo en procesos de cambio y momentos difíciles",
-        "Tratamiento 100% natural sin contraindicaciones",
-      ],
-    },
-      {
-      id: "ritual-corte-sobrepeso",
-      title: "Ritual Corte Generacional de Sobrepeso",
-      subtitle: "Velomancia y Rituales con Velas",
-      description:
-        "Tu sobrepeso no siempre es por comida. A veces es por historia. Es la lealtad al clan que paso hambre, a la abuela que guardo todo en el cuerpo para no desaparecer, a la que tuvo que hacerse grande y fuerte para que no le hagan daño. Este ritual corta ese pacto. No es dieta, es liberacion del cuerpo que carga con tu linaje",
-      image:
-        "placeholder.jpg",
-      price: "30000",
-      duration: "90 minutos",
-      benefits: [
-        "Armonización y equilibrio emocional",
-        "Alivio natural de la ansiedad, miedos y frustraciones",
-        "Apoyo en procesos de cambio y momentos difíciles",
-        "Tratamiento 100% natural sin contraindicaciones",
-      ],
-    },
-      {
-      id: "ritual-corte-amor-propio",
-      title: "Ritual Corte Generacional de Amor Propio",
-      subtitle: "Velomancia y Rituales con Velas",
-      description:
-        "Este ritual corta el pacto de no merecerte amor, de no sentirte suficiente, de no valorarte. Te ayuda a reconectar con tu esencia y a cultivar el amor propio, la autoestima y la confianza en ti mismo.",
-      image:
-        "placeholder.jpg",
-      price: "30000",
-      duration: "90 minutos",
-      benefits: [
-        "Armonización y equilibrio emocional",
-        "Alivio natural de la ansiedad, miedos y frustraciones",
-        "Apoyo en procesos de cambio y momentos difíciles",
-        "Tratamiento 100% natural sin contraindicaciones",
-      ],
-    },
-      {
-      id: "ritual-amor-propio",
-      title: "Ritual de Amor Propio",
-      subtitle: "Velomancia y Rituales con Velas",
-      description:
-        "Este ritual ayuda a fortalecer la relación contigo mismo, promoviendo la aceptación, el respeto y el cuidado personal. Es ideal para quienes buscan mejorar su autoestima y establecer límites saludables en sus relaciones.",
-      image:
-        "placeholder.jpg",
-      price: "25000",
-      duration: "90 minutos",
-      benefits: [
-        "Armonización y equilibrio emocional",
-        "Alivio natural de la ansiedad, miedos y frustraciones",
-        "Apoyo en procesos de cambio y momentos difíciles",
-        "Tratamiento 100% natural sin contraindicaciones",
-      ],
-    },
-  ];
+      },
+        {
+        id: "ritual-corte-generacional",
+        title: "Ritual Corte Generacional de la Escasez Economica",
+        subtitle: "Velomancia y Rituales con Velas",
+        description:
+          "Corta la promesa de escasez de 7 generaciones y abre el camino a la prosperidad y abundancia en tu vida. Este ritual ayuda a romper patrones familiares de limitación económica, permitiéndote atraer oportunidades y bienestar financiero.",
+        image:
+          "/img/escasez.jpeg",
+        price: "30000",
+        duration: "90 minutos",
+        benefits: [
+        "Ruptura de patrones y lealtades familiares de limitación económica",
+        "Apertura de caminos hacia la prosperidad y nuevas oportunidades financieras",
+        "Desbloqueo de la capacidad personal para generar y sostener la abundancia",
+        "Liberación de la carga transgeneracional de escasez proyectada hasta en 7 generaciones",
+        ],
+      },
+        {
+        id: "ritual-corte-sobrepeso",
+        title: "Ritual Corte Generacional de Sobrepeso",
+        subtitle: "Velomancia y Rituales con Velas",
+        description:
+          "Tu sobrepeso no siempre es por comida. A veces es por historia. Es la lealtad al clan que paso hambre, a la abuela que guardo todo en el cuerpo para no desaparecer, a la que tuvo que hacerse grande y fuerte para que no le hagan daño. Este ritual corta ese pacto. No es dieta, es liberacion del cuerpo que carga con tu linaje",
+        image:
+          "/img/sobrepeso.jpeg",
+        price: "30000",
+        duration: "90 minutos",
+        benefits: [
+        "Liberación de lealtades y memorias emocionales del linaje asociadas al cuerpo",
+        "Corte con pactos inconscientes de protección, hambre ancestral o invisibilidad",
+        "Reconciliación con la propia imagen corporal desde un lugar de libertad y autonomía",
+        "Desahogo de cargas energéticas heredadas que afectan la relación con el cuerpo",
+],
+      },
+        {
+        id: "ritual-corte-amor-propio",
+        title: "Ritual Corte Generacional de Amor Propio",
+        subtitle: "Velomancia y Rituales con Velas",
+        description:
+          "Este ritual corta el pacto de no merecerte amor, de no sentirte suficiente, de no valorarte. Te ayuda a reconectar con tu esencia y a cultivar el amor propio, la autoestima y la confianza en ti mismo.",
+        image:
+          "/img/amor.jpeg",
+        price: "30000",
+        duration: "90 minutos",
+        benefits: [
+        "Corte de mandatos familiares sobre el no merecimiento y la desvalorización",
+        "Liberación de patrones repetitivos de autosacrificio e insuficiencia heredados",
+        "Reconexión con la esencia individual libre de expectativas o heridas del clan",
+        "Desbloqueo de la capacidad profunda de recibir afecto, valía y respeto",
+],
+      },
+        {
+        id: "ritual-amor-propio",
+        title: "Ritual de Amor Propio",
+        subtitle: "Velomancia y Rituales con Velas",
+        description:
+          "Este ritual ayuda a fortalecer la relación contigo mismo, promoviendo la aceptación, el respeto y el cuidado personal. Es ideal para quienes buscan mejorar su autoestima y establecer límites saludables en sus relaciones.",
+        image:
+          "/img/amor.jpeg",
+        price: "25000",
+        duration: "90 minutos",
+        benefits: [
+        "Fortalecimiento de la autoestima, la autoaceptación y la confianza personal",
+        "Claridad para establecer límites saludables en vínculos y relaciones",
+        "Fomento de hábitos sostenibles de autocuidado y respeto hacia uno mismo",
+        "Reconversión del diálogo interno hacia una relación más compasiva y armoniosa",
+],
+      },
+    ];
 
   // Filtrar servicios
   const serviciosFiltrados = services.filter((service) => {
@@ -411,8 +411,8 @@ export function ServicesGrid() {
   });
 
   const filtros = [
-    { id: "todos" as const, label: "Todos los Servicios", icon: Star },
-    { id: "tarot" as const, label: "Lecturas de Tarot", icon: Star },
+    { id: "todos" as const, label: "Todos los Servicios", icon: Sparkles },
+    { id: "tarot" as const, label: "Lecturas de Tarot", icon: Sparkles },
     { id: "energia" as const, label: "Sanación Energética", icon: Users },
     { id: "limpieza" as const, label: "Limpiezas", icon: Clock },
   ];
@@ -426,10 +426,11 @@ export function ServicesGrid() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
+            aria-label="Buscar servicios"
             placeholder="Buscar servicios..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary"
+            className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 placeholder:text-gray-500 focus:border-babalu-action focus:outline-none focus:ring-2 focus:ring-babalu-action/30"
           />
         </div>
 
@@ -446,7 +447,7 @@ export function ServicesGrid() {
                 }
                 className={`flex items-center space-x-2 ${
                   filtroSeleccionado === filtro.id
-                    ? "bg-babalu-primary hover:bg-babalu-dark"
+                    ? "bg-babalu-action text-white hover:bg-babalu-dark"
                     : "bg-white hover:bg-babalu-primary/5 text-gray-700"
                 }`}
               >
@@ -492,7 +493,7 @@ export function ServicesGrid() {
               setBusqueda("");
               setFiltroSeleccionado("todos");
             }}
-            className="bg-babalu-primary hover:bg-babalu-dark"
+            className="bg-babalu-action text-white hover:bg-babalu-dark"
           >
             Ver todos los servicios
           </Button>

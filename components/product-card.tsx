@@ -1,9 +1,9 @@
 "use client";
 
-import { Card, CardContent } from "../components/ui/card";
+import { CardContent } from "../components/ui/card";
 import { ProductImage } from "./product-image";
 import { Product } from "app/types/product";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { parsePrice, formatPrice } from "../utils/price-utils";
 import { buildCatalogProductTitle, isCeramicsCategory, isStatuesCategory, sameCatalogText } from "../lib/product-variants";
 
@@ -39,8 +39,6 @@ export function ProductCard({
   lineaSeleccionada,
   esProductoAgrupado = false,
 }: ProductCardProps) {
-  const router = useRouter();
-
   // Función para capitalizar la primera letra de cada palabra
   const capitalizarPalabras = (texto: string | undefined | null): string => {
     if (!texto || typeof texto !== "string") return "";
@@ -136,7 +134,7 @@ export function ProductCard({
 
     return categoriasNoAgrupables.some((cat) => categoria.includes(cat));
   };
-  const handleCardClick = () => {
+  const getProductHref = () => {
     const params = new URLSearchParams();
 
     const marca =
@@ -168,12 +166,7 @@ export function ProductCard({
       queryString ? `?${queryString}` : ""
     }`;
 
-    router.push(url);
-  };
-
-  const handleImageClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    handleCardClick();
+    return url;
   };
 
   // Función para formatear línea
@@ -258,17 +251,9 @@ export function ProductCard({
   );
 
   return (
-    <Card
-      role="link"
-      tabIndex={0}
-      className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full"
-      onClick={handleCardClick}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          handleCardClick();
-        }
-      }}
+    <Link
+      href={getProductHref()}
+      className="block h-full rounded-xl border-0 bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-babalu-action focus-visible:ring-offset-2"
     >
       <CardContent className="p-4 h-full flex flex-col">
         <div className="aspect-square bg-gray-200 rounded-lg mb-3 overflow-hidden">
@@ -278,7 +263,6 @@ export function ProductCard({
             width={200}
             height={200}
             className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
-            onClick={handleImageClick}
             fallbackLabel={`${product.name || "Producto"}: imagen no disponible`}
           />
         </div>
@@ -293,12 +277,12 @@ export function ProductCard({
 
             {/* Mostrar precio para productos individuales o no agrupados */}
             {formattedPrice && !esProductoAgrupado && (
-              <p className="text-xl font-bold text-babalu-primary">
+              <p className="text-xl font-bold text-babalu-action">
                 {formattedPrice}
               </p>
             )}
             {esProductoAgrupado && (
-              <p className="text-xl font-bold text-babalu-primary">
+              <p className="text-xl font-bold text-babalu-action">
                 {hasDifferentGroupPrices
                   ? `Desde ${formatPrice(groupMinPrice)}`
                   : groupPrices.length > 0
@@ -375,6 +359,6 @@ export function ProductCard({
           )}
         </div>
       </CardContent>
-    </Card>
+    </Link>
   );
 }

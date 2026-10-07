@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { ExternalLink } from "lucide-react";
 import {
@@ -24,37 +24,7 @@ interface BrandsSectionProps {
 export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // Guardar la referencia actual en una variable local
-    const currentSectionRef = sectionRef.current;
-    
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      {
-        threshold: 0.1,
-        rootMargin: "50px",
-      }
-    );
-
-    if (currentSectionRef) {
-      observer.observe(currentSectionRef);
-    }
-
-    return () => {
-      if (currentSectionRef) {
-        observer.unobserve(currentSectionRef);
-      }
-    };
-  }, []); // Dependencies array vacío ya que solo necesitamos ejecutar esto una vez
-
-  // Marcas de ejemplo - tú puedes pasar tu propio array
   const defaultBrands: Brand[] = [
     {
       id: 1,
@@ -80,7 +50,7 @@ export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
     {
       id: 4,
       name: "Tao",
-      logo: "/img/logos-marcas/Diseño minimalista de logo _tao_.webp",
+      logo: "/img/logos-marcas/tao-logo.png",
       url: "https://www.aromatizarmayorista.com.ar",
       alt: "Logo Tao",
     },
@@ -105,7 +75,6 @@ export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
   const handleContactSubmit = async (formData: BrandContactFormData) => {
     setIsSubmitting(true);
 
-    // Aquí el usuario implementará su lógica
     if (onContactSubmit) {
       await onContactSubmit(formData);
     }
@@ -116,64 +85,52 @@ export function BrandsSection({ brands, onContactSubmit }: BrandsSectionProps) {
 
   return (
     <>
-      <section ref={sectionRef} className="w-full py-12 md:py-16 bg-gray-50">
+      <section className="w-full bg-gray-50 py-14 md:py-16">
         <div className="container px-4 md:px-6">
-          <div className={`text-center mb-10 transition-all duration-700 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-          }`}>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 transform transition-transform duration-300 hover:scale-105">
+          <div className="mb-8 text-center md:mb-10">
+            <h2 className="mb-3 text-balance text-2xl font-bold text-gray-900 md:text-3xl">
               Marcas con las que Trabajamos
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            <p className="mx-auto max-w-2xl text-base leading-relaxed text-gray-700 md:text-lg">
               Colaboramos con las mejores marcas del mercado para ofrecerte
               productos de calidad
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-8">
-            {displayBrands.map((brand, index) => (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-6">
+            {displayBrands.map((brand) => (
               <a
                 key={brand.id}
                 href={brand.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`group relative flex items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 ${
-                  isVisible 
-                    ? 'opacity-100 translate-y-0' 
-                    : 'opacity-0 translate-y-8'
-                }`}
-                style={{
-                  transitionDelay: `${isVisible ? index * 100 : 0}ms`
-                }}
+                aria-label={`Visitar el sitio de ${brand.name} (se abre en una pestaña nueva)`}
+                className="group relative flex min-h-36 items-center justify-center rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-babalu-action focus-visible:ring-offset-2"
               >
-                <div className="relative w-full h-24 flex items-center justify-center">
+                <div className="relative h-20 w-full md:h-24">
                   <Image
                     src={brand.logo || "/placeholder.svg"}
                     alt={brand.alt}
                     fill
-                    className="object-contain grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110"
+                    className="object-contain grayscale transition-[filter] duration-200 group-hover:grayscale-0"
+                    sizes="(max-width: 768px) 40vw, (max-width: 1200px) 25vw, 16vw"
                   />
                 </div>
-
-                {/* Icono de enlace externo que aparece al hacer hover */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
-                  <ExternalLink className="h-4 w-4 text-babalu-primary" />
-                </div>
-
-                {/* Overlay sutil al hacer hover */}
-                <div className="absolute inset-0 bg-babalu-primary/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <ExternalLink
+                  aria-hidden="true"
+                  className="absolute right-3 top-3 h-4 w-4 text-gray-500 transition-colors group-hover:text-babalu-action"
+                />
               </a>
             ))}
           </div>
 
-          <div className={`mt-10 text-center transition-all duration-700 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-          }`}>
-            <p className="text-sm text-gray-500">
+          <div className="mt-8 text-center md:mt-10">
+            <p className="text-sm text-gray-700">
               ¿Eres una marca y quieres trabajar con nosotros?{" "}
               <button
+                type="button"
                 onClick={() => setIsModalOpen(true)}
-                className="text-babalu-primary hover:underline font-medium cursor-pointer transform transition-transform duration-300 hover:scale-105"
+                className="inline-flex min-h-11 items-center rounded-sm font-semibold text-babalu-action underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-babalu-action"
               >
                 Contáctanos aquí
               </button>

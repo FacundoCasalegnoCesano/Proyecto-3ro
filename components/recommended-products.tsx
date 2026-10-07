@@ -162,7 +162,7 @@ export function RecommendedProducts() {
 
             {/* Información del producto */}
             <div className="space-y-2 p-2">
-              <h3 className="font-semibold text-gray-800 transition-colors duration-300 hover:text-babalu-primary">
+              <h3 className="font-semibold text-gray-800 transition-colors duration-300 hover:text-babalu-action">
                 {product.name}
               </h3>
               <p className="text-xl font-bold text-gray-800 transform transition-transform duration-300 hover:scale-105">

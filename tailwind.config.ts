@@ -20,10 +20,11 @@ const config: Config = {
   	},
   	extend: {
   		colors: {
-  			babalu: {
-  				dark: '#3A2415',
-  				primary: '#F58549',
-  				medium: '#4E342E'
+			babalu: {
+				dark: '#3A2415',
+				primary: '#F58549',
+				action: '#914218',
+				medium: '#4E342E'
   			},
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',

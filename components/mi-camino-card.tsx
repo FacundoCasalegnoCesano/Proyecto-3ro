@@ -24,61 +24,60 @@ export function MiCaminoCard({ section, reverse = false }: MiCaminoCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all duration-300">
+    <article className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
       {/* Encabezado de la card - Siempre visible */}
-      <div 
-        className={`p-6 cursor-pointer transition-all duration-200 ${
-          isExpanded ? 'bg-gray-50 border-b border-gray-100' : 'hover:bg-gray-50'
-        }`}
-        onClick={toggleExpand}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl lg:text-2xl font-bold text-gray-800">
+      <h2>
+        <button
+          type="button"
+          aria-expanded={isExpanded}
+          aria-controls={`contenido-${section.id}`}
+          onClick={toggleExpand}
+          className={`flex min-h-16 w-full items-center justify-between gap-4 p-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-babalu-action sm:p-6 ${
+            isExpanded ? "border-b border-gray-200 bg-orange-50/50" : "hover:bg-orange-50/40"
+          }`}
+        >
+          <span className="text-xl font-bold text-gray-900 sm:text-2xl">
             {section.title}
-          </h2>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500 hidden sm:block">
+          </span>
+          <span className="flex flex-shrink-0 items-center gap-2 text-sm font-medium text-babalu-action">
+            <span className="hidden sm:block">
               {isExpanded ? 'Cerrar' : 'Ver más'}
             </span>
-            <div className={`transform transition-transform duration-300 ${
+            <span className={`transition-transform duration-200 ${
               isExpanded ? 'rotate-180' : ''
             }`}>
-              <ChevronDown className="w-5 h-5 text-gray-500" />
-            </div>
-          </div>
-        </div>
-      </div>
+              <ChevronDown aria-hidden="true" className="h-5 w-5" />
+            </span>
+          </span>
+        </button>
+      </h2>
 
       {/* Contenido expandido con animación */}
-      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
-        isExpanded ? 'max-h-[2000px]' : 'max-h-0'
-      }`}>
-        <div className={`p-6 lg:p-8 transform transition-all duration-500 ${
-          isExpanded 
-            ? 'translate-y-0 opacity-100 scale-100' 
-            : '-translate-y-4 opacity-0 scale-95'
-        }`}>
-          <div className={`flex flex-col ${
-            reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'
-          } gap-6 lg:gap-8 items-center`}>
+      <div id={`contenido-${section.id}`} hidden={!isExpanded} className="overflow-hidden">
+        <div className="p-5 sm:p-6 lg:p-8">
+          <div className={`flex flex-col items-center gap-6 lg:gap-8 ${
+            section.content.trim()
+              ? reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'
+              : 'mx-auto max-w-2xl'
+          }`}>
             
             {/* Texto */}
-            <div className="flex-1">
-              <p className="text-gray-600 leading-relaxed text-base lg:text-lg">
+            {section.content.trim() && <div className="min-w-0 flex-1">
+              <p className="max-w-prose break-words text-base leading-relaxed text-gray-700 lg:text-lg">
                 {section.content}
               </p>
-            </div>
+            </div>}
             
             {/* Imagen */}
-            <div className="flex-1">
-              <div className="bg-babalu-primary rounded-2xl p-3">
-                <div className="bg-white rounded-xl overflow-hidden">
+            <div className="w-full min-w-0 flex-1">
+              <div className="rounded-2xl bg-babalu-primary p-2.5 sm:p-3">
+                <div className="overflow-hidden rounded-xl bg-white">
                   <div className="relative aspect-[4/3]">
                     <Image
                       src={section.image || "/placeholder.svg"}
                       alt={section.title}
                       fill
-                      className="object-cover transition-transform duration-500 hover:scale-105"
+                      className="object-cover"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
                     />
                   </div>
@@ -88,6 +87,6 @@ export function MiCaminoCard({ section, reverse = false }: MiCaminoCardProps) {
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

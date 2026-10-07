@@ -5,6 +5,7 @@ import type React from "react";
 import { useState } from "react";
 import Image from "next/image";
 import { Calendar, MapPin, Award, Heart, Sparkles, Users } from "lucide-react";
+import { getWhatsAppContactUrl } from "../lib/whatsapp";
 
 interface TimelineEvent {
   id: string;
@@ -149,7 +150,7 @@ export function MiCaminoTimeline() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-8">
+    <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
       <div className="text-center mb-12">
         <h2 className="text-3xl font-bold text-gray-800 mb-4">
           Mi Camino Espiritual
@@ -186,7 +187,7 @@ export function MiCaminoTimeline() {
 
                   {/* Año debajo del punto */}
                   <div className="absolute top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                    <span className="text-sm font-bold text-babalu-primary bg-white px-2 py-1 rounded">
+                    <span className="text-sm font-bold text-babalu-action bg-white px-2 py-1 rounded">
                       {event.year}
                     </span>
                   </div>
@@ -280,7 +281,7 @@ export function MiCaminoTimeline() {
                 <div className="bg-white border-2 border-gray-100 rounded-xl p-4 shadow-sm">
                   {/* Año y tipo */}
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-lg font-bold text-babalu-primary">
+                    <span className="text-lg font-bold text-babalu-action">
                       {event.year}
                     </span>
                     <div
@@ -334,20 +335,20 @@ export function MiCaminoTimeline() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
             href="/servicios"
-            className="bg-babalu-primary hover:bg-babalu-dark text-white px-8 py-3 rounded-lg font-medium transition-colors"
+            className="bg-babalu-action hover:bg-babalu-dark text-white px-8 py-3 rounded-lg font-medium transition-colors"
           >
             Conocer Servicios
           </a>
           <a
-            href="https://wa.me/5491123456789"
+            href={getWhatsAppContactUrl("Hola, quisiera consultar por los servicios de Babalu.")}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+            className="bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
           >
             Contactar por WhatsApp
           </a>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

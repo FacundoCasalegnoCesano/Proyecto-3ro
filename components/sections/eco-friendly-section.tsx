@@ -1,117 +1,75 @@
 "use client";
 
-import { Leaf, Recycle, Heart, Sprout } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Heart, Leaf, Recycle, Sprout } from "lucide-react";
+
+const features = [
+  {
+    icon: Leaf,
+    title: "100% Biodegradable",
+    description:
+      "Diseñados para minimizar el impacto ambiental, con envases reciclables y materiales de bajo impacto.",
+  },
+  {
+    icon: Recycle,
+    title: "Eco-Sostenible",
+    description:
+      "Fabricados con insumos naturales y procesos responsables con el planeta.",
+  },
+  {
+    icon: Heart,
+    title: "Sin Químicos",
+    description:
+      "Libres de fragancias y aditivos artificiales que puedan afectar tu salud o la del entorno.",
+  },
+  {
+    icon: Sprout,
+    title: "Origen Natural",
+    description:
+      "Cada producto está elaborado a mano con ingredientes naturales, fomentando un consumo consciente.",
+  },
+];
 
 export function EcoFriendlySection() {
-  const [isVisible, setIsVisible] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Guardar la referencia actual en una variable local
-    const currentSectionRef = sectionRef.current;
-    
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      {
-        threshold: 0.1,
-        rootMargin: "50px",
-      }
-    );
-
-    if (currentSectionRef) {
-      observer.observe(currentSectionRef);
-    }
-
-    return () => {
-      if (currentSectionRef) {
-        observer.unobserve(currentSectionRef);
-      }
-    };
-  }, []); // Dependencies array vacío
-
-  const features = [
-    {
-      icon: Leaf,
-      title: "100% Biodegradable",
-      description:
-        "Diseñados para minimizar el impacto ambiental, con envases reciclables y materiales de bajo impacto.",
-    },
-    {
-      icon: Recycle,
-      title: "Eco-Sostenible",
-      description:
-        "Fabricados con insumos naturales y procesos responsables con el planeta.",
-    },
-    {
-      icon: Heart,
-      title: "Sin Químicos",
-      description:
-        "Libres de fragancias y aditivos artificiales que puedan afectar tu salud o la del entorno.",
-    },
-    {
-      icon: Sprout,
-      title: "Origen Natural",
-      description:
-        "Cada producto está elaborado a mano con ingredientes naturales, fomentando un consumo consciente.",
-    },
-  ];
-
   return (
-    <section ref={sectionRef} className="w-full py-12 md:py-16 bg-gradient-to-r from-green-50 to-emerald-50">
+    <section className="w-full bg-green-50 py-14 md:py-16">
       <div className="container px-4 md:px-6">
-        <div className={`text-center mb-10 transition-all duration-700 ${
-          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}>
-          <div className="inline-flex items-center justify-center p-2 bg-green-100 rounded-full mb-4 transform transition-all duration-500 hover:scale-110 hover:rotate-12">
-            <Leaf className="h-8 w-8 text-green-600" />
+        <div className="mb-8 text-center md:mb-10">
+          <div className="mb-4 inline-flex items-center justify-center rounded-full bg-green-100 p-2.5 text-green-800">
+            <Leaf aria-hidden="true" className="h-7 w-7" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 transform transition-transform duration-300 hover:scale-105">
+          <h2 className="mb-3 text-balance text-2xl font-bold text-gray-900 md:text-3xl">
             Comprometidos con el Medio Ambiente
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="mx-auto max-w-2xl text-base leading-relaxed text-gray-700 md:text-lg">
             Nuestros productos son 100% biodegradables y respetuosos con la
             naturaleza
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className={`flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 ${
-                isVisible 
-                  ? 'opacity-100 translate-y-0' 
-                  : 'opacity-0 translate-y-8'
-              }`}
-              style={{
-                transitionDelay: `${isVisible ? index * 150 : 0}ms`
-              }}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
+          {features.map((feature) => (
+            <article
+              key={feature.title}
+              className="flex h-full flex-col items-center rounded-xl border border-green-900/10 bg-white p-5 text-center shadow-sm"
             >
-              <div className="p-3 bg-green-100 rounded-full mb-4 transform transition-all duration-500 hover:scale-110 hover:rotate-12 group">
-                <feature.icon className="h-8 w-8 text-green-600 transition-transform duration-300 group-hover:scale-110" />
+              <div className="mb-4 rounded-full bg-green-100 p-3 text-green-800">
+                <feature.icon aria-hidden="true" className="h-7 w-7" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2 transition-colors duration-300 hover:text-green-600">
+              <h3 className="mb-2 text-lg font-semibold text-gray-900">
                 {feature.title}
               </h3>
-              <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-            </div>
+              <p className="leading-relaxed text-gray-700">
+                {feature.description}
+              </p>
+            </article>
           ))}
         </div>
 
-        <div className={`mt-10 text-center transition-all duration-700 ${
-          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}>
-          <p className="text-sm text-gray-500 max-w-3xl mx-auto leading-relaxed">
-            En Babalú, nos comprometemos a ofrecer productos que cuiden de ti y
-            del planeta. Cada compra que realizas contribuye a un futuro más
-            sostenible y consciente.
-          </p>
-        </div>
+        <p className="mx-auto mt-8 max-w-3xl text-center text-sm leading-relaxed text-gray-700 md:mt-10">
+          En Babalú, nos comprometemos a ofrecer productos que cuiden de ti y
+          del planeta. Cada compra que realizas contribuye a un futuro más
+          sostenible y consciente.
+        </p>
       </div>
     </section>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { X, Building2, Mail, Phone, Globe, MessageSquare } from "lucide-react";
 import { Button } from "./ui/button";
@@ -32,6 +32,71 @@ export function BrandContactModal({
   isSubmitting = false,
 }: BrandContactModalProps) {
   const [localSubmitting, setLocalSubmitting] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previousFocusRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (
+        event.shiftKey &&
+        (document.activeElement === first ||
+          !dialogRef.current.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        last.focus();
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last ||
+          !dialogRef.current.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (previousFocusRef.current?.isConnected) previousFocusRef.current.focus();
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -62,14 +127,29 @@ export function BrandContactModal({
   const submitting = isSubmitting || localSubmitting;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="brand-contact-title"
+        aria-describedby="brand-contact-description"
+        tabIndex={-1}
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"
+      >
         {/* Header - Fondo sólido sin degradado */}
-        <div className="sticky top-0 z-10 bg-babalu-primary p-6 text-white border-b border-white/20">
+        <div className="sticky top-0 z-10 bg-babalu-action p-6 text-white border-b border-white/20">
           {/* Botón X adicional en la parte superior derecha */}
           <button
+            ref={closeButtonRef}
+            type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors"
+            className="absolute top-4 right-4 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full hover:bg-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             aria-label="Cerrar"
           >
             <X className="h-5 w-5" />
@@ -79,11 +159,17 @@ export function BrandContactModal({
             <div className="p-2 bg-white/20 rounded-lg">
               <Building2 className="h-6 w-6" />
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold">
+            <h2
+              id="brand-contact-title"
+              className="text-2xl md:text-3xl font-bold"
+            >
               Trabajemos Juntos
             </h2>
           </div>
-          <p className="text-white/90 text-sm md:text-base">
+          <p
+            id="brand-contact-description"
+            className="text-white text-sm md:text-base"
+          >
             ¿Tu marca comparte nuestros valores? Nos encantaría conocerte y
             explorar oportunidades de colaboración.
           </p>
@@ -240,14 +326,14 @@ export function BrandContactModal({
               variant="outline"
               onClick={onClose}
               disabled={submitting}
-              className="w-full sm:w-auto bg-transparent"
+              className="min-h-11 w-full sm:w-auto bg-transparent"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={submitting}
-              className="w-full sm:flex-1 bg-babalu-primary hover:bg-babalu-primary/90 text-white"
+              className="min-h-11 w-full sm:flex-1 bg-babalu-action hover:bg-babalu-dark text-white"
             >
               {submitting ? "Enviando..." : "Enviar Solicitud"}
             </Button>

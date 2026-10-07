@@ -649,7 +649,7 @@ export function ProductsGridPage({
         <p className="text-gray-400">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-babalu-primary text-white rounded-md hover:bg-babalu-dark"
+          className="mt-4 px-4 py-2 bg-babalu-action text-white rounded-md hover:bg-babalu-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-babalu-action focus-visible:ring-offset-2"
         >
           Reintentar
         </button>
@@ -696,11 +696,13 @@ export function ProductsGridPage({
 
       {/* Paginación */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center space-x-2">
+        <nav aria-label="Paginación de productos" className="flex flex-wrap items-center justify-center gap-2">
           <button
+            type="button"
+            aria-label="Página anterior"
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="p-2 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-babalu-action focus-visible:ring-offset-2"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -715,10 +717,13 @@ export function ProductsGridPage({
             return (
               <button
                 key={page}
+                type="button"
+                aria-label={`Página ${page}`}
+                aria-current={currentPage === page ? "page" : undefined}
                 onClick={() => setCurrentPage(page)}
-                className={`w-8 h-8 rounded border text-sm ${
+                className={`inline-flex h-11 min-w-11 items-center justify-center rounded border px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-babalu-action focus-visible:ring-offset-2 ${
                   currentPage === page
-                    ? "bg-babalu-primary text-white border-babalu-primary"
+                    ? "bg-babalu-action text-white border-babalu-action"
                     : "border-gray-300 hover:bg-gray-50 text-gray-700"
                 }`}
               >
@@ -730,15 +735,17 @@ export function ProductsGridPage({
           {totalPages > 5 && <span className="text-gray-400">...</span>}
 
           <button
+            type="button"
+            aria-label="Página siguiente"
             onClick={() =>
               setCurrentPage((prev) => Math.min(prev + 1, totalPages))
             }
             disabled={currentPage === totalPages}
-            className="p-2 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-babalu-action focus-visible:ring-offset-2"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
-        </div>
+        </nav>
       )}
 
       {/* Mensaje si no hay productos */}

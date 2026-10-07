@@ -67,7 +67,7 @@ export function ProductsPageContent() {
 
             <Button
               onClick={handleStockRedirect}
-              className="bg-babalu-primary hover:bg-babalu-dark text-white px-6 py-2 flex items-center space-x-2 transition-all duration-200 hover:scale-105"
+              className="bg-babalu-action hover:bg-babalu-dark text-white px-6 py-2 flex items-center space-x-2 transition-all duration-200 hover:scale-105"
             >
               <Package className="w-4 h-4" />
               <span>Ver Stock</span>

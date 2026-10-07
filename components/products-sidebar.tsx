@@ -202,7 +202,7 @@ export function ProductsSidebar({
         <div key={group.id} className="mb-4">
           <button
             onClick={() => toggleCategoryGroup(group.name)}
-            className="mb-2 flex w-full min-w-0 items-start justify-between gap-2 text-left font-semibold transition-colors hover:text-babalu-primary"
+            className="mb-2 flex w-full min-w-0 items-start justify-between gap-2 text-left font-semibold transition-colors hover:text-babalu-action"
             disabled={isLoading}
           >
             <span className="min-w-0 flex-1 break-words">
@@ -227,7 +227,7 @@ export function ProductsSidebar({
                 <button
                   key={subcategory.name}
                   onClick={() => handleSubcategoryClick(subcategory.name)}
-                  className={`flex w-full min-w-0 items-center gap-2 rounded p-2 text-left text-sm transition-colors hover:text-babalu-primary ${
+                  className={`flex w-full min-w-0 items-center gap-2 rounded p-2 text-left text-sm transition-colors hover:text-babalu-action ${
                     currentSelectedCategory === subcategory.name
                       ? "bg-white/20 font-medium border-l-4 border-orange-500"
                       : "border-l-4 border-transparent"

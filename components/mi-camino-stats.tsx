@@ -31,7 +31,7 @@ export function MiCaminoStats() {
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-8 mb-16">
+    <section className="mb-12 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:mb-16 sm:p-8">
       <div className="text-center mb-8">
         <h3 className="text-2xl font-bold text-gray-800 mb-2">
           Mi trayectoria en números
@@ -45,9 +45,9 @@ export function MiCaminoStats() {
         {stats.map((stat, index) => (
           <div key={index} className="text-center">
             <div className="w-16 h-16 bg-babalu-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <stat.icon className="w-8 h-8 text-babalu-primary" />
+              <stat.icon className="w-8 h-8 text-babalu-action" />
             </div>
-            <div className="text-3xl font-bold text-babalu-primary mb-2">
+            <div className="text-3xl font-bold text-babalu-action mb-2">
               {stat.number}
             </div>
             <div className="font-semibold text-gray-800 mb-1">{stat.label}</div>
@@ -55,6 +55,6 @@ export function MiCaminoStats() {
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

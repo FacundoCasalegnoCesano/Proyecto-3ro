@@ -58,6 +58,26 @@ test("order endpoint rejects checkout without database access", async () => {
   assert.equal(result.body.success, false);
 });
 
+test("public reservation API rejects creation without side effects", async () => {
+  let sideEffectCalls = 0;
+  const route = loadTypeScriptModule("app/api/crearReserva/route.ts", {
+    "next/server": nextServer,
+    "../../../lib/googleCalendar": {
+      getGoogleCalendarClient: async () => { sideEffectCalls += 1; },
+      checkTimeSlotAvailability: async () => { sideEffectCalls += 1; },
+    },
+    nodemailer: { createTransport: () => { sideEffectCalls += 1; } },
+  });
+
+  const result = await route.POST({
+    json: async () => { throw new Error("disabled endpoint should not read request body"); },
+  });
+
+  assert.equal(result.status, 410);
+  assert.equal(result.body.success, false);
+  assert.equal(sideEffectCalls, 0);
+});
+
 test("legacy cart and checkout URLs redirect to the public catalog", () => {
   const navigation = {
     redirect: (destination) => {
@@ -78,4 +98,20 @@ test("legacy cart and checkout URLs redirect to the public catalog", () => {
       return true;
     });
   }
+});
+
+test("public reservation URL redirects to the services showcase", () => {
+  const navigation = {
+    redirect: (destination) => {
+      throw { destination };
+    },
+  };
+  const page = loadTypeScriptModule("app/(pages)/reserva/page.tsx", {
+    "next/navigation": navigation,
+  });
+
+  assert.throws(() => page.default(), (error) => {
+    assert.equal(error.destination, "/servicios");
+    return true;
+  });
 });

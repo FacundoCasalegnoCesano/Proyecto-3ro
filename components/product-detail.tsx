@@ -328,7 +328,7 @@ export function ProductDetail({
         {/* Detalles del producto */}
         <div className="space-y-6">
           <div>
-            <span className="inline-block bg-babalu-primary text-white text-sm px-3 py-1 rounded-full mb-3">
+            <span className="inline-block bg-babalu-action text-white text-sm px-3 py-1 rounded-full mb-3">
               {product.category}
             </span>
             <h1 className="text-2xl font-bold text-gray-800 mb-2 sm:text-3xl">
@@ -361,7 +361,7 @@ export function ProductDetail({
 
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="text-xl font-bold text-babalu-primary">
+              <span className="text-xl font-bold text-babalu-action">
                 {formatPrice(displayedPrice)}
               </span>
               <span className={`text-sm font-medium ${displayedStock > 0 ? "text-green-700" : "text-gray-600"}`}>
@@ -462,7 +462,7 @@ export function ProductDetail({
                       aria-pressed={selectedVariant?.id === variant.id}
                       aria-label={`${variant.name}, ${formatPrice(variant.price)}, ${variant.stock > 0 ? `${variant.stock} disponibles` : "agotado"}`}
                       onClick={() => setSelectedVariantId(variant.id)}
-                      className={`flex min-w-0 items-center gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-babalu-primary focus-visible:ring-offset-2 ${selectedVariant?.id === variant.id ? "border-babalu-primary bg-babalu-primary/5 ring-1 ring-babalu-primary" : "border-gray-200 bg-gray-50 hover:border-gray-400"}`}
+                      className={`flex min-w-0 items-center gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-babalu-action focus-visible:ring-offset-2 ${selectedVariant?.id === variant.id ? "border-babalu-action bg-babalu-action/5 ring-1 ring-babalu-action" : "border-gray-200 bg-gray-50 hover:border-gray-400"}`}
                     >
                       <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-gray-200">
                           <ProductImage
@@ -480,7 +480,7 @@ export function ProductDetail({
                           {variant.name}
                         </h4>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
-                          <span className="font-bold text-babalu-primary">
+                          <span className="font-bold text-babalu-action">
                             {formatPrice(variant.price)}
                           </span>
                           <span className={variant.stock > 0 ? "text-green-700" : "text-gray-600"}>
@@ -514,7 +514,7 @@ export function ProductDetail({
               <span className="text-gray-600 text-sm">Categoría: </span>
               <a
                 href="#"
-                className="text-babalu-primary hover:text-babalu-dark text-sm"
+                className="text-babalu-action hover:text-babalu-dark text-sm underline underline-offset-4"
               >
                 {product.category}
               </a>

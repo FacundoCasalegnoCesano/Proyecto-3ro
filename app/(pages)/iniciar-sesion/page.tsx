@@ -1,7 +1,7 @@
 // app/iniciar-sesion/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Header } from "components/header";
 import { PageLayout } from "../../../components/layout/page-layout";
 import { Button } from "components/ui/button";
@@ -19,6 +19,8 @@ export default function IniciarSesionPage() {
     email?: string;
     password?: string;
   }>({});
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   const { login, isLoading, error } = useLogin({
     onSuccess: () => {
@@ -66,6 +68,11 @@ export default function IniciarSesionPage() {
     }
 
     setErrors(newErrors);
+    if (newErrors.email) {
+      emailRef.current?.focus();
+    } else if (newErrors.password) {
+      passwordRef.current?.focus();
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -87,20 +94,20 @@ export default function IniciarSesionPage() {
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
           <div className="text-center">
-            <h2 className="mt-6 text-3xl font-bold text-gray-900">
+            <h1 className="mt-6 text-3xl font-bold text-gray-900">
               Iniciar Sesión
-            </h2>
+            </h1>
             <p className="mt-2 text-sm text-gray-600">
-              Accede a tu cuenta para gestionar tus pedidos y reservas
+              Accede a tu cuenta de Babalu
             </p>
           </div>
 
           {/* Formulario de login */}
           <div className="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200">
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={handleSubmit} noValidate>
               {/* Error de autenticación */}
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+                <div role="alert" className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
                   {error}
                 </div>
               )}
@@ -118,20 +125,23 @@ export default function IniciarSesionPage() {
                     <Mail className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
+                    ref={emailRef}
                     id="email"
                     name="email"
                     type="email"
                     autoComplete="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`block w-full pl-10 pr-3 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary ${
+                    aria-invalid={!!errors.email}
+                    aria-describedby={errors.email ? "email-error" : undefined}
+                    className={`block w-full pl-10 pr-3 py-3 border rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-babalu-action focus:border-babalu-action ${
                       errors.email ? "border-red-300" : "border-gray-300"
                     }`}
                     placeholder="tu@email.com"
                   />
                 </div>
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  <p id="email-error" role="alert" className="mt-1 text-sm text-red-600">{errors.email}</p>
                 )}
               </div>
 
@@ -148,20 +158,25 @@ export default function IniciarSesionPage() {
                     <Lock className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
+                    ref={passwordRef}
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className={`block w-full pl-10 pr-10 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-babalu-primary focus:border-babalu-primary ${
+                    aria-invalid={!!errors.password}
+                    aria-describedby={errors.password ? "password-error" : undefined}
+                    className={`block w-full pl-10 pr-10 py-3 border rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-babalu-action focus:border-babalu-action ${
                       errors.password ? "border-red-300" : "border-gray-300"
                     }`}
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    className="absolute inset-y-0 right-0 inline-flex min-h-11 min-w-11 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-babalu-action"
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    aria-pressed={showPassword}
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
@@ -172,7 +187,7 @@ export default function IniciarSesionPage() {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  <p id="password-error" role="alert" className="mt-1 text-sm text-red-600">{errors.password}</p>
                 )}
               </div>
 
@@ -185,7 +200,7 @@ export default function IniciarSesionPage() {
                     type="checkbox"
                     checked={formData.rememberMe}
                     onChange={handleInputChange}
-                    className="h-4 w-4 text-babalu-primary focus:ring-babalu-primary border-gray-300 rounded"
+                    className="h-4 w-4 text-babalu-action focus:ring-babalu-action border-gray-300 rounded"
                   />
                   <label
                     htmlFor="remember-me"
@@ -201,7 +216,7 @@ export default function IniciarSesionPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-babalu-primary hover:bg-babalu-dark text-white py-3 px-4 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-babalu-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="min-h-11 w-full bg-babalu-action hover:bg-babalu-dark text-white py-3 px-4 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-babalu-action disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
@@ -222,7 +237,7 @@ export default function IniciarSesionPage() {
             <div className="text-sm">
               <a
                 href="/reset-password"
-                className="text-babalu-primary hover:text-babalu-dark transition-colors"
+                className="text-babalu-action hover:text-babalu-dark transition-colors underline underline-offset-4"
               >
                 ¿Olvidaste tu contraseña?
               </a>
@@ -232,7 +247,7 @@ export default function IniciarSesionPage() {
               ¿No tienes cuenta?{" "}
               <a
                 href="/registrar-usuario"
-                className="text-babalu-primary hover:text-babalu-dark font-medium transition-colors"
+                className="text-babalu-action hover:text-babalu-dark font-medium transition-colors underline underline-offset-4"
               >
                 Regístrate aquí
               </a>

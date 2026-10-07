@@ -2,6 +2,7 @@
 
 import { ServicesHero } from "../../components/services-hero";
 import { ServicesGrid } from "../../components/services-grid";
+import { getWhatsAppContactUrl } from "../../lib/whatsapp";
 
 export function ServicesPageContent() {
   return (
@@ -11,8 +12,8 @@ export function ServicesPageContent() {
 
       {/* Grid de servicios */}
       <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
+        <div id="servicios" className="mb-10 scroll-mt-6 text-center sm:mb-12">
+          <h2 className="mb-4 text-3xl font-bold text-gray-900 sm:text-4xl">
             Nuestros Servicios
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
@@ -35,16 +36,16 @@ export function ServicesPageContent() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="https://wa.me/5493404514018"
+              href={getWhatsAppContactUrl("Hola, quisiera recibir orientación sobre los servicios de Babalu.")}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+              className="bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
             >
               WhatsApp
             </a>
             <a
               href="mailto:hola@babalu.com"
-              className="bg-babalu-primary hover:bg-babalu-dark text-white px-8 py-3 rounded-lg font-medium transition-colors"
+              className="bg-babalu-action hover:bg-babalu-dark text-white px-8 py-3 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-babalu-action focus-visible:ring-offset-2"
             >
               Email
             </a>
